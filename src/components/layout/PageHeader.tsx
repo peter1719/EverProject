@@ -1,0 +1,55 @@
+import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+
+interface PageHeaderProps {
+  readonly title: string;
+  readonly showBack?: boolean;
+  readonly backPath?: string;
+  readonly rightSlot?: React.ReactNode;
+  readonly className?: string;
+}
+
+export function PageHeader({
+  title,
+  showBack = false,
+  backPath,
+  rightSlot,
+  className,
+}: PageHeaderProps): React.ReactElement {
+  const navigate = useNavigate();
+
+  function handleBack(): void {
+    if (backPath) {
+      navigate(backPath);
+    } else {
+      navigate(-1);
+    }
+  }
+
+  return (
+    <header
+      className={cn(
+        'flex items-stretch border-b border-outline/30 bg-surface',
+        className,
+      )}
+    >
+      {/* Back button */}
+      {showBack && (
+        <button
+          onClick={handleBack}
+          className="shrink-0 flex items-center px-6 rounded-lg border border-outline/50 text-on-surface-variant text-sm mx-2 my-3 active:opacity-80 transition-opacity duration-100"
+        >
+          ← Back
+        </button>
+      )}
+
+      {/* Title */}
+      <h1 className="flex flex-1 items-center px-4 py-6 font-display text-2xl font-bold text-on-surface leading-tight">
+        {title}
+      </h1>
+
+      {/* rightSlot */}
+      {rightSlot}
+    </header>
+  );
+}

@@ -1,0 +1,158 @@
+@import 'tailwindcss';
+
+/* ── Font theme utilities ────────────────────────────────────────────────────── */
+@theme {
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+}
+
+/* ── Warm Amber Color Tokens via @theme inline ──────────────────────────────── */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-variant: var(--surface-variant);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-outline: var(--outline);
+}
+
+/* ── Light mode (warm paper) ─────────────────────────────────────────────────── */
+:root {
+  --surface: #FDFAF4;
+  --surface-variant: #F4EDE0;
+  --on-surface: #1A1208;
+  --on-surface-variant: #7A6651;
+  --primary: #C75B21;
+  --on-primary: #FFFFFF;
+  --primary-container: #FEECD8;
+  --on-primary-container: #5C1E00;
+  --error: #C0392B;
+  --success: #2D6A2D;
+  --warning: #A0600A;
+  --outline: #B0A090;
+}
+
+/* ── Dark mode (deep espresso) ───────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #1A1208;
+    --surface-variant: #261C0F;
+    --on-surface: #F4EDE0;
+    --on-surface-variant: #A89070;
+    --primary: #E07840;
+    --on-primary: #1A1208;
+    --primary-container: #5C1E00;
+    --on-primary-container: #FEECD8;
+    --error: #EF5350;
+    --success: #66BB6A;
+    --warning: #FFA726;
+    --outline: #5C4A35;
+  }
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--on-surface);
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+/* ── CircularProgressbar: DM Mono for timer text ────────────────────────────── */
+.CircularProgressbar-text {
+  font-family: 'DM Mono', ui-monospace, monospace !important;
+  font-weight: 500;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────────── */
+@keyframes complete-enter {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes fill-bar {
+  from { width: 0; }
+  to   { width: var(--bar-width, 100%); }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+/* ── Safe area padding ──────────────────────────────────────────────────────── */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ── Accessibility: focus ring ───────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Accessibility: reduced motion ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Desktop frame ──────────────────────────────────────────────────────────── */
+@media (min-width: 640px) {
+  body {
+    background-color: #EDE8DF;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #0F0A05;
+    }
+  }
+
+  .phone-frame {
+    box-shadow:
+      -4px 0 32px rgba(0, 0, 0, 0.12),
+       4px 0 32px rgba(0, 0, 0, 0.12);
+  }
+}

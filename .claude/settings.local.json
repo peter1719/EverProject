@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(ls:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run build && npm run preview -- --open 2>&1 | tail -20)",
+      "Bash(cat /home/singyu/Workspace/EverProject/src/index.css 2>/dev/null || find /home/singyu/Workspace/EverProject/src -name \"*.css\" | head -5)",
+      "Bash(npm run dev --prefix /home/singyu/Workspace/EverProject)",
+      "Bash(google-chrome --headless=new --screenshot=/tmp/screenshot-home.png --window-size=390,844 --no-sandbox --disable-gpu http://localhost:5173/ 2>/dev/null && echo \"done\")",
+      "Bash(google-chrome --headless=new --screenshot=/tmp/screenshot-home.png --window-size=390,844 --no-sandbox --disable-gpu --virtual-time-budget=3000 http://localhost:5173/ 2>/dev/null && echo \"done\")",
+      "Bash(which xvfb-run && dpkg -l | grep -i \"scrot\\\\|imagemagick\\\\|xwd\" 2>/dev/null | head -5)",
+      "Bash(cat > /tmp/ss.js << 'EOF'\nconst { execSync, spawn } = require\\('child_process'\\);\nconst http = require\\('http'\\);\nconst fs = require\\('fs'\\);\n\n// Launch Chrome with remote debugging\nconst chrome = spawn\\('google-chrome', [\n  '--remote-debugging-port=9222',\n  '--no-sandbox',\n  '--disable-gpu', \n  '--headless=new',\n  '--window-size=390,844',\n  'about:blank'\n], { stdio: 'ignore' }\\);\n\nconst wait = ms => new Promise\\(r => setTimeout\\(r, ms\\)\\);\n\nfunction cdpFetch\\(path, method, body\\) {\n  return new Promise\\(\\(resolve, reject\\) => {\n    const data = body ? JSON.stringify\\(body\\) : '';\n    const opts = {\n      hostname: 'localhost', port: 9222,\n      path, method: method || 'GET',\n      headers: data ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength\\(data\\) } : {}\n    };\n    const req = http.request\\(opts, res => {\n      let d = '';\n      res.on\\('data', c => d += c\\);\n      res.on\\('end', \\(\\) => resolve\\(d ? JSON.parse\\(d\\) : {}\\)\\);\n    }\\);\n    req.on\\('error', reject\\);\n    if \\(data\\) req.write\\(data\\);\n    req.end\\(\\);\n  }\\);\n}\n\nfunction sendCmd\\(ws, id, method, params\\) {\n  return new Promise\\(\\(resolve, reject\\) => {\n    const msg = JSON.stringify\\({ id, method, params: params || {} }\\);\n    ws.send\\(msg\\);\n    const handler = \\(data\\) => {\n      const d = JSON.parse\\(data\\);\n      if \\(d.id === id\\) { ws.off\\('message', handler\\); resolve\\(d.result\\); }\n    };\n    ws.on\\('message', handler\\);\n    setTimeout\\(\\(\\) => reject\\(new Error\\('timeout'\\)\\), 10000\\);\n  }\\);\n}\n\nasync function main\\(\\) {\n  await wait\\(2000\\);\n  const tabs = await cdpFetch\\('/json'\\);\n  const wsUrl = tabs[0].webSocketDebuggerUrl;\n  \n  const { WebSocket } = await import\\('ws'\\).catch\\(\\(\\) => \\({ WebSocket: null }\\)\\);\n  if \\(!WebSocket\\) { console.log\\('no ws'\\); chrome.kill\\(\\); return; }\n  \n  const ws = new WebSocket\\(wsUrl\\);\n  await new Promise\\(r => ws.on\\('open', r\\)\\);\n  \n  let cmdId = 1;\n  await sendCmd\\(ws, cmdId++, 'Page.enable'\\);\n  await sendCmd\\(ws, cmdId++, 'Page.navigate', { url: 'http://localhost:5173/' }\\);\n  await wait\\(4000\\);\n  \n  const shot = await sendCmd\\(ws, cmdId++, 'Page.captureScreenshot', { format: 'png', clip: { x:0, y:0, width:390, height:844, scale:2 } }\\);\n  fs.writeFileSync\\('/tmp/screenshot-home.png', Buffer.from\\(shot.data, 'base64'\\)\\);\n  console.log\\('done'\\);\n  ws.close\\(\\);\n  chrome.kill\\(\\);\n}\nmain\\(\\).catch\\(e => { console.error\\(e.message\\); chrome.kill\\(\\); }\\);\nEOF\nnode /tmp/ss.js)",
+      "Bash(pkill -f \"google-chrome.*9222\" 2>/dev/null; pkill -f \"google-chrome.*headless\" 2>/dev/null; sleep 1; echo \"killed\")",
+      "Bash(pip3 list 2>/dev/null | grep -i \"websocket\\\\|selenium\\\\|playwright\" | head -5)",
+      "Bash(pip3 install websocket-client 2>&1 | tail -3)",
+      "Bash(python3 -m pip install websocket-client 2>&1 | tail -3)",
+      "Bash(node --version && node -e \"console.log\\(typeof WebSocket\\)\")",
+      "Bash(pkill -f \"google-chrome\" 2>/dev/null; sleep 1; echo \"killed all chrome\")"
+    ]
+  }
+}
