@@ -1,5 +1,6 @@
 import { PackageOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from './Button';
 
 interface EmptyStateCta {
   readonly label: string;
@@ -30,13 +31,9 @@ export function EmptyState({ title, subtitle, cta, className }: EmptyStateProps)
       )}
 
       {cta && (
-        <button
-          onClick={cta.onClick}
-          className="h-12 px-6 rounded-xl bg-primary text-on-primary font-medium active:opacity-80 transition-opacity duration-100"
-          style={{ minHeight: 44 }}
-        >
+        <Button variant="filled" onClick={cta.onClick} className="px-6">
           {cta.label}
-        </button>
+        </Button>
       )}
     </div>
   );

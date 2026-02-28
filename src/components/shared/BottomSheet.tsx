@@ -8,6 +8,7 @@ interface BottomSheetProps {
   readonly children: React.ReactNode;
   readonly className?: string;
   readonly height?: string;
+  readonly baseZIndex?: number;
 }
 
 /**
@@ -21,6 +22,7 @@ export function BottomSheet({
   children,
   className,
   height = '50dvh',
+  baseZIndex = 100,
 }: BottomSheetProps): React.ReactElement {
   // Prevent body scroll while open
   useEffect(() => {
@@ -51,7 +53,7 @@ export function BottomSheet({
           'fixed inset-0 bg-black transition-opacity',
           isOpen ? 'opacity-60 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
-        style={{ zIndex: 100 }}
+        style={{ zIndex: baseZIndex }}
         onClick={onClose}
         aria-hidden
       />
@@ -65,12 +67,12 @@ export function BottomSheet({
           isOpen ? 'translate-y-0' : 'translate-y-full',
           className,
         )}
-        style={{ zIndex: 101, height }}
+        style={{ zIndex: baseZIndex + 1, height }}
       >
         {/* Drag handle */}
         <div className="mx-auto mt-3 mb-1 h-1 w-9 rounded-full bg-outline/40 shrink-0" />
 
-        {title && (
+        {title && isOpen && (
           <div className="border-b border-outline/30 px-4 py-3 shrink-0">
             <h2 className="text-base font-semibold text-on-surface">{title}</h2>
           </div>

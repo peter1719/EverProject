@@ -2,9 +2,19 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { ColorDot } from '@/components/shared/ColorDot';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { BottomSheet } from '@/components/shared/BottomSheet';
+import {
+  Button,
+  Card,
+  ComboSessionCard,
+  DateDivider,
+  OutcomeToggle,
+  ProjectNameRow,
+  SessionListItem,
+  SwipeableSessionCard,
+  TabGroup,
+} from '@/components/shared';
 import { useSessionStore } from '@/store/sessionStore';
 import { useProjectStore } from '@/store/projectStore';
 import { formatDuration, toDateString } from '@/lib/utils';
@@ -25,22 +35,14 @@ export function ActivityDashboard(): React.ReactElement {
       <PageHeader title="Activity" />
 
       {/* View toggle */}
-      <div className="flex border-b border-outline/30">
-        {(['overview', 'history'] as ActiveView[]).map((view) => (
-          <button
-            key={view}
-            onClick={() => setActiveView(view)}
-            className={cn(
-              'flex-1 py-3 text-sm font-medium border-r last:border-r-0 border-outline/30',
-              activeView === view
-                ? 'bg-primary text-on-primary'
-                : 'text-on-surface-variant bg-surface',
-            )}
-          >
-            {view === 'overview' ? 'Overview' : 'History'}
-          </button>
-        ))}
-      </div>
+      <TabGroup<ActiveView>
+        options={[
+          { value: 'overview', label: 'Overview' },
+          { value: 'history', label: 'History' },
+        ]}
+        value={activeView}
+        onChange={setActiveView}
+      />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
@@ -53,7 +55,6 @@ export function ActivityDashboard(): React.ReactElement {
 // ── Overview Tab ──────────────────────────────────────────────────────────────
 
 function OverviewTab(): React.ReactElement {
-  const sessions = useSessionStore(s => s.sessions);
   const getTotalSessionCount = useSessionStore(s => s.getTotalSessionCount);
   const getTotalMinutes = useSessionStore(s => s.getTotalMinutes);
   const getCurrentStreak = useSessionStore(s => s.getCurrentStreak);
@@ -65,6 +66,7 @@ function OverviewTab(): React.ReactElement {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [editSession, setEditSession] = useState<Session | null>(null);
   const [scrollToEnd, setScrollToEnd] = useState(0);
+  const [swipeResetToken, setSwipeResetToken] = useState(0);
   const [daysToLoad, setDaysToLoad] = useState(365);
 
   const isFullyLoaded = daysToLoad >= MAX_HISTORY_DAYS;
@@ -131,6 +133,7 @@ function OverviewTab(): React.ReactElement {
       <BottomSheet
         isOpen={!!selectedDay}
         onClose={() => setSelectedDay(null)}
+        height="75dvh"
         title={selectedDay
           ? `${new Date(selectedDay + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — ${daySessionsForPanel.length} session${daySessionsForPanel.length !== 1 ? 's' : ''}`
           : 'Day detail'}
@@ -141,19 +144,37 @@ function OverviewTab(): React.ReactElement {
               No sessions this day.
             </p>
           )}
-          {daySessionsForPanel.map(session => (
-            <SwipeableSessionCard
-              key={session.id}
-              onClick={() => {}}
-              onDelete={() => void deleteSession(session.id)}
-            >
-              <SessionRow
-                session={session}
+          {groupSessionCards(daySessionsForPanel).map(item => {
+            if (item.type === 'single') {
+              return (
+                <SwipeableSessionCard
+                  key={item.session.id}
+                  onClick={() => setEditSession(item.session)}
+                  onDelete={() => { void deleteSession(item.session.id); setSwipeResetToken(k => k + 1); }}
+                  resetToken={swipeResetToken}
+                >
+                  <SingleSessionCard session={item.session} projects={projects} />
+                </SwipeableSessionCard>
+              );
+            }
+            return (
+              <ComboSessionCard
+                key={item.comboGroupId}
+                sessions={item.sessions}
                 projects={projects}
-                onEdit={() => setEditSession(session)}
+                onEditSession={setEditSession}
+                onDeleteGroup={() => {
+                  for (const s of item.sessions) void deleteSession(s.id);
+                  setSwipeResetToken(k => k + 1);
+                }}
+                onDeleteSession={(session) => {
+                  void deleteSession(session.id);
+                  setSwipeResetToken(k => k + 1);
+                }}
+                resetToken={swipeResetToken}
               />
-            </SwipeableSessionCard>
-          ))}
+            );
+          })}
         </div>
       </BottomSheet>
 
@@ -182,7 +203,7 @@ function StatTile({ value, label, isMinutes, prefix }: StatTileProps): React.Rea
   const prefixSize = totalLen >= 6 ? 'text-base' : 'text-xl';
 
   return (
-    <div className="bg-surface-variant rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-1 overflow-hidden">
+    <Card shadow className="flex flex-col items-center justify-center gap-1 overflow-hidden">
       <p className={cn('font-mono font-bold text-on-surface leading-none', valueSize)}>
         {prefix ? <span className={cn(prefixSize, 'mr-0.5')}>{prefix}</span> : null}
         {displayValue}
@@ -190,7 +211,7 @@ function StatTile({ value, label, isMinutes, prefix }: StatTileProps): React.Rea
       <p className="text-xs text-on-surface-variant text-center">
         {label}
       </p>
-    </div>
+    </Card>
   );
 }
 
@@ -207,6 +228,7 @@ function HistoryTab(): React.ReactElement {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [editSession, setEditSession] = useState<Session | null>(null);
+  const [swipeResetToken, setSwipeResetToken] = useState(0);
 
   const filteredSessions = useMemo(() => {
     return getSessionsForHistory(filterProjectId ?? undefined);
@@ -264,39 +286,41 @@ function HistoryTab(): React.ReactElement {
 
       {grouped.map(([date, dateSessions]) => (
         <div key={date} className="flex flex-col gap-2">
-          {/* Date group header */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-on-surface-variant shrink-0">
-              {new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric', year: 'numeric',
-              })}
-            </span>
-            <div className="flex-1 border-t border-outline/30" />
-          </div>
+          <DateDivider dateStr={date} />
 
           {/* Session cards */}
-          {groupSessionCards(dateSessions).map((item, i) => (
-            <SwipeableSessionCard
-              key={i}
-              onClick={() => {
-                if (item.type === 'single') setEditSession(item.session);
-                else setEditSession(item.sessions[item.sessions.length - 1] ?? null);
-              }}
-              onDelete={() => {
-                if (item.type === 'single') {
-                  void deleteSession(item.session.id);
-                } else {
+          {groupSessionCards(dateSessions).map(item => {
+            if (item.type === 'single') {
+              return (
+                <SwipeableSessionCard
+                  key={item.session.id}
+                  onClick={() => setEditSession(item.session)}
+                  onDelete={() => { void deleteSession(item.session.id); setSwipeResetToken(k => k + 1); }}
+                  resetToken={swipeResetToken}
+                >
+                  <SingleSessionCard session={item.session} projects={projects} />
+                </SwipeableSessionCard>
+              );
+            }
+
+            return (
+              <ComboSessionCard
+                key={item.comboGroupId}
+                sessions={item.sessions}
+                projects={projects}
+                onEditSession={setEditSession}
+                onDeleteGroup={() => {
                   for (const s of item.sessions) void deleteSession(s.id);
-                }
-              }}
-            >
-              {item.type === 'single' ? (
-                <SingleSessionCard session={item.session} projects={projects} />
-              ) : (
-                <ComboSessionCard sessions={item.sessions} projects={projects} />
-              )}
-            </SwipeableSessionCard>
-          ))}
+                  setSwipeResetToken(k => k + 1);
+                }}
+                onDeleteSession={(session) => {
+                  void deleteSession(session.id);
+                  setSwipeResetToken(k => k + 1);
+                }}
+                resetToken={swipeResetToken}
+              />
+            );
+          })}
         </div>
       ))}
 
@@ -512,123 +536,6 @@ function ActivityHeatmap({ values, onDayClick, scrollToEnd, onLoadMore, isFullyL
   );
 }
 
-// ── SwipeableSessionCard ──────────────────────────────────────────────────────
-
-const REVEAL_WIDTH = 72;
-const DRAG_THRESHOLD = 8;
-const SNAP_THRESHOLD = 30;
-
-function SwipeableSessionCard({
-  children,
-  onDelete,
-  onClick,
-}: {
-  readonly children: React.ReactNode;
-  readonly onDelete: () => void;
-  readonly onClick: () => void;
-}): React.ReactElement {
-  const [offset, setOffset] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const startYRef = useRef(0);
-  const baseOffsetRef = useRef(0);
-  const hasDraggedRef = useRef(false);
-
-  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>): void {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    startXRef.current = e.clientX;
-    startYRef.current = e.clientY;
-    baseOffsetRef.current = revealed ? -REVEAL_WIDTH : 0;
-    isDraggingRef.current = true;
-    hasDraggedRef.current = false;
-  }
-
-  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>): void {
-    if (!isDraggingRef.current) return;
-    const dx = e.clientX - startXRef.current;
-    const dy = e.clientY - startYRef.current;
-    // Let vertical scroll win when it clearly dominates
-    if (!hasDraggedRef.current && Math.abs(dy) > Math.abs(dx)) {
-      isDraggingRef.current = false;
-      setOffset(baseOffsetRef.current);
-      return;
-    }
-    if (Math.abs(dx) < DRAG_THRESHOLD) return;
-    hasDraggedRef.current = true;
-    setOffset(Math.min(0, Math.max(-REVEAL_WIDTH, baseOffsetRef.current + dx)));
-  }
-
-  function handlePointerUp(): void {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    const dx = offset - baseOffsetRef.current;
-    if (dx < -SNAP_THRESHOLD) {
-      setOffset(-REVEAL_WIDTH);
-      setRevealed(true);
-    } else if (dx > SNAP_THRESHOLD && revealed) {
-      setOffset(0);
-      setRevealed(false);
-    } else {
-      setOffset(revealed ? -REVEAL_WIDTH : 0);
-    }
-  }
-
-  function handleClick(): void {
-    if (hasDraggedRef.current) return;
-    if (revealed) {
-      setOffset(0);
-      setRevealed(false);
-    } else {
-      onClick();
-    }
-  }
-
-  return (
-    <div className="overflow-hidden rounded-xl">
-      {/* Flex row: card + delete zone slide together so hit areas stay correct */}
-      <div
-        style={{
-          display: 'flex',
-          transform: `translateX(${offset}px)`,
-          transition: isDraggingRef.current ? 'none' : 'transform 200ms ease-out',
-        }}
-      >
-        {/* Card */}
-        <div
-          className="bg-surface-variant shadow-sm px-4 py-4 w-full shrink-0"
-          style={{
-            touchAction: 'pan-y',
-            cursor: 'pointer',
-            userSelect: 'none',
-            minHeight: 68,
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onClick={handleClick}
-        >
-          {children}
-        </div>
-
-        {/* Delete zone — always REVEAL_WIDTH px to the right; clipped until swiped */}
-        <div
-          className="bg-error shrink-0 flex items-center justify-center"
-          style={{ width: REVEAL_WIDTH }}
-        >
-          <button
-            className="h-full w-full flex items-center justify-center text-white text-sm font-medium"
-            onClick={onDelete}
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── ProjectFilter ─────────────────────────────────────────────────────────────
 
 interface ProjectFilterProps {
@@ -747,69 +654,12 @@ function SingleSessionCard({
   projects: ReturnType<typeof useProjectStore.getState>['projects'];
 }): React.ReactElement {
   const project = projects.find(p => p.id === session.projectId);
-  const { icon, colorClass } = outcomeStyle(session.outcome);
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <span className={cn('text-base shrink-0', colorClass)}>
-          {icon}
-        </span>
-        <ColorDot color={project?.color ?? session.projectColor} size={10} />
-        <span className="flex-1 text-sm text-on-surface truncate">
-          {project?.name ?? session.projectName}
-        </span>
-        <span className="text-xs text-on-surface-variant shrink-0">
-          {session.actualDurationMinutes}M
-        </span>
-      </div>
-      {session.notes && (
-        <p className="text-xs text-on-surface-variant truncate pl-6 italic">
-          "{session.notes}"
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ── ComboSessionCard ──────────────────────────────────────────────────────────
-
-function ComboSessionCard({
-  sessions,
-  projects,
-}: {
-  sessions: Session[];
-  projects: ReturnType<typeof useProjectStore.getState>['projects'];
-}): React.ReactElement {
-  const totalMinutes = sessions.reduce((s, sess) => s + sess.actualDurationMinutes, 0);
-  const lastNotes = sessions.find(s => s.notes)?.notes;
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <span className="text-base text-primary">⧉</span>
-        <span className="flex-1 text-sm font-medium text-on-surface">
-          Combo session
-        </span>
-        <span className="text-xs text-on-surface-variant shrink-0">
-          {totalMinutes}M
-        </span>
-      </div>
-      {sessions.map(s => {
-        const project = projects.find(p => p.id === s.projectId);
-        return (
-          <div key={s.id} className="flex items-center gap-2 pl-4">
-            <ColorDot color={project?.color ?? s.projectColor} size={10} />
-            <span className="text-xs text-on-surface-variant truncate">
-              {project?.name ?? s.projectName}
-            </span>
-          </div>
-        );
-      })}
-      {lastNotes && (
-        <p className="text-xs text-on-surface-variant truncate pl-4 italic">
-          "{lastNotes}"
-        </p>
-      )}
-    </div>
+    <SessionListItem
+      session={session}
+      projectColor={project?.color ?? session.projectColor}
+      projectName={project?.name ?? session.projectName}
+    />
   );
 }
 
@@ -825,31 +675,17 @@ function SessionRow({
   onEdit: () => void;
 }): React.ReactElement {
   const project = projects.find(p => p.id === session.projectId);
-  const { icon, colorClass } = outcomeStyle(session.outcome);
   return (
     <button
       onClick={onEdit}
       className="w-full flex flex-col gap-1 border-b border-outline/20 pb-3 last:border-0 last:pb-0 text-left active:opacity-70"
     >
-      <div className="flex items-center gap-2">
-        <span className={cn('text-base shrink-0', colorClass)}>
-          {icon}
-        </span>
-        <ColorDot color={project?.color ?? session.projectColor} size={10} />
-        <span className="flex-1 text-sm text-on-surface truncate">
-          {project?.name ?? session.projectName}
-        </span>
-        <span className="text-xs text-on-surface-variant shrink-0">
-          {session.actualDurationMinutes}M
-        </span>
-      </div>
-      {session.notes ? (
-        <p className="text-xs text-on-surface-variant pl-6 truncate italic">
-          "{session.notes}"
-        </p>
-      ) : (
-        <p className="text-xs text-on-surface-variant/50 pl-6">(no notes)</p>
-      )}
+      <SessionListItem
+        session={session}
+        projectColor={project?.color ?? session.projectColor}
+        projectName={project?.name ?? session.projectName}
+        showNoNotesPlaceholder
+      />
     </button>
   );
 }
@@ -864,7 +700,7 @@ function EditSessionSheet({
   onClose: () => void;
 }): React.ReactElement {
   return (
-    <BottomSheet isOpen={!!session} onClose={onClose} title="Edit session">
+    <BottomSheet isOpen={!!session} onClose={onClose} title="Edit session" height="65dvh" baseZIndex={200}>
       {session && (
         <EditSessionForm key={session.id} session={session} onClose={onClose} />
       )}
@@ -897,10 +733,11 @@ function EditSessionForm({
     <div className="flex flex-col gap-4 p-4">
       {/* Session identity */}
       <div className="flex items-center gap-2">
-        <ColorDot color={project?.color ?? session.projectColor} size={12} />
-        <span className="flex-1 text-sm font-medium text-on-surface truncate">
-          {project?.name ?? session.projectName}
-        </span>
+        <ProjectNameRow
+          color={project?.color ?? session.projectColor}
+          name={project?.name ?? session.projectName}
+          className="flex-1"
+        />
         <span className="text-xs text-on-surface-variant shrink-0">
           {dateLabel}
         </span>
@@ -909,7 +746,7 @@ function EditSessionForm({
       {/* Outcome */}
       <div className="flex flex-col gap-2">
         <p className="text-sm font-medium text-on-surface-variant">Outcome</p>
-        <OutcomeToggleEdit value={outcome} onChange={setOutcome} />
+        <OutcomeToggle value={outcome} onChange={setOutcome} includeAbandoned compactLabels />
       </div>
 
       {/* Notes */}
@@ -926,61 +763,14 @@ function EditSessionForm({
 
       {/* Actions */}
       <div className="flex gap-3 pb-2">
-        <button
-          onClick={() => void handleSave()}
-          className="flex-1 h-12 rounded-xl bg-primary text-on-primary font-medium active:opacity-80 transition-opacity duration-100"
-        >
+        <Button variant="filled" onClick={() => void handleSave()} className="flex-1">
           Save
-        </button>
-        <button
-          onClick={onClose}
-          className="flex-1 h-12 rounded-xl border border-outline text-on-surface-variant bg-transparent font-medium active:opacity-80 transition-opacity duration-100"
-        >
+        </Button>
+        <Button variant="outlined" onClick={onClose} className="flex-1">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
 
-// Compact 3-option toggle for edit sheet
-function OutcomeToggleEdit({
-  value,
-  onChange,
-}: {
-  value: SessionOutcome;
-  onChange: (v: SessionOutcome) => void;
-}): React.ReactElement {
-  const options: Array<{ label: string; value: SessionOutcome; activeClass: string }> = [
-    { label: '✓', value: 'completed', activeClass: 'bg-success text-white' },
-    { label: '~', value: 'partial', activeClass: 'bg-warning text-white' },
-    { label: '✕', value: 'abandoned', activeClass: 'bg-error text-white' },
-  ];
-  return (
-    <div className="flex rounded-xl overflow-hidden border border-outline/30">
-      {options.map((opt, i) => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          className={cn(
-            'flex-1 py-3 text-sm font-medium',
-            i < options.length - 1 ? 'border-r border-outline/30' : '',
-            value === opt.value ? opt.activeClass : 'text-on-surface-variant',
-          )}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ── Helper ────────────────────────────────────────────────────────────────────
-
-function outcomeStyle(outcome: SessionOutcome): { icon: string; colorClass: string } {
-  switch (outcome) {
-    case 'completed': return { icon: '✓', colorClass: 'text-success' };
-    case 'partial':   return { icon: '~', colorClass: 'text-warning' };
-    case 'abandoned': return { icon: '✕', colorClass: 'text-error' };
-  }
-}

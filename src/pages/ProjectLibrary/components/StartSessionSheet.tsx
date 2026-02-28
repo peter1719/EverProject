@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BottomSheet } from '@/components/shared/BottomSheet';
-import { ColorDot } from '@/components/shared/ColorDot';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/shared/Button';
+import { DurationSelector } from '@/components/shared/DurationSelector';
+import { ProjectNameRow } from '@/components/shared/ProjectNameRow';
 import { DURATION_OPTIONS } from '@/lib/constants';
 import type { Project } from '@/types';
 
@@ -42,21 +43,18 @@ export function StartSessionSheet({
     onClose();
   }
 
-  function handleOpenChange(mins: number): void {
-    setSelectedMinutes(mins);
-  }
-
   return (
-    <BottomSheet isOpen={!!project} onClose={onClose} title="Start session?">
+    <BottomSheet isOpen={!!project} onClose={onClose} title="Start session?" height="60dvh">
       {project && (
         <div className="flex flex-col gap-5 p-4">
           {/* Project identity */}
-          <div className="flex items-center gap-3">
-            <ColorDot color={project.color} size={16} />
-            <span className="text-base font-medium text-on-surface flex-1 truncate">
-              {project.name}
-            </span>
-          </div>
+          <ProjectNameRow
+            color={project.color}
+            name={project.name}
+            dotSize={16}
+            gap={3}
+            textSize="base"
+          />
 
           {/* Archived banner */}
           {project.isArchived && (
@@ -76,39 +74,17 @@ export function StartSessionSheet({
           {/* Duration picker */}
           <div className="flex flex-col gap-3">
             <label className="text-sm font-medium text-on-surface-variant">How long?</label>
-            <div className="grid grid-cols-4 gap-2">
-              {DURATION_OPTIONS.map(mins => (
-                <button
-                  key={mins}
-                  type="button"
-                  onClick={() => handleOpenChange(mins)}
-                  className={cn(
-                    'h-14 w-full rounded-lg text-sm font-medium active:opacity-80 transition-opacity duration-100',
-                    effectiveMinutes === mins
-                      ? 'bg-primary text-on-primary'
-                      : 'border border-outline text-on-surface-variant bg-transparent',
-                  )}
-                >
-                  {mins >= 999 ? '>180' : mins}
-                </button>
-              ))}
-            </div>
+            <DurationSelector value={effectiveMinutes} onChange={setSelectedMinutes} />
           </div>
 
           {/* Actions */}
           <div className="flex gap-3 pb-2">
-            <button
-              onClick={handleStart}
-              className="flex-1 h-12 rounded-lg bg-primary text-on-primary font-medium active:opacity-80 transition-opacity duration-100"
-            >
+            <Button variant="filled" onClick={handleStart} className="flex-1">
               ▶ Start
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 h-12 rounded-lg border border-outline text-on-surface-variant bg-transparent font-medium active:opacity-80 transition-opacity duration-100"
-            >
+            </Button>
+            <Button variant="outlined" onClick={onClose} className="flex-1">
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       )}

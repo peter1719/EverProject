@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { BottomSheet } from '@/components/shared/BottomSheet';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { Button } from '@/components/shared/Button';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectForm } from './components/ProjectForm';
 import { StartSessionSheet } from './components/StartSessionSheet';
@@ -105,14 +106,15 @@ export function ProjectLibrary(): React.ReactElement {
           {/* Archived section toggle */}
           {archivedProjects.length > 0 && (
             <div className="flex flex-col gap-3 mt-2">
-              <button
+              <Button
+                variant="outlined"
                 onClick={() => setShowArchived(v => !v)}
-                className="rounded-xl border border-outline/30 bg-surface-variant py-3 text-sm font-medium text-on-surface-variant w-full active:opacity-80 transition-opacity duration-100"
+                className="w-full"
               >
                 {showArchived
                   ? `▲ Hide archived (${archivedProjects.length})`
                   : `▼ Show archived (${archivedProjects.length})`}
-              </button>
+              </Button>
 
               {showArchived &&
                 archivedProjects.map(project => (

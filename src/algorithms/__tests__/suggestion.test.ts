@@ -51,21 +51,26 @@ describe('suggestProject', () => {
     expect(suggestProject(makeContext([], [], 45))).toBeNull();
   });
 
-  it('returns null when no project fits the available time', () => {
+  it('returns the only project regardless of its estimated duration', () => {
     const p = makeProject({ id: 'p1', estimatedDurationMinutes: 60 });
-    expect(suggestProject(makeContext([p], [], 30))).toBeNull();
+    // availableMinutes (30) < estimatedDuration (60) — still suggested
+    expect(suggestProject(makeContext([p], [], 30))).toEqual(p);
   });
 
-  it('returns the only eligible project', () => {
+  it('returns the only project when it fits', () => {
     const p = makeProject({ id: 'p1', estimatedDurationMinutes: 30 });
     expect(suggestProject(makeContext([p], [], 45))).toEqual(p);
   });
 
-  it('excludes projects that exceed availableMinutes', () => {
-    const fits = makeProject({ id: 'fits', estimatedDurationMinutes: 30 });
-    const tooBig = makeProject({ id: 'tooBig', estimatedDurationMinutes: 90 });
-    const result = suggestProject(makeContext([fits, tooBig], [], 45));
-    expect(result?.id).toBe('fits');
+  it('includes projects that exceed availableMinutes in the pool', () => {
+    const short = makeProject({ id: 'short', estimatedDurationMinutes: 30 });
+    const long = makeProject({ id: 'long', estimatedDurationMinutes: 90 });
+    // Both have equal scores (never done). With enough seeds one should win.
+    const results = new Set<string>();
+    for (let seed = 0; seed < 30; seed++) {
+      results.add(suggestProject(makeContext([short, long], [], 45, seed))!.id);
+    }
+    expect(results.size).toBeGreaterThan(1);
   });
 
   it('favours a neglected project over a recently-worked one', () => {

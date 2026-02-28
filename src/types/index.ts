@@ -75,6 +75,8 @@ export interface SuggestionContext {
   readonly sessions: readonly Session[];
   readonly availableMinutes: number;
   readonly seed: number;
+  /** Project ID to exclude from the pick (Roll Again — avoid repeating the same result). */
+  readonly excludeId?: string;
 }
 
 export interface ComboSuggestion {

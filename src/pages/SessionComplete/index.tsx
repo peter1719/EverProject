@@ -2,7 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useSessionStore } from '@/store/sessionStore';
 import { useProjectStore } from '@/store/projectStore';
+import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
+import { Button } from '@/components/shared/Button';
+import { OutcomeToggle } from '@/components/shared/OutcomeToggle';
+import { ProjectNameRow } from '@/components/shared/ProjectNameRow';
 import { cn } from '@/lib/utils';
 import { MAX_NOTES_LENGTH } from '@/lib/constants';
 import type { CompleteRouterState, SessionOutcome } from '@/types';
@@ -44,7 +48,8 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
     initialOutcome === 'abandoned' ? 'completed' : initialOutcome,
   );
   const [notes, setNotes] = useState('');
-  const [saved, setSaved] = useState(false);
+  const [showQuitDialog, setShowQuitDialog] = useState(false);
+
 
   const isCombo = projectIds.length > 1;
 
@@ -127,11 +132,14 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
       }
     }
 
-    setSaved(true);
     navigate('/dashboard');
   }
 
   function handleQuit(): void {
+    setShowQuitDialog(true);
+  }
+
+  function handleQuitConfirm(): void {
     navigate('/');
   }
 
@@ -168,12 +176,10 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
                 const project = projects.find(p => p.id === projectIds[0]);
                 return (
                   <>
-                    <div className="flex items-center gap-2">
-                      {project && <ColorDot color={project.color} size={12} />}
-                      <span className="text-sm font-medium text-on-surface flex-1 truncate">
-                        {project?.name ?? 'Project'}
-                      </span>
-                    </div>
+                    <ProjectNameRow
+                      color={project?.color ?? 'indigo'}
+                      name={project?.name ?? 'Project'}
+                    />
                     <div className="flex justify-between">
                       <span className="text-xs text-on-surface-variant">
                         Planned: {plannedDurationMinutes} min
@@ -242,52 +248,25 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
 
         {/* Action buttons */}
         <div className="flex gap-3">
-          <button
-            onClick={handleQuit}
-            className="flex-1 h-12 rounded-xl border border-outline text-on-surface-variant bg-transparent font-medium active:opacity-80 transition-opacity duration-100"
-          >
+          <Button variant="outlined" onClick={handleQuit} className="flex-1">
             ✕ Quit
-          </button>
-          <button
-            onClick={() => void handleSave()}
-            className="flex-1 h-12 rounded-xl bg-primary text-on-primary font-medium active:opacity-80 transition-opacity duration-100"
-          >
+          </Button>
+          <Button variant="filled" onClick={() => void handleSave()} className="flex-1">
             ✓ Save
-          </button>
+          </Button>
         </div>
       </div>
+
+      <PixelDialog
+        isOpen={showQuitDialog}
+        message="Quit without saving? Your session progress will be lost."
+        confirmLabel="YES, QUIT"
+        cancelLabel="KEEP LOGGING"
+        isDanger
+        onConfirm={handleQuitConfirm}
+        onCancel={() => setShowQuitDialog(false)}
+      />
     </div>
   );
 }
 
-// ── OutcomeToggle ─────────────────────────────────────────────────────────────
-
-interface OutcomeToggleProps {
-  readonly value: SessionOutcome;
-  readonly onChange: (v: SessionOutcome) => void;
-}
-
-function OutcomeToggle({ value, onChange }: OutcomeToggleProps): React.ReactElement {
-  const options: Array<{ label: string; value: SessionOutcome; activeClass: string }> = [
-    { label: '✓ Done', value: 'completed', activeClass: 'bg-success text-white' },
-    { label: '~ Partial', value: 'partial', activeClass: 'bg-warning text-white' },
-  ];
-
-  return (
-    <div className="flex rounded-xl overflow-hidden border border-outline/30">
-      {options.map((opt, i) => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          className={cn(
-            'flex-1 py-3 text-sm font-medium transition-none',
-            i < options.length - 1 ? 'border-r border-outline/30' : '',
-            value === opt.value ? opt.activeClass : 'text-on-surface-variant',
-          )}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  );
-}

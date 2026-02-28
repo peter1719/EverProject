@@ -79,6 +79,9 @@ beforeEach(() => {
     settings: { lastVisitedTab: '/dashboard' },
     isHydrated: true,
   } as never);
+  // jsdom does not implement pointer capture — stub it so SwipeableSessionCard clicks work
+  Element.prototype.setPointerCapture = vi.fn();
+  Element.prototype.releasePointerCapture = vi.fn();
 });
 
 // ── view toggle ───────────────────────────────────────────────────────────────
@@ -225,6 +228,97 @@ describe('ActivityDashboard edit session sheet', () => {
         expect(screen.getByText(/EDIT SESSION/i)).toBeInTheDocument();
       });
     }
+  });
+});
+
+// ── combo session expand/collapse ─────────────────────────────────────────────
+
+describe('ActivityDashboard combo session expand', () => {
+  beforeEach(() => {
+    useProjectStore.setState({
+      projects: [makeProject('p1', 'Alpha'), makeProject('p2', 'Beta')],
+      isHydrated: true,
+    });
+    useSessionStore.setState({
+      sessions: [
+        makeSession('s1', 'p1', {
+          wasCombo: true,
+          comboGroupId: 'combo-1',
+          actualDurationMinutes: 25,
+          startedAt: Date.now() - 2000,
+        }),
+        makeSession('s2', 'p2', {
+          wasCombo: true,
+          comboGroupId: 'combo-1',
+          actualDurationMinutes: 15,
+          startedAt: Date.now() - 1000,
+        }),
+      ],
+      isHydrated: true,
+    });
+  });
+
+  async function goToHistory(user: ReturnType<typeof userEvent.setup>) {
+    renderDashboard();
+    await user.click(screen.getByRole('button', { name: /HISTORY/i }));
+    await vi.waitFor(() =>
+      expect(screen.getByText('Combo session')).toBeInTheDocument(),
+    );
+  }
+
+  it('shows a collapsed combo card initially', async () => {
+    const user = userEvent.setup();
+    await goToHistory(user);
+    expect(screen.getByText('Combo session')).toBeInTheDocument();
+    // Individual project names should not be shown as separate cards yet
+    expect(screen.queryByText('▲')).not.toBeInTheDocument();
+  });
+
+  it('clicking the combo card expands it into individual session cards', async () => {
+    const user = userEvent.setup();
+    await goToHistory(user);
+
+    await user.click(screen.getByText('Combo session'));
+
+    await vi.waitFor(() => {
+      expect(screen.getByText('▲')).toBeInTheDocument();
+      // Individual project names now visible as separate cards
+      expect(screen.getByText('Alpha')).toBeInTheDocument();
+      expect(screen.getByText('Beta')).toBeInTheDocument();
+    });
+  });
+
+  it('clicking the expanded header collapses it back', async () => {
+    const user = userEvent.setup();
+    await goToHistory(user);
+
+    // Expand
+    await user.click(screen.getByText('Combo session'));
+    await vi.waitFor(() => expect(screen.getByText('▲')).toBeInTheDocument());
+
+    // Collapse by clicking the header row
+    const header = screen.getByText('▲').closest('div') as HTMLElement;
+    await user.click(header);
+
+    await vi.waitFor(() => {
+      expect(screen.queryByText('▲')).not.toBeInTheDocument();
+    });
+  });
+
+  it('clicking an individual card in an expanded combo opens the edit sheet for that session', async () => {
+    const user = userEvent.setup();
+    await goToHistory(user);
+
+    // Expand the combo
+    await user.click(screen.getByText('Combo session'));
+    await vi.waitFor(() => expect(screen.getByText('Alpha')).toBeInTheDocument());
+
+    // Click the Alpha card
+    await user.click(screen.getByText('Alpha'));
+
+    await vi.waitFor(() => {
+      expect(screen.getByText(/Edit session/i)).toBeInTheDocument();
+    });
   });
 });
 

@@ -7,6 +7,7 @@ import { useProjectStore } from '@/store/projectStore';
 import { useTimer } from '@/hooks/useTimer';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
+import { Button } from '@/components/shared/Button';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { TimerRouterState, CompleteRouterState } from '@/types';
@@ -140,7 +141,23 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
   function handleSkipConfirm(): void {
     setShowSkipDialog(false);
     navigator.vibrate?.([50, 30, 50]);
+
+    const nextIndex = currentProjectIndex + 1;
     skipProject();
+
+    // Reset remainingSeconds to the next project's allocated duration.
+    // skipProject() only advances currentProjectIndex but leaves remainingSeconds
+    // at the old project's value, causing the elapsed display to go negative.
+    if (nextIndex < projectIds.length) {
+      const nextId = projectIds[nextIndex];
+      const nextProject = projects.find(p => p.id === nextId);
+      if (nextId && nextProject) {
+        const allocated = projectAllocatedMinutes[nextId];
+        const nextSecs = (allocated ?? nextProject.estimatedDurationMinutes) * 60;
+        useTimerStore.setState(s => ({ ...s, remainingSeconds: nextSecs }));
+      }
+    }
+
     setFlashNext(true);
     setTimeout(() => setFlashNext(false), 800);
   }
@@ -265,45 +282,32 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
       <div className="flex flex-col gap-3 px-4 pb-6">
         {/* Primary: Pause / Resume */}
         {phase === 'running' && (
-          <button
-            onClick={handlePause}
-            className="w-full h-12 rounded-xl bg-primary text-on-primary font-medium active:opacity-80 transition-opacity duration-100"
-          >
+          <Button variant="filled" onClick={handlePause} className="w-full">
             ❚❚ Pause
-          </button>
+          </Button>
         )}
 
         {phase === 'paused' && (
-          <button
-            onClick={handleResume}
-            className="w-full h-12 rounded-xl bg-primary text-on-primary font-medium active:opacity-80 transition-opacity duration-100"
-          >
+          <Button variant="filled" onClick={handleResume} className="w-full">
             ▶ Resume
-          </button>
+          </Button>
         )}
 
         {/* Stop & Log — always visible */}
-        <button
-          onClick={() => setShowStopDialog(true)}
-          className="w-full h-12 rounded-xl bg-primary-container text-on-primary-container font-medium active:opacity-80 transition-opacity duration-100"
-        >
+        <Button variant="tonal" onClick={() => setShowStopDialog(true)} className="w-full">
           ⏹ Stop & log
-        </button>
+        </Button>
 
         {/* Skip Project — only shown for combo sessions */}
         {isCombo && (
-          <button
-            onClick={() => isSkipEnabled && setShowSkipDialog(true)}
+          <Button
+            variant="outlined"
             disabled={!isSkipEnabled}
-            className={cn(
-              'w-full h-12 rounded-xl border border-outline text-primary bg-transparent font-medium',
-              isSkipEnabled
-                ? 'active:opacity-80 transition-opacity duration-100'
-                : 'opacity-[0.38] cursor-not-allowed',
-            )}
+            onClick={() => setShowSkipDialog(true)}
+            className="w-full text-primary"
           >
             ⏭ Skip project
-          </button>
+          </Button>
         )}
       </div>
 

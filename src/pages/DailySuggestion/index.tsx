@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ColorDot } from '@/components/shared/ColorDot';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { Button } from '@/components/shared/Button';
+import { DurationSelector } from '@/components/shared/DurationSelector';
+import { ProjectDetailSheet } from '@/components/shared';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
-import { suggestProject, getDurationFitScore, getDaysSinceLastSession } from '@/algorithms/suggestion';
-import { DURATION_OPTIONS, COLOR_HEX_MAP } from '@/lib/constants';
-import { cn } from '@/lib/utils';
+import { suggestProject, getDaysSinceLastSession } from '@/algorithms/suggestion';
+import { COLOR_HEX_MAP } from '@/lib/constants';
 import type { Project, TimerRouterState } from '@/types';
 
 const DEFAULT_MINUTES = 45;
@@ -16,7 +18,9 @@ export function DailySuggestion(): React.ReactElement {
   const navigate = useNavigate();
   const [availableMinutes, setAvailableMinutes] = useState(DEFAULT_MINUTES);
   const [seed, setSeed] = useState(0);
+  const [excludeId, setExcludeId] = useState<string | undefined>(undefined);
   const [flipping, setFlipping] = useState(false);
+  const [noteSheetProject, setNoteSheetProject] = useState<Project | null>(null);
   const prevSuggestionRef = useRef<Project | null>(null);
 
   const sessions = useSessionStore(s => s.sessions);
@@ -29,25 +33,26 @@ export function DailySuggestion(): React.ReactElement {
       sessions,
       availableMinutes,
       seed,
+      excludeId,
     });
-  }, [activeProjects, sessions, availableMinutes, seed]);
+  }, [activeProjects, sessions, availableMinutes, seed, excludeId]);
 
-  const eligibleCount = useMemo(() => {
-    return activeProjects.filter(p => p.estimatedDurationMinutes <= availableMinutes).length;
-  }, [activeProjects, availableMinutes]);
 
   function handleRollAgain(): void {
+    const currentId = suggestion?.id;
     setFlipping(true);
     setTimeout(() => {
+      setExcludeId(currentId);
       setSeed(s => s + 1);
       setFlipping(false);
     }, 300);
   }
 
   function handleStartTimer(): void {
-    if (!suggestion) return;
+    const project = suggestion;
+    if (!project) return;
     const state: TimerRouterState = {
-      projectIds: [suggestion.id],
+      projectIds: [project.id],
       totalMinutes: availableMinutes,
     };
     navigate('/timer', { state });
@@ -58,12 +63,10 @@ export function DailySuggestion(): React.ReactElement {
   }
 
   const hasNoProjects = activeProjects.length === 0;
-  const noFit = !hasNoProjects && !suggestion;
 
-  const fitScore = suggestion
-    ? getDurationFitScore(suggestion.estimatedDurationMinutes, availableMinutes)
-    : 0;
-  const daysSince = suggestion ? getDaysSinceLastSession(suggestion.id, sessions) : null;
+  const daysSince = suggestion
+    ? getDaysSinceLastSession(suggestion.id, sessions)
+    : null;
 
   useEffect(() => {
     if (!flipping && suggestion) {
@@ -79,23 +82,7 @@ export function DailySuggestion(): React.ReactElement {
         {/* Time selector */}
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium text-on-surface-variant">How much time do you have?</p>
-          <div className="grid grid-cols-4 gap-2">
-            {DURATION_OPTIONS.map(mins => (
-              <button
-                key={mins}
-                type="button"
-                onClick={() => setAvailableMinutes(mins)}
-                className={cn(
-                  'h-14 w-full rounded-xl font-mono text-sm font-medium active:opacity-80 transition-opacity duration-100',
-                  availableMinutes === mins
-                    ? 'bg-primary text-on-primary'
-                    : 'border border-outline text-on-surface-variant bg-transparent',
-                )}
-              >
-                {mins >= 999 ? '>180' : mins}
-              </button>
-            ))}
-          </div>
+          <DurationSelector value={availableMinutes} onChange={setAvailableMinutes} />
         </div>
 
         {/* Empty state: no projects */}
@@ -106,17 +93,6 @@ export function DailySuggestion(): React.ReactElement {
           />
         )}
 
-        {/* No fit state */}
-        {noFit && (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <p className="text-base text-on-surface text-center">
-              Nothing fits {availableMinutes} min.
-            </p>
-            <p className="text-sm text-on-surface-variant text-center">
-              Try a longer time.
-            </p>
-          </div>
-        )}
 
         {/* Suggestion card */}
         {suggestion && (
@@ -129,9 +105,9 @@ export function DailySuggestion(): React.ReactElement {
           >
             <SuggestionCard
               project={suggestion}
-              fitScore={fitScore}
               daysSince={daysSince}
               availableMinutes={availableMinutes}
+              onClick={() => setNoteSheetProject(suggestion)}
             />
           </div>
         )}
@@ -139,44 +115,35 @@ export function DailySuggestion(): React.ReactElement {
         {/* Actions */}
         {!hasNoProjects && (
           <div className="flex flex-col gap-3 mx-4">
-            {/* Roll Again */}
-            <button
+            <Button
+              variant="outlined"
               onClick={handleRollAgain}
-              disabled={eligibleCount <= 1 || !suggestion}
-              className={cn(
-                'w-full h-12 rounded-xl border border-outline text-on-surface-variant bg-transparent font-medium',
-                eligibleCount > 1 && suggestion
-                  ? 'active:opacity-80 transition-opacity duration-100'
-                  : 'opacity-[0.38] cursor-not-allowed',
-              )}
+              disabled={activeProjects.length <= 1}
+              className="w-full"
             >
               ↻ Roll again
-            </button>
+            </Button>
 
-            {/* Start Timer */}
-            <button
+            <Button
+              variant="filled"
               onClick={handleStartTimer}
               disabled={!suggestion}
-              className={cn(
-                'w-full h-12 rounded-xl font-medium',
-                suggestion
-                  ? 'bg-primary text-on-primary active:opacity-80 transition-opacity duration-100'
-                  : 'bg-outline/20 text-on-surface-variant opacity-[0.38] cursor-not-allowed',
-              )}
+              className="w-full"
             >
               ▶ Start Timer
-            </button>
+            </Button>
 
-            {/* Try Combo */}
-            <button
-              onClick={handleCombo}
-              className="w-full h-12 rounded-xl bg-primary-container text-on-primary-container font-medium active:opacity-80 transition-opacity duration-100"
-            >
+            <Button variant="tonal" onClick={handleCombo} className="w-full">
               Try Combo →
-            </button>
+            </Button>
           </div>
         )}
       </div>
+
+      <ProjectDetailSheet
+        project={noteSheetProject}
+        onClose={() => setNoteSheetProject(null)}
+      />
     </div>
   );
 }
@@ -185,16 +152,16 @@ export function DailySuggestion(): React.ReactElement {
 
 interface SuggestionCardProps {
   readonly project: Project;
-  readonly fitScore: number;
   readonly daysSince: number | null;
   readonly availableMinutes: number;
+  readonly onClick: () => void;
 }
 
 function SuggestionCard({
   project,
-  fitScore,
   daysSince,
   availableMinutes,
+  onClick,
 }: SuggestionCardProps): React.ReactElement {
   const notesExcerpt = project.notes ? project.notes.slice(0, 80) : null;
   const colorHex = COLOR_HEX_MAP[project.color];
@@ -208,61 +175,48 @@ function SuggestionCard({
           ? 'Yesterday'
           : `${Math.floor(daysSince)} days ago`;
 
-  const slackMin = availableMinutes - project.estimatedDurationMinutes;
-  const slackLabel =
-    availableMinutes >= 999
-      ? 'Plenty of time'
-      : slackMin === 0
-        ? 'Perfect fit'
-        : `${slackMin} min free`;
+  // When available time is very long (>200 min), show time remaining after the project
+  // instead of the project duration — more useful when planning a long block.
+  const durationTag =
+    availableMinutes > 200
+      ? `>3h left`
+      : project.estimatedDurationMinutes >= 999
+        ? '>3h'
+        : `~${project.estimatedDurationMinutes} min`;
 
   return (
     <div
-      className="bg-surface-variant rounded-xl shadow-sm overflow-hidden"
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+      className="bg-surface-variant rounded-xl shadow-sm overflow-hidden cursor-pointer active:opacity-80 transition-opacity duration-100"
       style={{ borderLeft: `4px solid ${colorHex}` }}
     >
       {/* Project name row */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
         <ColorDot color={project.color} size={14} />
         <span className="font-display text-lg font-bold text-on-surface flex-1 truncate">
           {project.name}
         </span>
       </div>
 
-      {/* Duration + fit bar */}
-      <div className="flex items-center gap-3 px-4 pb-2">
-        <span className="font-mono text-sm text-on-surface-variant shrink-0">
-          {project.estimatedDurationMinutes >= 999 ? '>3h' : `~${project.estimatedDurationMinutes} MIN`}
+      {/* Duration tag + Note — always same height */}
+      <div className="flex items-center gap-2 px-4 pb-3">
+        <span className="shrink-0 rounded-full bg-primary-container text-on-primary-container text-xs font-medium px-2.5 py-0.5">
+          {durationTag}
         </span>
-        <div className="flex-1 h-1 rounded-full bg-outline/20">
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${Math.round(fitScore * 100)}%`,
-              backgroundColor: colorHex,
-            }}
-          />
-        </div>
-        <span className="text-sm text-on-surface-variant shrink-0">
-          {slackLabel}
-        </span>
+        <p className="text-sm text-on-surface-variant flex-1 min-w-0 leading-snug line-clamp-2">
+          {notesExcerpt
+            ? `${notesExcerpt}${project.notes.length > 80 ? '…' : ''}`
+            : <span className="italic opacity-50">No note</span>}
+        </p>
       </div>
 
-      {/* Recency */}
-      <div className="px-4 pb-2">
-        <span className="text-sm text-on-surface-variant">
-          Last: {recencyLabel}
-        </span>
+      {/* Last done — bottom */}
+      <div className="border-t border-outline/20 px-4 py-2">
+        <span className="text-xs text-on-surface-variant">Last: {recencyLabel}</span>
       </div>
-
-      {/* Notes */}
-      {notesExcerpt && (
-        <div className="px-4 pb-4 border-t border-outline/20 pt-2">
-          <p className="text-sm text-on-surface-variant leading-snug italic">
-            "{notesExcerpt}{project.notes.length > 80 ? '…' : ''}"
-          </p>
-        </div>
-      )}
     </div>
   );
 }

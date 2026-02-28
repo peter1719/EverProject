@@ -44,7 +44,7 @@ describe('BottomNav rendering', () => {
   it('renders icon glyphs for each tab', () => {
     renderNav();
     expect(screen.getByText('▤')).toBeInTheDocument();
-    expect(screen.getByText('▶')).toBeInTheDocument();
+    expect(screen.getByText('?')).toBeInTheDocument();
     expect(screen.getByText('▦')).toBeInTheDocument();
   });
 });

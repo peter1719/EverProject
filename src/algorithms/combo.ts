@@ -141,8 +141,8 @@ function buildPartialCombos(
 export function suggestCombos(context: SuggestionContext): ComboSuggestion[] {
   const { projects, sessions, availableMinutes } = context;
 
-  // Score all eligible projects and take the top N
-  const scored = scoreAllEligible(projects, sessions, availableMinutes)
+  // Score ALL projects; buildCombos / buildPartialCombos handle time-fitting.
+  const scored = scoreAllEligible(projects, sessions)
     .sort((a, b) => b.score - a.score)
     .slice(0, TOP_N_PROJECTS)
     .map(s => ({ project: s.project, score: s.score }));

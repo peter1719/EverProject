@@ -3,11 +3,13 @@ import { useSearchParams, Navigate, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ColorDot } from '@/components/shared/ColorDot';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { Button } from '@/components/shared/Button';
+import { Card } from '@/components/shared/Card';
+import { ProjectColorStrip } from '@/components/shared/ProjectColorStrip';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { suggestCombos } from '@/algorithms/combo';
 import { cn } from '@/lib/utils';
-import { COLOR_HEX_MAP } from '@/lib/constants';
 import type { ComboSuggestion, TimerRouterState } from '@/types';
 
 export function ComboSuggestion(): React.ReactElement {
@@ -170,12 +172,9 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
 
             {/* Start button */}
             <div className="px-4">
-              <button
-                onClick={handleStart}
-                className="w-full h-12 rounded-xl bg-primary text-on-primary font-medium active:opacity-80 transition-opacity duration-100"
-              >
+              <Button variant="filled" onClick={handleStart} className="w-full">
                 ▶ Start this combo
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -201,7 +200,7 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
         : 'text-on-surface-variant';
 
   return (
-    <div className="bg-surface-variant rounded-xl shadow-sm mx-1 overflow-hidden">
+    <Card shadow className="mx-1 overflow-hidden" padding="">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3">
         <span className="text-sm font-medium text-primary">
@@ -210,6 +209,7 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
       </div>
 
       {/* Projects */}
+      {/* ComboCard rows keep raw JSX: the trailing "partial" badge prevents clean ProjectNameRow use */}
       <div className="flex flex-col gap-3 px-4 py-4">
         {combo.projects.map((project, i) => {
           const allocated = combo.projectMinutes[i];
@@ -249,15 +249,7 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
       </div>
 
       {/* Color bar strip */}
-      <div className="flex h-1.5">
-        {combo.projects.map((project, i) => (
-          <div
-            key={i}
-            className="flex-1"
-            style={{ backgroundColor: COLOR_HEX_MAP[project.color] }}
-          />
-        ))}
-      </div>
-    </div>
+      <ProjectColorStrip colors={combo.projects.map(p => p.color)} />
+    </Card>
   );
 }

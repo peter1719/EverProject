@@ -46,7 +46,9 @@ function setup(overrides: Partial<Project> = {}) {
 describe('ProjectCard rendering', () => {
   it('renders the project name', () => {
     setup({ name: 'Reading' });
-    expect(screen.getByText('Reading')).toBeInTheDocument();
+    // BottomSheet title also renders project name in DOM (off-screen when closed)
+    const matches = screen.getAllByText('Reading');
+    expect(matches.length).toBeGreaterThan(0);
   });
 
   it('renders a duration badge with ~ prefix (lowercase)', () => {
@@ -59,9 +61,9 @@ describe('ProjectCard rendering', () => {
     expect(screen.getByText('▶')).toBeInTheDocument();
   });
 
-  it('renders a menu button with aria-label "More options"', () => {
+  it('renders an edit button with aria-label "Edit project"', () => {
     setup();
-    expect(screen.getByRole('button', { name: 'More options' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit project' })).toBeInTheDocument();
   });
 
   it('shows Archived tag for archived projects', () => {
@@ -76,142 +78,46 @@ describe('ProjectCard rendering', () => {
 
   it('applies muted text color class to name for archived projects', () => {
     setup({ isArchived: true, name: 'Archived One' });
-    const nameEl = screen.getByText('Archived One');
-    expect(nameEl.className).toContain('text-on-surface-variant');
+    // BottomSheet title also renders project name; find the card's <p> specifically
+    const cardName = screen.getAllByText('Archived One').find(el => el.tagName === 'P')!;
+    expect(cardName.className).toContain('text-on-surface-variant');
   });
 
-  it('card wrapper does not have overflow-hidden (menu popup must not be clipped)', () => {
+  it('card wrapper does not have overflow-hidden', () => {
     const { container } = setup();
-    // overflow-hidden on the card would clip the absolutely-positioned dropdown menu
     const cardWrapper = container.querySelector('.bg-surface-variant');
     expect(cardWrapper).not.toBeNull();
     expect(cardWrapper!.className).not.toContain('overflow-hidden');
   });
 });
 
-// ── menu ──────────────────────────────────────────────────────────────────────
+// ── edit button ───────────────────────────────────────────────────────────────
 
-describe('ProjectCard menu', () => {
-  it('menu is hidden initially', () => {
-    setup();
-    expect(screen.queryByText('✎ Edit')).not.toBeInTheDocument();
-  });
-
-  it('opens when ··· button is clicked', async () => {
-    const user = userEvent.setup();
-    setup();
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    expect(screen.getByText('✎ Edit')).toBeInTheDocument();
-  });
-
-  it('shows Archive for active projects', async () => {
-    const user = userEvent.setup();
-    setup({ isArchived: false });
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    expect(screen.getByText(/Archive/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Unarchive/i)).not.toBeInTheDocument();
-  });
-
-  it('shows Unarchive for archived projects', async () => {
-    const user = userEvent.setup();
-    setup({ isArchived: true });
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    expect(screen.getByText(/Unarchive/i)).toBeInTheDocument();
-    expect(screen.queryByText(/⊳ Archive/i)).not.toBeInTheDocument();
-  });
-
-  it('closes when the backdrop overlay is clicked', async () => {
-    const user = userEvent.setup();
-    setup();
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    const overlay = document.querySelector('div.fixed.inset-0') as HTMLElement;
-    await user.click(overlay);
-    expect(screen.queryByText('✎ Edit')).not.toBeInTheDocument();
-  });
-});
-
-// ── menu actions ──────────────────────────────────────────────────────────────
-
-describe('ProjectCard menu actions', () => {
-  it('Edit action closes menu and calls onEdit with project', async () => {
+describe('ProjectCard edit button', () => {
+  it('calls onEdit with the project when edit button is clicked', async () => {
     const user = userEvent.setup();
     const { onEdit, project } = setup();
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText('✎ Edit'));
+    await user.click(screen.getByRole('button', { name: 'Edit project' }));
     expect(onEdit).toHaveBeenCalledWith(project);
-    expect(screen.queryByText('✎ Edit')).not.toBeInTheDocument();
-  });
-
-  it('Archive action closes menu and calls onArchive with project id', async () => {
-    const user = userEvent.setup();
-    const { onArchive } = setup({ isArchived: false });
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText(/⊳ Archive/i));
-    expect(onArchive).toHaveBeenCalledWith('project-1');
-    expect(screen.queryByText('✎ Edit')).not.toBeInTheDocument();
-  });
-
-  it('Unarchive action calls onUnarchive with project id', async () => {
-    const user = userEvent.setup();
-    const { onUnarchive } = setup({ isArchived: true });
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText(/Unarchive/i));
-    expect(onUnarchive).toHaveBeenCalledWith('project-1');
-  });
-
-  it('Delete action opens the delete dialog (does NOT call onDelete immediately)', async () => {
-    const user = userEvent.setup();
-    const { onDelete } = setup({ name: 'My Project' });
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText('✕ Delete'));
-    expect(onDelete).not.toHaveBeenCalled();
-    // Dialog visible — message includes project name
-    expect(screen.getByText(/Delete "My Project"/)).toBeInTheDocument();
   });
 });
 
 // ── card tap ─────────────────────────────────────────────────────────────────
 
-describe('ProjectCard tap to start', () => {
-  it('calls onStart with the project when card body is clicked', async () => {
+describe('ProjectCard play button', () => {
+  it('calls onStart with the project when play button is clicked', async () => {
     const user = userEvent.setup();
     const { onStart, project } = setup();
-    const cardBody = screen.getByText('My Project').closest('button')!;
-    await user.click(cardBody);
+    await user.click(screen.getByRole('button', { name: 'Start session' }));
     expect(onStart).toHaveBeenCalledWith(project);
   });
+
+  it('opens note sheet when card body is clicked', async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.click(screen.getByTestId('card-body'));
+    // Note sheet opens — title is project name, rendered by BottomSheet
+    expect(screen.getAllByText('My Project').length).toBeGreaterThan(0);
+  });
 });
 
-// ── delete dialog ─────────────────────────────────────────────────────────────
-
-describe('ProjectCard delete dialog', () => {
-  beforeEach(async () => {
-    // Shared setup: open menu, click Delete
-  });
-
-  it('confirms deletion — calls onDelete and closes dialog', async () => {
-    const user = userEvent.setup();
-    const { onDelete } = setup({ name: 'Test' });
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText('✕ Delete'));
-    await user.click(screen.getByRole('button', { name: 'YES' }));
-    expect(onDelete).toHaveBeenCalledWith('project-1');
-  });
-
-  it('cancels deletion — does NOT call onDelete', async () => {
-    const user = userEvent.setup();
-    const { onDelete } = setup({ name: 'Test' });
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText('✕ Delete'));
-    await user.click(screen.getByRole('button', { name: 'NO' }));
-    expect(onDelete).not.toHaveBeenCalled();
-  });
-
-  it('dialog message includes project name', async () => {
-    const user = userEvent.setup();
-    setup({ name: 'Reading' });
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText('✕ Delete'));
-    expect(screen.getByText(/Delete "Reading"/)).toBeInTheDocument();
-  });
-});

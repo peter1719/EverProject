@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useState, useReducer, useRef, useEffect } from 'react';
 import { ColorDot } from '@/components/shared/ColorDot';
 import { DurationBadge } from '@/components/shared/DurationBadge';
 import { PixelDialog } from '@/components/shared/PixelDialog';
-import { BottomSheet } from '@/components/shared/BottomSheet';
-import { useSessionStore } from '@/store/sessionStore';
+import { ProjectDetailSheet } from '@/components/shared';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { Project } from '@/types';
@@ -17,6 +16,44 @@ interface ProjectCardProps {
   readonly onDelete: (id: string) => void;
 }
 
+// ── Swipe constants ────────────────────────────────────────────────────────────
+const REVEAL_WIDTH = 72;
+const DRAG_THRESHOLD = 8;
+const SNAP_THRESHOLD = 30;
+
+// offset 語意：0 = 中立，+REVEAL_WIDTH = 右滑(archive)，-REVEAL_WIDTH = 左滑(delete)
+type RevealedSide = 'archive' | 'delete' | null;
+type SwipeState = { offset: number; revealedSide: RevealedSide; isDragging: boolean };
+const SWIPE_INITIAL: SwipeState = { offset: 0, revealedSide: null, isDragging: false };
+
+type SwipeAction =
+  | { type: 'DRAG_START' }
+  | { type: 'DRAG_MOVE'; offset: number }
+  | { type: 'DRAG_CANCEL_VERTICAL'; offset: number }
+  | { type: 'SNAP_OPEN_ARCHIVE' }
+  | { type: 'SNAP_OPEN_DELETE' }
+  | { type: 'SNAP_CLOSE' }
+  | { type: 'KEEP_CURRENT'; revealedSide: RevealedSide }
+  | { type: 'CLOSE_REVEAL' };
+
+function swipeReducer(state: SwipeState, action: SwipeAction): SwipeState {
+  switch (action.type) {
+    case 'DRAG_START':           return { ...state, isDragging: true };
+    case 'DRAG_MOVE':            return { ...state, offset: action.offset };
+    case 'DRAG_CANCEL_VERTICAL': return { ...state, isDragging: false, offset: action.offset };
+    case 'SNAP_OPEN_ARCHIVE':    return { ...state, isDragging: false, offset: REVEAL_WIDTH,  revealedSide: 'archive' };
+    case 'SNAP_OPEN_DELETE':     return { ...state, isDragging: false, offset: -REVEAL_WIDTH, revealedSide: 'delete' };
+    case 'SNAP_CLOSE':           return { ...state, isDragging: false, offset: 0, revealedSide: null };
+    case 'KEEP_CURRENT': {
+      const snap = action.revealedSide === 'archive' ? REVEAL_WIDTH
+                 : action.revealedSide === 'delete'  ? -REVEAL_WIDTH
+                 : 0;
+      return { ...state, isDragging: false, offset: snap };
+    }
+    case 'CLOSE_REVEAL': return { ...state, offset: 0, revealedSide: null };
+  }
+}
+
 export function ProjectCard({
   project,
   onStart,
@@ -25,133 +62,217 @@ export function ProjectCard({
   onUnarchive,
   onDelete,
 }: ProjectCardProps): React.ReactElement {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [swipe, dispatchSwipe] = useReducer(swipeReducer, SWIPE_INITIAL);
+  const { offset, revealedSide, isDragging } = swipe;
+  const revealed = revealedSide !== null;
 
-  const sessions = useSessionStore(s => s.sessions);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startYRef = useRef(0);
+  const baseOffsetRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const sessionNotes = sessions
-    .filter(s => s.projectId === project.id && s.notes.trim() !== '')
-    .sort((a, b) => b.startedAt - a.startedAt);
+  const colorHex = COLOR_HEX_MAP[project.color];
 
-  function handleMenuAction(action: 'edit' | 'archive' | 'unarchive' | 'delete' | 'note'): void {
-    setMenuOpen(false);
-    if (action === 'edit') onEdit(project);
-    else if (action === 'archive') onArchive(project.id);
-    else if (action === 'unarchive') onUnarchive(project.id);
-    else if (action === 'delete') setDeleteDialogOpen(true);
-    else if (action === 'note') setNoteSheetOpen(true);
-  }
+  // Close swipe reveal when tapping outside this card
+  useEffect(() => {
+    if (!revealed) return;
+    function onDocPointerDown(e: PointerEvent): void {
+      if (!containerRef.current?.contains(e.target as Node)) {
+        dispatchSwipe({ type: 'CLOSE_REVEAL' });
+      }
+    }
+    document.addEventListener('pointerdown', onDocPointerDown);
+    return () => document.removeEventListener('pointerdown', onDocPointerDown);
+  }, [revealed]);
 
   function handleConfirmDelete(): void {
     setDeleteDialogOpen(false);
     onDelete(project.id);
   }
 
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>): void {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    startXRef.current = e.clientX;
+    startYRef.current = e.clientY;
+    baseOffsetRef.current =
+      revealedSide === 'archive' ? REVEAL_WIDTH :
+      revealedSide === 'delete'  ? -REVEAL_WIDTH :
+      0;
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
+    dispatchSwipe({ type: 'DRAG_START' });
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>): void {
+    if (!isDraggingRef.current) return;
+    const dx = e.clientX - startXRef.current;
+    const dy = e.clientY - startYRef.current;
+    // Let vertical scroll win when it clearly dominates
+    if (!hasDraggedRef.current && Math.abs(dy) > Math.abs(dx)) {
+      isDraggingRef.current = false;
+      dispatchSwipe({ type: 'DRAG_CANCEL_VERTICAL', offset: baseOffsetRef.current });
+      return;
+    }
+    if (Math.abs(dx) < DRAG_THRESHOLD) return;
+    hasDraggedRef.current = true;
+    dispatchSwipe({
+      type: 'DRAG_MOVE',
+      offset: Math.max(-REVEAL_WIDTH, Math.min(REVEAL_WIDTH, baseOffsetRef.current + dx)),
+    });
+  }
+
+  function handlePointerUp(): void {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    const dx = offset - baseOffsetRef.current;
+
+    if (revealedSide === 'delete') {
+      // delete 已開：右滑超過 threshold → 關閉（不跳到 archive）
+      if (dx > SNAP_THRESHOLD) dispatchSwipe({ type: 'SNAP_CLOSE' });
+      else                     dispatchSwipe({ type: 'KEEP_CURRENT', revealedSide: 'delete' });
+    } else if (revealedSide === 'archive') {
+      // archive 已開：左滑超過 threshold → 關閉（不跳到 delete）
+      if (dx < -SNAP_THRESHOLD) dispatchSwipe({ type: 'SNAP_CLOSE' });
+      else                      dispatchSwipe({ type: 'KEEP_CURRENT', revealedSide: 'archive' });
+    } else {
+      // 中立：依方向決定開哪個
+      if      (dx < -SNAP_THRESHOLD) dispatchSwipe({ type: 'SNAP_OPEN_DELETE' });
+      else if (dx >  SNAP_THRESHOLD) dispatchSwipe({ type: 'SNAP_OPEN_ARCHIVE' });
+      else                           dispatchSwipe({ type: 'KEEP_CURRENT', revealedSide: null });
+    }
+  }
+
+  function handleClick(): void {
+    if (hasDraggedRef.current) return;
+    if (revealedSide !== null) {
+      dispatchSwipe({ type: 'CLOSE_REVEAL' });
+    } else {
+      setNoteSheetOpen(true);
+    }
+  }
+
   return (
     <>
-      {/* Fixed-height card — all cards same height regardless of notes */}
-      <div
-        className="relative flex rounded-lg bg-surface-variant shadow-sm h-24"
-        style={{ borderLeft: `4px solid ${COLOR_HEX_MAP[project.color]}` }}
-      >
-        {/* Card info — tap to start; overflow-hidden here clips content but NOT the popup menu */}
-        <button
-          onClick={() => onStart(project)}
-          className="flex flex-1 items-center gap-3 px-5 py-3 text-left overflow-hidden"
+      {/* Outer wrapper: relative, no overflow-hidden — lets 3-dot dropdown escape */}
+      <div ref={containerRef} className="relative rounded-xl">
+
+        {/* Archive zone — absolutely positioned OUTSIDE overflow-hidden, revealed on right-swipe */}
+        <div
+          className="absolute left-0 top-0.25 bottom-0.25 flex items-center justify-center rounded-l-xl overflow-hidden"
+          style={{ width: REVEAL_WIDTH, zIndex: revealedSide === 'archive' ? 2 : 0 }}
         >
-          <ColorDot color={project.color} size={14} className="shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p
-              className={cn(
-                'font-display text-base font-bold leading-tight truncate',
-                project.isArchived ? 'text-on-surface-variant' : 'text-on-surface',
-              )}
-            >
-              {project.name}
-            </p>
-            <div className="mt-1.5 flex items-center gap-2 min-w-0">
-              <DurationBadge minutes={project.estimatedDurationMinutes} />
-              {project.isArchived && (
-                <span className="text-xs text-on-surface-variant shrink-0">Archived</span>
-              )}
-              {/* Note inline after badge — truncates if too long */}
-              <p className="text-xs text-on-surface-variant truncate leading-tight min-w-0">
-                {project.notes}
-              </p>
-            </div>
-          </div>
-
-          {/* Play button */}
-          <span className="shrink-0 rounded-lg bg-primary-container text-on-primary-container px-4 py-2 text-sm font-medium active:opacity-80 transition-opacity duration-100">
-            ▶
-          </span>
-        </button>
-
-        {/* 3-dot menu button */}
-        <div className="relative flex shrink-0 border-l border-outline/30">
           <button
-            onClick={e => {
-              e.stopPropagation();
-              setMenuOpen(v => !v);
+            className={`h-full w-full flex items-center justify-center text-white text-sm font-medium ${project.isArchived ? 'bg-primary' : 'bg-success'}`}
+            onClick={() => {
+              if (project.isArchived) onUnarchive(project.id);
+              else onArchive(project.id);
+              dispatchSwipe({ type: 'CLOSE_REVEAL' });
             }}
-            className="flex h-full w-14 items-center justify-center text-on-surface-variant"
-            aria-label="More options"
           >
-            ···
+            {project.isArchived ? 'Unarchive' : 'Archive'}
           </button>
+        </div>
 
-          {/* Popup menu */}
-          {menuOpen && (
-            <>
-              <div
-                className="fixed inset-0"
-                style={{ zIndex: 10 }}
-                onClick={() => setMenuOpen(false)}
-                aria-hidden
-              />
-              <div
-                className="absolute right-0 top-full bg-surface rounded-lg shadow-lg border border-outline/20 z-20 min-w-[160px]"
-                style={{ zIndex: 20 }}
-              >
-                <button
-                  onClick={() => handleMenuAction('note')}
-                  className="flex w-full items-center gap-2 px-4 py-[14px] text-sm text-on-surface hover:bg-surface-variant"
-                >
-                  ✎ Note
-                </button>
-                <button
-                  onClick={() => handleMenuAction('edit')}
-                  className="flex w-full items-center gap-2 px-4 py-[14px] text-sm text-on-surface hover:bg-surface-variant"
-                >
-                  ✎ Edit
-                </button>
-                {project.isArchived ? (
-                  <button
-                    onClick={() => handleMenuAction('unarchive')}
-                    className="flex w-full items-center gap-2 px-4 py-[14px] text-sm text-on-surface hover:bg-surface-variant"
+        {/* Inner wrapper: overflow-hidden clips the sliding row; z-[1] covers archive zone */}
+        <div className="overflow-hidden rounded-xl" style={{ position: 'relative', zIndex: 1 }}>
+          <div
+            style={{
+              display: 'flex',
+              transform: `translateX(${offset}px)`,
+              transition: isDragging ? 'none' : 'transform 200ms ease-out',
+            }}
+          >
+            {/* Card body */}
+            <div
+              data-testid="card-body"
+              className="bg-surface-variant shadow-sm h-24 w-full shrink-0 flex"
+              style={{
+                borderLeft: `4px solid ${colorHex}`,
+                touchAction: 'pan-y',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              onClick={handleClick}
+            >
+              <div className="flex-1 overflow-hidden flex items-center gap-3 px-5 py-3">
+                <ColorDot color={project.color} size={14} />
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={cn(
+                      'font-display text-base font-bold leading-tight truncate',
+                      project.isArchived ? 'text-on-surface-variant' : 'text-on-surface',
+                    )}
                   >
-                    ⊳ Unarchive
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleMenuAction('archive')}
-                    className="flex w-full items-center gap-2 px-4 py-[14px] text-sm text-on-surface hover:bg-surface-variant"
-                  >
-                    ⊳ Archive
-                  </button>
-                )}
+                    {project.name}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-2 min-w-0">
+                    <DurationBadge minutes={project.estimatedDurationMinutes} />
+                    {project.isArchived && (
+                      <span className="text-xs text-on-surface-variant shrink-0">Archived</span>
+                    )}
+                    {/* Note inline after badge — truncates if too long */}
+                    <p className="text-xs text-on-surface-variant truncate leading-tight min-w-0">
+                      {project.notes}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Play button */}
                 <button
-                  onClick={() => handleMenuAction('delete')}
-                  className="flex w-full items-center gap-2 px-4 py-[14px] text-sm text-error hover:bg-surface-variant"
+                  data-testid="play-button"
+                  aria-label="Start session"
+                  onPointerDown={e => e.stopPropagation()}
+                  onClick={e => {
+                    e.stopPropagation();
+                    onStart(project);
+                  }}
+                  className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-primary-container text-on-primary-container active:opacity-80 transition-opacity duration-100"
                 >
-                  ✕ Delete
+                  ▶
+                </button>
+
+                {/* Edit button */}
+                <button
+                  data-testid="edit-button"
+                  aria-label="Edit project"
+                  onPointerDown={e => e.stopPropagation()}
+                  onClick={e => {
+                    e.stopPropagation();
+                    onEdit(project);
+                  }}
+                  className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-surface-variant text-on-surface-variant border border-outline/40 active:opacity-80 transition-opacity duration-100"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
                 </button>
               </div>
-            </>
-          )}
+            </div>
+
+            {/* Delete zone — revealed on swipe left; reuses existing PixelDialog */}
+            <div
+              className="bg-error shrink-0 flex items-center justify-center"
+              style={{ width: REVEAL_WIDTH }}
+            >
+              <button
+                className="h-full w-full flex items-center justify-center text-white text-sm font-medium"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
+
       </div>
 
       <PixelDialog
@@ -164,58 +285,10 @@ export function ProjectCard({
         isDanger
       />
 
-      {/* Note sheet */}
-      <BottomSheet
-        isOpen={noteSheetOpen}
+      <ProjectDetailSheet
+        project={noteSheetOpen ? project : null}
         onClose={() => setNoteSheetOpen(false)}
-        title="Notes"
-        height="70dvh"
-      >
-        {/* Only mount content when open to prevent duplicate text in DOM */}
-        {noteSheetOpen && <div className="flex flex-col gap-5 p-4">
-          {/* Project note */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <ColorDot color={project.color} size={10} />
-              <p className="text-sm font-medium text-on-surface">{project.name}</p>
-            </div>
-            {project.notes ? (
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                {project.notes}
-              </p>
-            ) : (
-              <p className="text-sm text-on-surface-variant/50 italic">No project notes.</p>
-            )}
-          </div>
-
-          {/* Session notes */}
-          {sessionNotes.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-medium text-on-surface-variant uppercase tracking-wide">
-                Session notes
-              </p>
-              {sessionNotes.map(s => (
-                <div key={s.id} className="flex flex-col gap-1 border-b border-outline/20 pb-3 last:border-0 last:pb-0">
-                  <p className="text-xs text-on-surface-variant">
-                    {new Date(s.startedAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </p>
-                  <p className="text-sm text-on-surface leading-relaxed">{s.notes}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {sessionNotes.length === 0 && !project.notes && (
-            <p className="text-sm text-on-surface-variant/50 italic text-center py-4">
-              No notes yet.
-            </p>
-          )}
-        </div>}
-      </BottomSheet>
+      />
     </>
   );
 }

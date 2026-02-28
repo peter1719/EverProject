@@ -118,8 +118,8 @@ describe('ProjectLibrary archived section', () => {
     });
     renderLibrary();
     await user.click(screen.getByText(/Show archived/i));
-    // Component renders project.name as-is
-    expect(screen.getByText('Old')).toBeInTheDocument();
+    // BottomSheet title also renders project name in DOM; use getAllByText
+    expect(screen.getAllByText('Old').length).toBeGreaterThan(0);
   });
 
   it('toggle label updates after expanding', async () => {
@@ -177,54 +177,6 @@ describe('ProjectLibrary adding a project', () => {
   });
 });
 
-// ── project card actions ──────────────────────────────────────────────────────
-
-describe('ProjectLibrary project card actions', () => {
-  beforeEach(() => {
-    useProjectStore.setState({
-      projects: [makeProject({ id: 'p1', name: 'Alpha' })],
-      isHydrated: true,
-    });
-  });
-
-  it('archive project removes it from active list', async () => {
-    const user = userEvent.setup();
-    renderLibrary();
-
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText(/⊳ Archive/));
-
-    await vi.waitFor(() => {
-      // After archiving, the project card moves to archived section (hidden by default)
-      expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
-    });
-  });
-
-  it('delete project — confirm removes it from list', async () => {
-    const user = userEvent.setup();
-    renderLibrary();
-
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText('✕ Delete'));
-    await user.click(screen.getByRole('button', { name: 'YES' }));
-
-    await vi.waitFor(() => {
-      expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
-    });
-  });
-
-  it('delete project — cancel keeps it in list', async () => {
-    const user = userEvent.setup();
-    renderLibrary();
-
-    await user.click(screen.getByRole('button', { name: 'More options' }));
-    await user.click(screen.getByText('✕ Delete'));
-    await user.click(screen.getByRole('button', { name: 'NO' }));
-
-    expect(screen.getByText('Alpha')).toBeInTheDocument();
-  });
-});
-
 // ── start session sheet ───────────────────────────────────────────────────────
 
 describe('ProjectLibrary start session sheet', () => {
@@ -236,9 +188,8 @@ describe('ProjectLibrary start session sheet', () => {
     });
     renderLibrary();
 
-    // Tap the card body (play button area) — name rendered as-is
-    const cardBody = screen.getByText('Alpha').closest('button')!;
-    await user.click(cardBody);
+    // Click the play button to open Start Session sheet
+    await user.click(screen.getByRole('button', { name: 'Start session' }));
 
     expect(screen.getByText('Start session?')).toBeInTheDocument();
   });

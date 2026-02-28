@@ -62,14 +62,14 @@ describe('DailySuggestion empty state', () => {
     expect(screen.getByText(/NO PROJECTS/i)).toBeInTheDocument();
   });
 
-  it('shows nothing-fits message when project is too long for selected time', () => {
+  it('still shows a suggestion card when project exceeds selected time', () => {
     useProjectStore.setState({
-      projects: [makeProject({ id: 'p1', estimatedDurationMinutes: 60 })],
+      projects: [makeProject({ id: 'p1', name: 'Long Project', estimatedDurationMinutes: 60 })],
       isHydrated: true,
     });
     renderPage();
-    // Default is 45 min, project is 60 — no fit
-    expect(screen.getByText(/NOTHING FITS/i)).toBeInTheDocument();
+    // Default is 45 min, project is 60 — duration no longer gates eligibility
+    expect(screen.getByText('Long Project')).toBeInTheDocument();
   });
 });
 
@@ -91,7 +91,7 @@ describe('DailySuggestion suggestion card', () => {
   it('shows duration badge', () => {
     renderPage();
     // Component renders "~{minutes} MIN" with a space before MIN
-    expect(screen.getByText(/~30 MIN/)).toBeInTheDocument();
+    expect(screen.getByText(/~30 min/)).toBeInTheDocument();
   });
 
   it('shows Never done when project has no sessions', () => {

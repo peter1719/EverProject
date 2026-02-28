@@ -10,7 +10,7 @@ interface NavTab {
 
 const TABS: NavTab[] = [
   { path: '/library', label: 'Library', icon: '▤' },
-  { path: '/suggest', label: 'Suggest', icon: '▶' },
+  { path: '/suggest', label: 'Suggest', icon: '?' },
   { path: '/dashboard', label: 'Stats', icon: '▦' },
 ];
 

@@ -228,6 +228,70 @@ describe('PomodoroTimer SKIP button', () => {
     const skipBtn = screen.getByRole('button', { name: /SKIP/i });
     expect(skipBtn).not.toBeDisabled();
   });
+
+  it('resets remainingSeconds to next project duration after confirming skip', async () => {
+    // Regression test: p1 is 30 min, p2 is 15 min.
+    // User skips p1 with 1793 secs still remaining (> p2's 900).
+    // Without the fix: elapsed = 900 - 1793 = -893 → displayed as "-14:-53".
+    useProjectStore.setState({
+      projects: [makeProject('p1', 30), makeProject('p2', 15)],
+      isHydrated: true,
+    });
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'running',
+      projectIds: ['p1', 'p2'],
+      currentProjectIndex: 0,
+      remainingSeconds: 1793,
+      projectAllocatedMinutes: { p1: 30, p2: 15 },
+    });
+
+    const user = userEvent.setup();
+    renderTimer({
+      projectIds: ['p1', 'p2'],
+      totalMinutes: 45,
+      comboGroupId: 'combo-1',
+      projectAllocatedMinutes: { p1: 30, p2: 15 },
+    });
+
+    await user.click(screen.getByRole('button', { name: /skip project/i }));
+    await user.click(screen.getByRole('button', { name: 'YES, SKIP' }));
+
+    expect(useTimerStore.getState().currentProjectIndex).toBe(1);
+    // Must be p2's 15 min = 900 secs, not the stale 1793 from p1
+    expect(useTimerStore.getState().remainingSeconds).toBe(15 * 60);
+  });
+
+  it('falls back to estimatedDurationMinutes when no allocation exists for next project', async () => {
+    // Combos always have allocations, but guard against missing entries.
+    useProjectStore.setState({
+      projects: [makeProject('p1', 30), makeProject('p2', 20)],
+      isHydrated: true,
+    });
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'running',
+      projectIds: ['p1', 'p2'],
+      currentProjectIndex: 0,
+      remainingSeconds: 1793,
+      projectAllocatedMinutes: { p1: 30 }, // p2 intentionally missing
+    });
+
+    const user = userEvent.setup();
+    renderTimer({
+      projectIds: ['p1', 'p2'],
+      totalMinutes: 50,
+      comboGroupId: 'combo-1',
+      projectAllocatedMinutes: { p1: 30 },
+    });
+
+    await user.click(screen.getByRole('button', { name: /skip project/i }));
+    await user.click(screen.getByRole('button', { name: 'YES, SKIP' }));
+
+    expect(useTimerStore.getState().currentProjectIndex).toBe(1);
+    // Falls back to p2's estimatedDurationMinutes = 20 min = 1200 secs
+    expect(useTimerStore.getState().remainingSeconds).toBe(20 * 60);
+  });
 });
 
 // ── combo pills ───────────────────────────────────────────────────────────────

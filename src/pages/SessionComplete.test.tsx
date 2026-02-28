@@ -162,16 +162,37 @@ describe('SessionComplete save flow', () => {
     });
   });
 
-  it('clicking Quit navigates to / without saving', async () => {
+  it('clicking Quit opens a confirmation dialog instead of navigating immediately', async () => {
+    const user = userEvent.setup();
+    renderComplete();
+    await user.click(screen.getByRole('button', { name: /Quit/i }));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(screen.getByText(/Quit without saving/i)).toBeInTheDocument();
+  });
+
+  it('confirming quit dialog navigates to / without saving', async () => {
     const user = userEvent.setup();
     const addSession = vi.fn().mockResolvedValue(undefined);
     useSessionStore.setState(prev => ({ ...prev, addSession }));
 
     renderComplete();
     await user.click(screen.getByRole('button', { name: /Quit/i }));
+    await user.click(screen.getByRole('button', { name: 'YES, QUIT' }));
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
     expect(addSession).not.toHaveBeenCalled();
+  });
+
+  it('cancelling quit dialog keeps the user on the page', async () => {
+    const user = userEvent.setup();
+    renderComplete();
+    await user.click(screen.getByRole('button', { name: /Quit/i }));
+    await user.click(screen.getByRole('button', { name: /KEEP LOGGING/i }));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 });
 
