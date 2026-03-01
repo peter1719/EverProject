@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 import { Shell } from '@/components/layout/Shell';
 import { Home } from '@/pages/Home';
 import { ProjectLibrary } from '@/pages/ProjectLibrary';
@@ -9,7 +9,7 @@ import { SessionComplete } from '@/pages/SessionComplete';
 import { ActivityDashboard } from '@/pages/ActivityDashboard';
 import { Settings } from '@/pages/Settings';
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: '/',
     element: <Shell />,

@@ -6,6 +6,7 @@ import path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/EverProject/',
   plugins: [
     react(),
     tailwindcss(),
@@ -29,7 +30,7 @@ export default defineConfig({
         description: 'Manage personal projects and stay productive',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
+        start_url: '/EverProject/',
         background_color: '#0a0a0a',
         theme_color: '#6366f1',
         icons: [
