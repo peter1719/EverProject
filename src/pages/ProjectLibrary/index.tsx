@@ -289,7 +289,7 @@ export function ProjectLibrary(): React.ReactElement {
             isOpen={addSheetOpen}
             onClose={() => setAddSheetOpen(false)}
             title={t('library.newProject')}
-            height="80dvh"
+            height="92dvh"
           >
             <ProjectForm
               onSave={data => void handleAdd(data)}
@@ -301,7 +301,7 @@ export function ProjectLibrary(): React.ReactElement {
             isOpen={!!editProject}
             onClose={() => setEditProject(null)}
             title={t('library.editProject')}
-            height="80dvh"
+            height="92dvh"
           >
             {editProject && (
               <ProjectForm

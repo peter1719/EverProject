@@ -131,7 +131,7 @@ function OverviewTab(): React.ReactElement {
         />
         {/* Heatmap CSS — warm amber scale */}
         <style>{`
-          .heatmap-empty { background-color: #F4EDE0; }
+          .heatmap-empty { background-color: #E0D5C3; }
           .heatmap-low   { background-color: #F5C4A0; }
           .heatmap-mid   { background-color: #C75B21; }
           .heatmap-high  { background-color: #8C3A0E; }

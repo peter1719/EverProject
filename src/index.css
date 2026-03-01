@@ -26,7 +26,7 @@
 /* ── Light mode base (warm paper) ────────────────────────────────────────────── */
 :root {
   --surface: #FDFAF4;
-  --surface-variant: #F4EDE0;
+  --surface-variant: #FFFFFF;
   --on-surface: #1A1208;
   --on-surface-variant: #7A6651;
   --primary: #C75B21;
