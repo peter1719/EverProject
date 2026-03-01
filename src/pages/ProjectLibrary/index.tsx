@@ -21,15 +21,10 @@ import { StartSessionSheet } from './components/StartSessionSheet';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Project, LibrarySort } from '@/types';
 
 const SORT_CYCLE: LibrarySort[] = ['date', 'name', 'custom'];
-
-const SORT_LABELS: Record<LibrarySort, string> = {
-  date: 'Date added',
-  name: 'Name',
-  custom: 'Custom',
-};
 
 function applySortMode(
   projects: Project[],
@@ -57,6 +52,13 @@ function applySortMode(
 
 export function ProjectLibrary(): React.ReactElement {
   const location = useLocation();
+  const { t } = useTranslation();
+
+  const SORT_LABELS: Record<LibrarySort, string> = {
+    date: t('library.sort.date'),
+    name: t('library.sort.name'),
+    custom: t('library.sort.custom'),
+  };
 
   const projects = useProjectStore(s => s.projects);
   const addProject = useProjectStore(s => s.addProject);
@@ -163,20 +165,20 @@ export function ProjectLibrary(): React.ReactElement {
       )}
 
       <div className="flex flex-col h-full">
-        <PageHeader title="My Library" />
+        <PageHeader title={t('page.library')} />
 
         <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
           {hasNoProjects && (
             <EmptyState
-              title="No projects yet."
-              subtitle="Add your first project to get started."
-              cta={{ label: '+ Add project', onClick: () => setAddSheetOpen(true) }}
+              title={t('library.noProjects')}
+              subtitle={t('library.noProjectsSub')}
+              cta={{ label: t('library.addFirst'), onClick: () => setAddSheetOpen(true) }}
             />
           )}
 
           {allArchived && (
             <p className="text-sm text-on-surface-variant text-center py-4">
-              All projects archived.
+              {t('library.allArchived')}
             </p>
           )}
 
@@ -186,20 +188,20 @@ export function ProjectLibrary(): React.ReactElement {
               {isReordering ? (
                 <button
                   onClick={handleExitReorder}
-                  aria-label="Done reordering"
+                  aria-label={t('btn.done')}
                   className="flex items-center gap-1.5 px-3 h-8 rounded-xl bg-primary text-on-primary text-xs font-medium active:opacity-80 transition-opacity duration-100"
                 >
-                  Done
+                  {t('btn.done')}
                 </button>
               ) : (
                 <>
                   <button
                     onClick={handleEnterReorder}
-                    aria-label="Custom order"
+                    aria-label={t('library.customOrder')}
                     className="flex items-center gap-1.5 px-3 h-8 rounded-xl border border-outline text-on-surface-variant bg-transparent text-xs font-medium active:opacity-80 transition-opacity duration-100"
                   >
                     <GripVertical className="w-3.5 h-3.5" aria-hidden />
-                    Custom order
+                    {t('library.customOrder')}
                   </button>
                   <button
                     onClick={handleCycleSort}
@@ -250,8 +252,8 @@ export function ProjectLibrary(): React.ReactElement {
                 className="w-full"
               >
                 {showArchived
-                  ? `▲ Hide archived (${archivedProjects.length})`
-                  : `▼ Show archived (${archivedProjects.length})`}
+                  ? t('library.hideArchived', { count: archivedProjects.length })
+                  : t('library.showArchived', { count: archivedProjects.length })}
               </Button>
 
               {showArchived &&
@@ -275,7 +277,7 @@ export function ProjectLibrary(): React.ReactElement {
       <button
         onClick={() => setAddSheetOpen(true)}
         className={`fixed bottom-20 right-4 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center text-2xl leading-none active:opacity-80 transition-opacity duration-100 ${isReordering ? 'hidden' : ''}`}
-        aria-label="Add project"
+        aria-label={t('library.addProject')}
       >
         +
       </button>
@@ -286,7 +288,7 @@ export function ProjectLibrary(): React.ReactElement {
           <BottomSheet
             isOpen={addSheetOpen}
             onClose={() => setAddSheetOpen(false)}
-            title="New project"
+            title={t('library.newProject')}
             height="80dvh"
           >
             <ProjectForm
@@ -298,7 +300,7 @@ export function ProjectLibrary(): React.ReactElement {
           <BottomSheet
             isOpen={!!editProject}
             onClose={() => setEditProject(null)}
-            title="Edit project"
+            title={t('library.editProject')}
             height="80dvh"
           >
             {editProject && (

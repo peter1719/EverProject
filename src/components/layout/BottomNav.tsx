@@ -1,23 +1,25 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 interface NavTab {
   path: '/library' | '/suggest' | '/dashboard';
-  label: string;
+  labelKey: string;
   icon: string;
 }
 
 const TABS: NavTab[] = [
-  { path: '/library', label: 'Library', icon: '▤' },
-  { path: '/suggest', label: 'Suggest', icon: '?' },
-  { path: '/dashboard', label: 'Stats', icon: '▦' },
+  { path: '/library', labelKey: 'nav.library', icon: '▤' },
+  { path: '/suggest', labelKey: 'nav.suggest', icon: '?' },
+  { path: '/dashboard', labelKey: 'nav.stats', icon: '▦' },
 ];
 
 export function BottomNav(): React.ReactElement {
   const location = useLocation();
   const navigate = useNavigate();
   const setLastVisitedTab = useSettingsStore(s => s.setLastVisitedTab);
+  const { t } = useTranslation();
 
   function handleTabPress(path: NavTab['path']): void {
     void setLastVisitedTab(path);
@@ -42,7 +44,7 @@ export function BottomNav(): React.ReactElement {
             aria-current={isActive ? 'page' : undefined}
           >
             <span className="text-base leading-none" aria-hidden="true">{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span>{t(tab.labelKey)}</span>
           </button>
         );
       })}

@@ -23,7 +23,7 @@
   --color-outline: var(--outline);
 }
 
-/* ── Light mode (warm paper) ─────────────────────────────────────────────────── */
+/* ── Light mode base (warm paper) ────────────────────────────────────────────── */
 :root {
   --surface: #FDFAF4;
   --surface-variant: #F4EDE0;
@@ -39,9 +39,9 @@
   --outline: #B0A090;
 }
 
-/* ── Dark mode (deep espresso) ───────────────────────────────────────────────── */
+/* ── System dark mode — only when no explicit data-theme ─────────────────────── */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --surface: #1A1208;
     --surface-variant: #261C0F;
     --on-surface: #F4EDE0;
@@ -55,6 +55,22 @@
     --warning: #FFA726;
     --outline: #5C4A35;
   }
+}
+
+/* ── Explicit dark theme ──────────────────────────────────────────────────────── */
+html[data-theme="dark"] {
+  --surface: #1A1208;
+  --surface-variant: #261C0F;
+  --on-surface: #F4EDE0;
+  --on-surface-variant: #A89070;
+  --primary: #E07840;
+  --on-primary: #1A1208;
+  --primary-container: #5C1E00;
+  --on-primary-container: #FEECD8;
+  --error: #EF5350;
+  --success: #66BB6A;
+  --warning: #FFA726;
+  --outline: #5C4A35;
 }
 
 /* ── Reset ──────────────────────────────────────────────────────────────────── */
@@ -145,9 +161,13 @@ body {
   }
 
   @media (prefers-color-scheme: dark) {
-    body {
+    html:not([data-theme]) body {
       background-color: #0F0A05;
     }
+  }
+
+  html[data-theme="dark"] body {
+    background-color: #0F0A05;
   }
 
   .phone-frame {

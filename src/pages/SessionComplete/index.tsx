@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useSessionStore } from '@/store/sessionStore';
 import { useProjectStore } from '@/store/projectStore';
+import { useTranslation } from '@/hooks/useTranslation';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
 import { Button } from '@/components/shared/Button';
@@ -30,6 +31,7 @@ interface SessionCompleteInnerProps {
 
 function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.ReactElement {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const {
     actualDurationMs,
@@ -158,17 +160,17 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
           )}
         >
           {initialOutcome === 'completed'
-            ? '✓ Session complete'
+            ? t('complete.completed')
             : initialOutcome === 'partial'
-              ? '◷ Session logged'
-              : '✕ Abandoned'}
+              ? t('complete.partial')
+              : t('complete.abandoned')}
         </h1>
       </div>
 
       <div className="flex-1 flex flex-col gap-4 px-4 pb-6">
         {/* Session summary card */}
         <div className="bg-surface-variant rounded-xl p-4">
-          <p className="text-xs text-on-surface-variant mb-3 font-medium">Session summary</p>
+          <p className="text-xs text-on-surface-variant mb-3 font-medium">{t('complete.summary')}</p>
 
           <div className="flex flex-col gap-3">
             {!isCombo ? (
@@ -182,10 +184,10 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
                     />
                     <div className="flex justify-between">
                       <span className="text-xs text-on-surface-variant">
-                        Planned: {plannedDurationMinutes} min
+                        {t('complete.planned', { minutes: plannedDurationMinutes })}
                       </span>
                       <span className="text-xs text-on-surface-variant">
-                        Actual: {actualDurationMinutes} min
+                        {t('complete.actual', { minutes: actualDurationMinutes })}
                       </span>
                     </div>
                   </>
@@ -223,8 +225,8 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium text-on-surface-variant">
             {isCombo
-              ? `How did ${projects.find(p => p.id === lastActiveProjectId)?.name ?? 'last project'} go?`
-              : 'How did it go?'}
+              ? t('complete.howLastGo', { name: projects.find(p => p.id === lastActiveProjectId)?.name ?? '' })
+              : t('complete.howGo')}
           </p>
           <OutcomeToggle value={outcome} onChange={setOutcome} />
         </div>
@@ -232,12 +234,12 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
         {/* Notes */}
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium text-on-surface-variant">
-            Notes (optional)
+            {t('complete.notes')}
           </p>
           <textarea
             value={notes}
             onChange={e => setNotes(e.target.value.slice(0, MAX_NOTES_LENGTH))}
-            placeholder="Add notes..."
+            placeholder={t('complete.addNotes')}
             rows={4}
             className="rounded-xl border border-outline bg-surface-variant text-on-surface p-3 resize-none focus:border-primary focus:outline-none"
           />
@@ -249,19 +251,19 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
         {/* Action buttons */}
         <div className="flex gap-3">
           <Button variant="outlined" onClick={handleQuit} className="flex-1">
-            ✕ Quit
+            {t('btn.quit')}
           </Button>
           <Button variant="filled" onClick={() => void handleSave()} className="flex-1">
-            ✓ Save
+            {t('btn.save')}
           </Button>
         </div>
       </div>
 
       <PixelDialog
         isOpen={showQuitDialog}
-        message="Quit without saving? Your session progress will be lost."
-        confirmLabel="YES, QUIT"
-        cancelLabel="KEEP LOGGING"
+        message={t('complete.quitMsg')}
+        confirmLabel={t('complete.yesQuit')}
+        cancelLabel={t('complete.keepLogging')}
         isDanger
         onConfirm={handleQuitConfirm}
         onCancel={() => setShowQuitDialog(false)}

@@ -1,9 +1,11 @@
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import { useHydration } from '@/hooks/useHydration';
+import { useTheme } from '@/hooks/useTheme';
 
 function AppContent(): React.ReactElement {
   const isHydrated = useHydration();
+  useTheme();
 
   if (!isHydrated) {
     return (

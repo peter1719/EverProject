@@ -10,6 +10,7 @@ import { BottomSheet } from '@/components/shared/BottomSheet';
 import { DurationSelector } from '@/components/shared/DurationSelector';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
+import { useTranslation } from '@/hooks/useTranslation';
 import { suggestCombos } from '@/algorithms/combo';
 import { cn } from '@/lib/utils';
 import type { ComboSuggestion, TimerRouterState } from '@/types';
@@ -33,6 +34,7 @@ interface ComboSuggestionInnerProps {
 
 function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): React.ReactElement {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -97,7 +99,7 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
   return (
     <div className="flex flex-col h-full">
       <PageHeader
-        title="Combo mode"
+        title={t('page.combo')}
         showBack
         backPath="/suggest"
         rightSlot={
@@ -113,8 +115,8 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
       <div className="flex-1 overflow-y-auto flex flex-col gap-4 py-4">
         {combos.length === 0 && (
           <EmptyState
-            title={`No combos for ${availableMinutes} min.`}
-            subtitle="← Try a different time"
+            title={t('combo.noCombo', { minutes: availableMinutes })}
+            subtitle={t('combo.noComboSub')}
           />
         )}
 
@@ -130,7 +132,7 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
                   'shrink-0 rounded-full p-2 bg-surface-variant active:opacity-80 transition-opacity duration-100',
                   combos.length <= 1 ? 'opacity-[0.38] cursor-not-allowed' : '',
                 )}
-                aria-label="Previous combo"
+                aria-label={t('combo.prevAriaLabel')}
               >
                 ◀
               </button>
@@ -159,7 +161,7 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
                   'shrink-0 rounded-full p-2 bg-surface-variant active:opacity-80 transition-opacity duration-100',
                   combos.length <= 1 ? 'opacity-[0.38] cursor-not-allowed' : '',
                 )}
-                aria-label="Next combo"
+                aria-label={t('combo.nextAriaLabel')}
               >
                 ▶
               </button>
@@ -172,7 +174,7 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
                   <button
                     key={i}
                     onClick={() => scrollTo(i)}
-                    aria-label={`Combo ${i + 1}`}
+                    aria-label={t('combo.dotAriaLabel', { index: i + 1 })}
                     className={cn(
                       'rounded-full w-2 h-2',
                       i === currentIndex ? 'bg-primary' : 'bg-outline/30',
@@ -185,7 +187,7 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
             {/* Start button */}
             <div className="px-4">
               <Button variant="filled" onClick={handleStart} className="w-full">
-                ▶ Start this combo
+                {t('combo.startThis')}
               </Button>
             </div>
           </>
@@ -195,7 +197,7 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
       <BottomSheet
         isOpen={showTimePicker}
         onClose={() => setShowTimePicker(false)}
-        title="Change duration"
+        title={t('combo.changeDuration')}
         height="45dvh"
       >
         <div className="px-4 py-4">
@@ -215,6 +217,7 @@ interface ComboCardProps {
 }
 
 function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement {
+  const { t } = useTranslation();
   const slackClass =
     combo.slackMinutes <= 5
       ? 'text-success'
@@ -227,7 +230,7 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
       {/* Header */}
       <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3">
         <span className="text-sm font-medium text-primary">
-          Combo {index + 1} / {total}
+          {t('combo.label', { index: index + 1, total })}
         </span>
       </div>
 
@@ -243,7 +246,7 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
               <span className="flex-1 text-sm text-on-surface truncate">
                 {project.name}
                 {isPartial && (
-                  <span className="ml-1.5 text-xs text-warning">partial</span>
+                  <span className="ml-1.5 text-xs text-warning">{t('combo.partial')}</span>
                 )}
               </span>
               <span className="text-sm text-on-surface-variant shrink-0">
@@ -260,14 +263,14 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
       {/* Totals */}
       <div className="flex items-center justify-between px-4 py-3">
         <span className="text-sm font-medium text-on-surface">
-          Total: ~{combo.totalMinutes} min
+          {t('combo.total', { minutes: combo.totalMinutes })}
         </span>
         {combo.slackMinutes > 0 ? (
           <span className={cn('text-sm font-medium', slackClass)}>
-            {combo.slackMinutes} min free
+            {t('combo.free', { minutes: combo.slackMinutes })}
           </span>
         ) : combo.projectMinutes.some((m, i) => m < combo.projects[i].estimatedDurationMinutes) ? (
-          <span className="text-sm font-medium text-success">Perfect fit</span>
+          <span className="text-sm font-medium text-success">{t('combo.perfectFit')}</span>
         ) : null}
       </div>
 

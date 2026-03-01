@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface PageHeaderProps {
   readonly title: string;
@@ -17,6 +18,7 @@ export function PageHeader({
   className,
 }: PageHeaderProps): React.ReactElement {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   function handleBack(): void {
     if (backPath) {
@@ -39,7 +41,7 @@ export function PageHeader({
           onClick={handleBack}
           className="shrink-0 flex items-center px-6 rounded-lg border border-outline/50 text-on-surface-variant text-sm mx-2 my-3 active:opacity-80 transition-opacity duration-100"
         >
-          ← Back
+          {t('btn.back')}
         </button>
       )}
 

@@ -8,6 +8,7 @@ import { DurationSelector } from '@/components/shared/DurationSelector';
 import { ProjectDetailSheet } from '@/components/shared';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
+import { useTranslation } from '@/hooks/useTranslation';
 import { suggestProject, getDaysSinceLastSession } from '@/algorithms/suggestion';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import type { Project, TimerRouterState } from '@/types';
@@ -16,6 +17,7 @@ const DEFAULT_MINUTES = 45;
 
 export function DailySuggestion(): React.ReactElement {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [availableMinutes, setAvailableMinutes] = useState(DEFAULT_MINUTES);
   const [seed, setSeed] = useState(0);
   const [excludeId, setExcludeId] = useState<string | undefined>(undefined);
@@ -76,20 +78,20 @@ export function DailySuggestion(): React.ReactElement {
 
   return (
     <div className="flex flex-col h-full">
-      <PageHeader title="What's next?" />
+      <PageHeader title={t('page.suggest')} />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-6">
         {/* Time selector */}
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-on-surface-variant">How much time do you have?</p>
+          <p className="text-sm font-medium text-on-surface-variant">{t('suggest.timeQuestion')}</p>
           <DurationSelector value={availableMinutes} onChange={setAvailableMinutes} />
         </div>
 
         {/* Empty state: no projects */}
         {hasNoProjects && (
           <EmptyState
-            title="No projects in library."
-            subtitle="Add a project first."
+            title={t('suggest.noProjects')}
+            subtitle={t('suggest.noProjectsSub')}
           />
         )}
 
@@ -121,7 +123,7 @@ export function DailySuggestion(): React.ReactElement {
               disabled={activeProjects.length <= 1}
               className="w-full"
             >
-              ↻ Roll again
+              {t('suggest.rollAgain')}
             </Button>
 
             <Button
@@ -130,11 +132,11 @@ export function DailySuggestion(): React.ReactElement {
               disabled={!suggestion}
               className="w-full"
             >
-              ▶ Start Timer
+              {t('suggest.startTimer')}
             </Button>
 
             <Button variant="tonal" onClick={handleCombo} className="w-full">
-              Try Combo →
+              {t('suggest.tryCombo')}
             </Button>
           </div>
         )}
@@ -164,17 +166,18 @@ function SuggestionCard({
   availableMinutes,
   onClick,
 }: SuggestionCardProps): React.ReactElement {
+  const { t } = useTranslation();
   const notesExcerpt = project.notes ? project.notes.slice(0, 80) : null;
   const colorHex = COLOR_HEX_MAP[project.color];
 
   const recencyLabel =
     daysSince === null
-      ? 'Never done'
+      ? t('suggest.neverDone')
       : daysSince < 1
-        ? 'Today'
+        ? t('suggest.today')
         : daysSince < 2
-          ? 'Yesterday'
-          : `${Math.floor(daysSince)} days ago`;
+          ? t('suggest.yesterday')
+          : t('suggest.daysAgo', { n: Math.floor(daysSince) });
 
   // When available time is very long (>200 min), show time remaining after the project
   // instead of the project duration — more useful when planning a long block.
@@ -210,13 +213,13 @@ function SuggestionCard({
         <p className="text-sm text-on-surface-variant flex-1 min-w-0 leading-snug line-clamp-2">
           {notesExcerpt
             ? `${notesExcerpt}${project.notes.length > 80 ? '…' : ''}`
-            : <span className="italic opacity-50">No note</span>}
+            : <span className="italic opacity-50">{t('suggest.noNote')}</span>}
         </p>
       </div>
 
       {/* Last done — bottom */}
       <div className="border-t border-outline/20 px-4 py-2">
-        <span className="text-xs text-on-surface-variant">Last: {recencyLabel}</span>
+        <span className="text-xs text-on-surface-variant">{t('suggest.last', { label: recencyLabel })}</span>
       </div>
     </div>
   );

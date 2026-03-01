@@ -7,6 +7,7 @@ import { ComboSuggestion } from '@/pages/ComboSuggestion';
 import { PomodoroTimer } from '@/pages/PomodoroTimer';
 import { SessionComplete } from '@/pages/SessionComplete';
 import { ActivityDashboard } from '@/pages/ActivityDashboard';
+import { Settings } from '@/pages/Settings';
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
       { path: 'timer', element: <PomodoroTimer /> },
       { path: 'complete', element: <SessionComplete /> },
       { path: 'dashboard', element: <ActivityDashboard /> },
+      { path: 'settings', element: <Settings /> },
     ],
   },
 ]);

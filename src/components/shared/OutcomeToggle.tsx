@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { SessionOutcome } from '@/types';
 
 interface OutcomeToggleProps {
@@ -10,16 +11,24 @@ interface OutcomeToggleProps {
   compactLabels?: boolean;
 }
 
-const ALL_OPTIONS: Array<{
-  label: string;
-  compactLabel: string;
-  value: SessionOutcome;
-  activeClass: string;
-}> = [
-  { label: '✓ Done', compactLabel: '✓', value: 'completed', activeClass: 'bg-success text-white' },
-  { label: '~ Partial', compactLabel: '~', value: 'partial', activeClass: 'bg-warning text-white' },
-  { label: '✕ Abandoned', compactLabel: '✕', value: 'abandoned', activeClass: 'bg-error text-white' },
-];
+const COMPACT_LABELS: Record<SessionOutcome, string> = {
+  completed: '✓',
+  partial: '~',
+  abandoned: '✕',
+};
+
+const ACTIVE_CLASSES: Record<SessionOutcome, string> = {
+  completed: 'bg-success text-white',
+  partial: 'bg-warning text-white',
+  abandoned: 'bg-error text-white',
+};
+
+const OUTCOME_KEYS: SessionOutcome[] = ['completed', 'partial', 'abandoned'];
+const LABEL_KEYS: Record<SessionOutcome, string> = {
+  completed: 'outcome.done',
+  partial: 'outcome.partial',
+  abandoned: 'outcome.abandoned',
+};
 
 /** Segmented toggle for session outcome. */
 export function OutcomeToggle({
@@ -28,21 +37,22 @@ export function OutcomeToggle({
   includeAbandoned = false,
   compactLabels = false,
 }: OutcomeToggleProps): React.ReactElement {
-  const options = includeAbandoned ? ALL_OPTIONS : ALL_OPTIONS.slice(0, 2);
+  const { t } = useTranslation();
+  const outcomes = includeAbandoned ? OUTCOME_KEYS : OUTCOME_KEYS.slice(0, 2);
 
   return (
     <div className="flex rounded-xl overflow-hidden border border-outline/30">
-      {options.map((opt, i) => (
+      {outcomes.map((outcome, i) => (
         <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
+          key={outcome}
+          onClick={() => onChange(outcome)}
           className={cn(
             'flex-1 py-3 text-sm font-medium transition-none',
-            i < options.length - 1 ? 'border-r border-outline/30' : '',
-            value === opt.value ? opt.activeClass : 'text-on-surface-variant',
+            i < outcomes.length - 1 ? 'border-r border-outline/30' : '',
+            value === outcome ? ACTIVE_CLASSES[outcome] : 'text-on-surface-variant',
           )}
         >
-          {compactLabels ? opt.compactLabel : opt.label}
+          {compactLabels ? COMPACT_LABELS[outcome] : t(LABEL_KEYS[outcome])}
         </button>
       ))}
     </div>

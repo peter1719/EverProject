@@ -5,6 +5,7 @@ import 'react-circular-progressbar/dist/styles.css';
 import { useTimerStore } from '@/store/timerStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useTimer } from '@/hooks/useTimer';
+import { useTranslation } from '@/hooks/useTranslation';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
 import { Button } from '@/components/shared/Button';
@@ -31,6 +32,7 @@ interface TimerPageProps {
 
 function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const phase = useTimerStore(s => s.phase);
   const projectIds = useTimerStore(s => s.projectIds);
@@ -177,15 +179,15 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         <button
           onClick={() => setShowQuitDialog(true)}
           className="rounded-lg border border-outline/50 text-sm text-on-surface-variant px-3 py-2 active:opacity-80 transition-opacity duration-100"
-          aria-label="Quit session"
+          aria-label={t('timer.quit')}
           style={{ minHeight: 44 }}
         >
-          ✕ Quit
+          {t('timer.quit')}
         </button>
 
         {/* Phase indicator */}
         <span className="text-sm text-on-surface-variant">
-          {phase === 'paused' ? '❚❚ Paused' : ''}
+          {phase === 'paused' ? t('timer.paused') : ''}
         </span>
       </div>
 
@@ -212,7 +214,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         )}
         {isCombo && (
           <p className="text-sm text-on-surface-variant">
-            Project {currentProjectIndex + 1} of {projectIds.length}
+            {t('timer.projectOf', { current: currentProjectIndex + 1, total: projectIds.length })}
           </p>
         )}
       </div>
@@ -223,14 +225,14 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
           {flashComplete && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-xl font-bold">
-                Complete!
+                {t('timer.complete')}
               </p>
             </div>
           )}
           {flashNext && !flashComplete && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <p className="text-warning text-base font-semibold">
-                Next!
+                {t('timer.next')}
               </p>
             </div>
           )}
@@ -283,19 +285,19 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         {/* Primary: Pause / Resume */}
         {phase === 'running' && (
           <Button variant="filled" onClick={handlePause} className="w-full">
-            ❚❚ Pause
+            {t('timer.pause')}
           </Button>
         )}
 
         {phase === 'paused' && (
           <Button variant="filled" onClick={handleResume} className="w-full">
-            ▶ Resume
+            {t('timer.resume')}
           </Button>
         )}
 
         {/* Stop & Log — always visible */}
         <Button variant="tonal" onClick={() => setShowStopDialog(true)} className="w-full">
-          ⏹ Stop & log
+          {t('timer.stopLog')}
         </Button>
 
         {/* Skip Project — only shown for combo sessions */}
@@ -306,7 +308,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
             onClick={() => setShowSkipDialog(true)}
             className="w-full text-primary"
           >
-            ⏭ Skip project
+            {t('timer.skipProject')}
           </Button>
         )}
       </div>
@@ -314,9 +316,9 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
       {/* Quit dialog */}
       <PixelDialog
         isOpen={showQuitDialog}
-        message="Quit session? Progress will not be saved."
-        confirmLabel="YES, QUIT"
-        cancelLabel="KEEP GOING"
+        message={t('timer.quitMsg')}
+        confirmLabel={t('timer.yesQuit')}
+        cancelLabel={t('timer.keepGoing')}
         isDanger
         onConfirm={handleQuitConfirm}
         onCancel={() => {
@@ -329,9 +331,9 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
       {currentProject && (
         <PixelDialog
           isOpen={showSkipDialog}
-          message={`Skip project?\n${currentProject.name}\nTime so far: ${skipTimeLabel}`}
-          confirmLabel="YES, SKIP"
-          cancelLabel="KEEP GOING"
+          message={t('timer.skipMsg', { name: currentProject.name, time: skipTimeLabel })}
+          confirmLabel={t('timer.yesSkip')}
+          cancelLabel={t('timer.keepGoing')}
           onConfirm={handleSkipConfirm}
           onCancel={() => setShowSkipDialog(false)}
         />
@@ -340,9 +342,9 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
       {/* Stop & log confirm dialog */}
       <PixelDialog
         isOpen={showStopDialog}
-        message="Stop session and log progress?"
-        confirmLabel="STOP & LOG"
-        cancelLabel="KEEP GOING"
+        message={t('timer.stopLogMsg')}
+        confirmLabel={t('timer.stopLogConfirm')}
+        cancelLabel={t('timer.keepGoing')}
         onConfirm={handleStopAndLogConfirm}
         onCancel={() => setShowStopDialog(false)}
       />

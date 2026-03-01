@@ -4,7 +4,7 @@ import { UpdatePrompt } from '@/components/shared/UpdatePrompt';
 import { PWAInstallBanner } from '@/components/shared/PWAInstallBanner';
 
 /** Routes that should NOT show the BottomNav */
-const FULLSCREEN_ROUTES = ['/timer', '/complete'];
+const FULLSCREEN_ROUTES = ['/timer', '/complete', '/settings'];
 
 export function Shell(): React.ReactElement {
   const location = useLocation();

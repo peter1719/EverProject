@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -16,6 +17,7 @@ import {
 } from '@/components/shared';
 import { useSessionStore } from '@/store/sessionStore';
 import { useProjectStore } from '@/store/projectStore';
+import { useTranslation } from '@/hooks/useTranslation';
 import { formatDuration, toDateString } from '@/lib/utils';
 
 import { cn } from '@/lib/utils';
@@ -25,19 +27,32 @@ type ActiveView = 'overview' | 'history';
 
 export function ActivityDashboard(): React.ReactElement {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
   const defaultView: ActiveView =
     searchParams.get('view') === 'history' ? 'history' : 'overview';
   const [activeView, setActiveView] = useState<ActiveView>(defaultView);
 
   return (
     <div className="flex flex-col h-full">
-      <PageHeader title="Activity" />
+      <PageHeader
+        title={t('page.activity')}
+        rightSlot={
+          <button
+            onClick={() => navigate('/settings')}
+            aria-label={t('stats.openSettings')}
+            className="flex items-center justify-center w-11 h-11 mr-2 my-auto rounded-xl text-on-surface-variant active:opacity-80 transition-opacity duration-100"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        }
+      />
 
       {/* View toggle */}
       <TabGroup<ActiveView>
         options={[
-          { value: 'overview', label: 'Overview' },
-          { value: 'history', label: 'History' },
+          { value: 'overview', label: t('stats.overview') },
+          { value: 'history', label: t('stats.history') },
         ]}
         value={activeView}
         onChange={setActiveView}
@@ -54,6 +69,7 @@ export function ActivityDashboard(): React.ReactElement {
 // ── Overview Tab ──────────────────────────────────────────────────────────────
 
 function OverviewTab(): React.ReactElement {
+  const { t } = useTranslation();
   const getTotalSessionCount = useSessionStore(s => s.getTotalSessionCount);
   const getTotalMinutes = useSessionStore(s => s.getTotalMinutes);
   const getCurrentStreak = useSessionStore(s => s.getCurrentStreak);
@@ -90,20 +106,20 @@ function OverviewTab(): React.ReactElement {
     <div className="flex flex-col gap-6 px-4 py-4">
       {/* Stats tiles */}
       <div className="grid grid-cols-3 gap-2">
-        <StatTile value={totalCount} label="Sessions" prefix="" />
-        <StatTile value={totalMinutes} label="Focused" isMinutes />
-        <StatTile value={streak} label="Day streak" prefix={streak > 0 ? '🔥' : undefined} />
+        <StatTile value={totalCount} label={t('stats.sessions')} prefix="" />
+        <StatTile value={totalMinutes} label={t('stats.focused')} isMinutes />
+        <StatTile value={streak} label={t('stats.dayStreak')} prefix={streak > 0 ? '🔥' : undefined} />
       </div>
 
       {/* Heatmap */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-on-surface-variant">Focus log</p>
+          <p className="text-xs font-medium text-on-surface-variant">{t('stats.focusLog')}</p>
           <button
             onClick={() => setScrollToEnd(n => n + 1)}
             className="text-xs font-medium text-primary active:opacity-70"
           >
-            Today
+            {t('stats.today')}
           </button>
         </div>
         <ActivityHeatmap
@@ -120,11 +136,15 @@ function OverviewTab(): React.ReactElement {
           .heatmap-mid   { background-color: #C75B21; }
           .heatmap-high  { background-color: #8C3A0E; }
           @media (prefers-color-scheme: dark) {
-            .heatmap-empty { background-color: #261C0F; }
-            .heatmap-low   { background-color: #5C3010; }
-            .heatmap-mid   { background-color: #C75B21; }
-            .heatmap-high  { background-color: #A04C28; }
+            html:not([data-theme]) .heatmap-empty { background-color: #261C0F; }
+            html:not([data-theme]) .heatmap-low   { background-color: #5C3010; }
+            html:not([data-theme]) .heatmap-mid   { background-color: #C75B21; }
+            html:not([data-theme]) .heatmap-high  { background-color: #A04C28; }
           }
+          html[data-theme="dark"] .heatmap-empty { background-color: #261C0F; }
+          html[data-theme="dark"] .heatmap-low   { background-color: #5C3010; }
+          html[data-theme="dark"] .heatmap-mid   { background-color: #C75B21; }
+          html[data-theme="dark"] .heatmap-high  { background-color: #A04C28; }
         `}</style>
       </div>
 
@@ -134,13 +154,13 @@ function OverviewTab(): React.ReactElement {
         onClose={() => setSelectedDay(null)}
         height="75dvh"
         title={selectedDay
-          ? `${new Date(selectedDay + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — ${daySessionsForPanel.length} session${daySessionsForPanel.length !== 1 ? 's' : ''}`
-          : 'Day detail'}
+          ? `${new Date(selectedDay + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — ${daySessionsForPanel.length !== 1 ? t('stats.sessionCountPlural', { count: daySessionsForPanel.length }) : t('stats.sessionCount', { count: daySessionsForPanel.length })}`
+          : ''}
       >
         <div className="flex flex-col gap-2 p-4">
           {daySessionsForPanel.length === 0 && (
             <p className="text-sm text-on-surface-variant text-center py-4">
-              No sessions this day.
+              {t('stats.noSessionsDay')}
             </p>
           )}
           {groupSessionCards(daySessionsForPanel).map(item => {
@@ -220,6 +240,7 @@ function StatTile({ value, label, isMinutes, prefix }: StatTileProps): React.Rea
 const PAGE_SIZE = 20;
 
 function HistoryTab(): React.ReactElement {
+  const { t } = useTranslation();
   const sessions = useSessionStore(s => s.sessions);
   const getSessionsForHistory = useSessionStore(s => s.getSessionsForHistory);
   const deleteSession = useSessionStore(s => s.deleteSession);
@@ -274,10 +295,10 @@ function HistoryTab(): React.ReactElement {
           type="button"
           onClick={() => { setFilterProjectId(null); setFilterDate(null); setVisibleCount(PAGE_SIZE); }}
           disabled={!filterProjectId && !filterDate}
-          aria-label="Reset filters"
+          aria-label={t('stats.resetFilters')}
           className="shrink-0 rounded-xl border border-outline bg-surface text-on-surface-variant px-3 py-3 text-sm transition-opacity duration-100 active:opacity-70 disabled:opacity-30 disabled:cursor-default"
         >
-          Reset
+          {t('stats.resetFilters')}
         </button>
         <div className="flex-1 min-w-0">
           <ProjectFilter
@@ -301,8 +322,8 @@ function HistoryTab(): React.ReactElement {
       {/* Sessions */}
       {filteredSessions.length === 0 && (
         filterProjectId || filterDate
-          ? <EmptyState title="No sessions found." />
-          : <EmptyState title="No activity yet." />
+          ? <EmptyState title={t('stats.noSessionsFound')} />
+          : <EmptyState title={t('stats.noActivity')} />
       )}
 
       {grouped.map(([date, dateSessions]) => (
@@ -567,6 +588,7 @@ interface ProjectFilterProps {
 }
 
 function ProjectFilter({ value, projects, onChange }: ProjectFilterProps): React.ReactElement {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -582,8 +604,8 @@ function ProjectFilter({ value, projects, onChange }: ProjectFilterProps): React
   }, [open]);
 
   const selectedLabel = value
-    ? (projects.find(p => p.id === value)?.name ?? 'All projects')
-    : 'All projects';
+    ? (projects.find(p => p.id === value)?.name ?? t('stats.allProjects'))
+    : t('stats.allProjects');
 
   return (
     <div ref={containerRef} className="relative">
@@ -614,7 +636,7 @@ function ProjectFilter({ value, projects, onChange }: ProjectFilterProps): React
               value === null ? 'bg-primary text-on-primary' : 'text-on-surface',
             )}
           >
-            All projects
+            {t('stats.allProjects')}
           </div>
           {projects.map(p => (
             <div
@@ -644,11 +666,12 @@ interface DateFilterProps {
 }
 
 function DateFilterButton({ value, onChange }: DateFilterProps): React.ReactElement {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const label = value
     ? new Date(value + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : 'Date';
+    : t('stats.date');
 
   return (
     <>
@@ -686,6 +709,7 @@ interface DatePickerProps {
 const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function DatePicker({ value, onConfirm, onCancel }: DatePickerProps): React.ReactElement {
+  const { t } = useTranslation();
   const [todayStr] = useState(() => toDateString(Date.now()));
   const initial = value ?? todayStr;
   const [selected, setSelected] = useState<string>(initial);
@@ -818,14 +842,14 @@ function DatePicker({ value, onConfirm, onCancel }: DatePickerProps): React.Reac
             onClick={onCancel}
             className="border border-outline text-primary bg-transparent rounded-xl h-10 px-5 text-sm active:opacity-80 transition-opacity duration-100"
           >
-            Cancel
+            {t('btn.cancel')}
           </button>
           <button
             type="button"
             onClick={() => onConfirm(selected)}
             className="bg-primary text-on-primary rounded-xl h-10 px-5 text-sm active:opacity-80 transition-opacity duration-100"
           >
-            OK
+            {t('btn.ok')}
           </button>
         </div>
       </div>

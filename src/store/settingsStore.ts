@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { getDB } from '@/db';
-import type { AppSettings } from '@/types';
+import type { AppSettings, AppTheme, AppLanguage } from '@/types';
 
 const SETTINGS_KEY = 'settings';
 
 const DEFAULT_SETTINGS: AppSettings = {
   lastVisitedTab: '/suggest',
   customOrderIds: [],
+  theme: 'system',
+  language: 'en',
 };
 
 interface SettingsState {
@@ -20,6 +22,8 @@ interface SettingsActions {
   hydrate(): Promise<void>;
   setLastVisitedTab(tab: AppSettings['lastVisitedTab']): Promise<void>;
   setCustomOrder(ids: string[]): Promise<void>;
+  setTheme(theme: AppTheme): Promise<void>;
+  setLanguage(lang: AppLanguage): Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState & SettingsActions>()(
@@ -31,7 +35,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
     async hydrate() {
       const db = await getDB();
       const stored = await db.get('settings', SETTINGS_KEY);
-      const merged = stored ?? DEFAULT_SETTINGS;
+      const merged: AppSettings = { ...DEFAULT_SETTINGS, ...(stored ?? {}) };
       set(state => {
         state.settings = merged;
         state.customOrderIds = merged.customOrderIds ?? [];
@@ -55,6 +59,24 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
       set(state => {
         state.settings.customOrderIds = ids;
         state.customOrderIds = ids;
+      });
+    },
+
+    async setTheme(theme) {
+      const db = await getDB();
+      const updated: AppSettings = { ...get().settings, theme };
+      await db.put('settings', { key: SETTINGS_KEY, ...updated });
+      set(state => {
+        state.settings.theme = theme;
+      });
+    },
+
+    async setLanguage(lang) {
+      const db = await getDB();
+      const updated: AppSettings = { ...get().settings, language: lang };
+      await db.put('settings', { key: SETTINGS_KEY, ...updated });
+      set(state => {
+        state.settings.language = lang;
       });
     },
   })),
