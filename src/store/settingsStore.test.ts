@@ -13,7 +13,7 @@ vi.mock('@/db', () => ({
 // ── Store import (after mocks) ───────────────────────────────────────────────
 import { useSettingsStore } from './settingsStore';
 
-const DEFAULT_SETTINGS = { lastVisitedTab: '/suggest' as const };
+const DEFAULT_SETTINGS = { lastVisitedTab: '/suggest' as const, customOrderIds: [] as string[] };
 
 beforeEach(() => {
   useSettingsStore.setState({ settings: { ...DEFAULT_SETTINGS }, isHydrated: false });

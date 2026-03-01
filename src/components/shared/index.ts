@@ -18,3 +18,4 @@ export { SessionListItem, outcomeStyle } from './SessionListItem';
 export { SwipeableSessionCard } from './SwipeableSessionCard';
 export { TabGroup } from './TabGroup';
 export { ProjectDetailSheet } from './ProjectDetailSheet';
+export { EditSessionSheet } from './EditSessionSheet';

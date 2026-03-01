@@ -20,16 +20,16 @@ export function TabGroup<T extends string>({
   className,
 }: TabGroupProps<T>): React.ReactElement {
   return (
-    <div className={cn('flex border-b border-outline/30', className)}>
+    <div className={cn('flex gap-1 px-4 py-2 border-b border-outline/30', className)}>
       {options.map(opt => (
         <button
           key={opt.value}
           onClick={() => onChange(opt.value)}
           className={cn(
-            'flex-1 py-3 text-sm font-medium border-r last:border-r-0 border-outline/30',
+            'flex-1 py-3 text-sm font-medium rounded-xl transition-colors duration-150',
             value === opt.value
-              ? 'bg-primary text-on-primary'
-              : 'text-on-surface-variant bg-surface',
+              ? 'bg-primary-container text-on-primary-container'
+              : 'text-on-surface-variant',
           )}
         >
           {opt.label}

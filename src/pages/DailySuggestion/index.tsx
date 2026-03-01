@@ -143,6 +143,7 @@ export function DailySuggestion(): React.ReactElement {
       <ProjectDetailSheet
         project={noteSheetProject}
         onClose={() => setNoteSheetProject(null)}
+        allowEdit={false}
       />
     </div>
   );

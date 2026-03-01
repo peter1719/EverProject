@@ -1,16 +1,15 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { BottomSheet } from '@/components/shared/BottomSheet';
 import {
-  Button,
   Card,
   ComboSessionCard,
   DateDivider,
-  OutcomeToggle,
-  ProjectNameRow,
+  EditSessionSheet,
   SessionListItem,
   SwipeableSessionCard,
   TabGroup,
@@ -20,7 +19,7 @@ import { useProjectStore } from '@/store/projectStore';
 import { formatDuration, toDateString } from '@/lib/utils';
 
 import { cn } from '@/lib/utils';
-import type { Session, SessionOutcome, Project } from '@/types';
+import type { Session, Project } from '@/types';
 
 type ActiveView = 'overview' | 'history';
 
@@ -182,6 +181,7 @@ function OverviewTab(): React.ReactElement {
       <EditSessionSheet
         session={editSession}
         onClose={() => setEditSession(null)}
+        baseZIndex={200}
       />
     </div>
   );
@@ -225,14 +225,17 @@ function HistoryTab(): React.ReactElement {
   const deleteSession = useSessionStore(s => s.deleteSession);
   const projects = useProjectStore(s => s.projects);
   const [filterProjectId, setFilterProjectId] = useState<string | null>(null);
+  const [filterDate, setFilterDate] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [editSession, setEditSession] = useState<Session | null>(null);
   const [swipeResetToken, setSwipeResetToken] = useState(0);
 
   const filteredSessions = useMemo(() => {
-    return getSessionsForHistory(filterProjectId ?? undefined);
-  }, [filterProjectId, getSessionsForHistory, sessions]);
+    let result = getSessionsForHistory(filterProjectId ?? undefined);
+    if (filterDate) result = result.filter(s => toDateString(s.startedAt) === filterDate);
+    return result;
+  }, [filterProjectId, filterDate, getSessionsForHistory, sessions]);
 
   const grouped = useMemo(() => {
     const visible = filteredSessions.slice(0, visibleCount);
@@ -265,22 +268,40 @@ function HistoryTab(): React.ReactElement {
 
   return (
     <div className="flex flex-col gap-4 px-4 py-4">
-      {/* Project filter */}
-      <ProjectFilter
-        value={filterProjectId}
-        projects={activeProjects}
-        onChange={id => {
-          setFilterProjectId(id);
-          setVisibleCount(PAGE_SIZE);
-        }}
-      />
+      {/* Filters row */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => { setFilterProjectId(null); setFilterDate(null); setVisibleCount(PAGE_SIZE); }}
+          disabled={!filterProjectId && !filterDate}
+          aria-label="Reset filters"
+          className="shrink-0 rounded-xl border border-outline bg-surface text-on-surface-variant px-3 py-3 text-sm transition-opacity duration-100 active:opacity-70 disabled:opacity-30 disabled:cursor-default"
+        >
+          Reset
+        </button>
+        <div className="flex-1 min-w-0">
+          <ProjectFilter
+            value={filterProjectId}
+            projects={activeProjects}
+            onChange={id => {
+              setFilterProjectId(id);
+              setVisibleCount(PAGE_SIZE);
+            }}
+          />
+        </div>
+        <DateFilterButton
+          value={filterDate}
+          onChange={date => {
+            setFilterDate(date);
+            setVisibleCount(PAGE_SIZE);
+          }}
+        />
+      </div>
 
       {/* Sessions */}
       {filteredSessions.length === 0 && (
-        filterProjectId
-          ? <EmptyState
-              title={`No sessions for ${projects.find(p => p.id === filterProjectId)?.name ?? 'project'}.`}
-            />
+        filterProjectId || filterDate
+          ? <EmptyState title="No sessions found." />
           : <EmptyState title="No activity yet." />
       )}
 
@@ -331,6 +352,7 @@ function HistoryTab(): React.ReactElement {
       <EditSessionSheet
         session={editSession}
         onClose={() => setEditSession(null)}
+        baseZIndex={200}
       />
     </div>
   );
@@ -573,7 +595,7 @@ function ProjectFilter({ value, projects, onChange }: ProjectFilterProps): React
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between rounded-xl border border-outline bg-surface text-on-surface px-3 py-3 text-sm active:opacity-80 transition-opacity duration-100"
       >
-        <span>{selectedLabel}</span>
+        <span className="truncate">{selectedLabel}</span>
         <span className="text-on-surface-variant text-xs ml-2" aria-hidden="true">
           {open ? '▲' : '▼'}
         </span>
@@ -611,6 +633,204 @@ function ProjectFilter({ value, projects, onChange }: ProjectFilterProps): React
         </div>
       )}
     </div>
+  );
+}
+
+// ── DateFilterButton ──────────────────────────────────────────────────────────
+
+interface DateFilterProps {
+  readonly value: string | null;
+  readonly onChange: (date: string | null) => void;
+}
+
+function DateFilterButton({ value, onChange }: DateFilterProps): React.ReactElement {
+  const [open, setOpen] = useState(false);
+
+  const label = value
+    ? new Date(value + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : 'Date';
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={cn(
+          'shrink-0 flex items-center rounded-xl border px-3 py-3 text-sm whitespace-nowrap active:opacity-80 transition-opacity duration-100',
+          value
+            ? 'border-primary bg-primary-container text-on-primary-container'
+            : 'border-outline bg-surface text-on-surface-variant',
+        )}
+      >
+        {label}
+      </button>
+      {open && (
+        <DatePicker
+          value={value}
+          onConfirm={date => { onChange(date); setOpen(false); }}
+          onCancel={() => setOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
+// ── DatePicker ────────────────────────────────────────────────────────────────
+
+interface DatePickerProps {
+  readonly value: string | null;
+  readonly onConfirm: (date: string) => void;
+  readonly onCancel: () => void;
+}
+
+const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function DatePicker({ value, onConfirm, onCancel }: DatePickerProps): React.ReactElement {
+  const [todayStr] = useState(() => toDateString(Date.now()));
+  const initial = value ?? todayStr;
+  const [selected, setSelected] = useState<string>(initial);
+  const [viewYear, setViewYear] = useState(() => parseInt(initial.slice(0, 4)));
+  const [viewMonth, setViewMonth] = useState(() => parseInt(initial.slice(5, 7)) - 1);
+
+  const days = useMemo<(string | null)[]>(() => {
+    const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const grid: (string | null)[] = Array<null>(firstWeekday).fill(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      grid.push(
+        `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+      );
+    }
+    // Always 6 rows × 7 cols = 42 cells so the card height never changes
+    while (grid.length < 42) grid.push(null);
+    return grid;
+  }, [viewYear, viewMonth]);
+
+  function prevMonth(): void {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth(): void {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  }
+
+  const monthName = new Date(viewYear, viewMonth, 1)
+    .toLocaleDateString('en-US', { month: 'long' });
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-6"
+      onPointerDown={onCancel}
+    >
+      <div
+        className="bg-surface rounded-2xl p-4 w-full max-w-sm shadow-xl"
+        onPointerDown={e => e.stopPropagation()}
+      >
+        {/* Unified calendar box */}
+        <div className="bg-surface-variant rounded-xl p-3 mb-4">
+          {/* Year + Month navigation */}
+          <div className="flex items-center justify-center gap-3 mb-3">
+            {/* Year group */}
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => setViewYear(y => y - 1)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20 transition-colors"
+              >
+                ◀
+              </button>
+              <span className="w-[3.25rem] text-center text-sm font-semibold text-on-surface tabular-nums">
+                {viewYear}
+              </span>
+              <button
+                type="button"
+                onClick={() => setViewYear(y => y + 1)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20 transition-colors"
+              >
+                ▶
+              </button>
+            </div>
+
+            {/* Divider */}
+            <div className="w-px h-5 bg-outline/30 shrink-0" />
+
+            {/* Month group */}
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={prevMonth}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20 transition-colors"
+              >
+                ◀
+              </button>
+              <span className="w-24 text-center text-sm font-medium text-on-surface-variant">
+                {monthName}
+              </span>
+              <button
+                type="button"
+                onClick={nextMonth}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20 transition-colors"
+              >
+                ▶
+              </button>
+            </div>
+          </div>
+
+          {/* Weekday headers */}
+          <div className="grid grid-cols-7 mb-1">
+            {WEEKDAY_INITIALS.map((d, i) => (
+              <div key={i} className="h-9 flex items-center justify-center text-xs font-medium text-on-surface-variant">
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Day grid */}
+          <div className="grid grid-cols-7">
+            {days.map((day, i) => (
+              <div key={i} className="h-9 flex items-center justify-center">
+                {day && (
+                  <button
+                    type="button"
+                    onClick={() => setSelected(day)}
+                    className={cn(
+                      'w-9 h-9 rounded-full text-sm transition-colors',
+                      selected === day
+                        ? 'bg-primary text-on-primary font-medium'
+                        : day === todayStr
+                        ? 'border border-primary text-primary'
+                        : 'text-on-surface active:bg-outline/20',
+                    )}
+                  >
+                    {parseInt(day.slice(8))}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="border border-outline text-primary bg-transparent rounded-xl h-10 px-5 text-sm active:opacity-80 transition-opacity duration-100"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(selected)}
+            className="bg-primary text-on-primary rounded-xl h-10 px-5 text-sm active:opacity-80 transition-opacity duration-100"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -663,114 +883,4 @@ function SingleSessionCard({
   );
 }
 
-// ── SessionRow (for Day Detail panel) ────────────────────────────────────────
-
-function SessionRow({
-  session,
-  projects,
-  onEdit,
-}: {
-  session: Session;
-  projects: ReturnType<typeof useProjectStore.getState>['projects'];
-  onEdit: () => void;
-}): React.ReactElement {
-  const project = projects.find(p => p.id === session.projectId);
-  return (
-    <button
-      onClick={onEdit}
-      className="w-full flex flex-col gap-1 border-b border-outline/20 pb-3 last:border-0 last:pb-0 text-left active:opacity-70"
-    >
-      <SessionListItem
-        session={session}
-        projectColor={project?.color ?? session.projectColor}
-        projectName={project?.name ?? session.projectName}
-        showNoNotesPlaceholder
-      />
-    </button>
-  );
-}
-
-// ── EditSessionSheet ──────────────────────────────────────────────────────────
-
-function EditSessionSheet({
-  session,
-  onClose,
-}: {
-  session: Session | null;
-  onClose: () => void;
-}): React.ReactElement {
-  return (
-    <BottomSheet isOpen={!!session} onClose={onClose} title="Edit session" height="65dvh" baseZIndex={200}>
-      {session && (
-        <EditSessionForm key={session.id} session={session} onClose={onClose} />
-      )}
-    </BottomSheet>
-  );
-}
-
-function EditSessionForm({
-  session,
-  onClose,
-}: {
-  session: Session;
-  onClose: () => void;
-}): React.ReactElement {
-  const updateSession = useSessionStore(s => s.updateSession);
-  const projects = useProjectStore(s => s.projects);
-  const [outcome, setOutcome] = useState<SessionOutcome>(session.outcome);
-  const [notes, setNotes] = useState(session.notes);
-  const project = projects.find(p => p.id === session.projectId);
-
-  async function handleSave(): Promise<void> {
-    await updateSession(session.id, { outcome, notes });
-    onClose();
-  }
-
-  const dateLabel = new Date(session.startedAt)
-    .toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-  return (
-    <div className="flex flex-col gap-4 p-4">
-      {/* Session identity */}
-      <div className="flex items-center gap-2">
-        <ProjectNameRow
-          color={project?.color ?? session.projectColor}
-          name={project?.name ?? session.projectName}
-          className="flex-1"
-        />
-        <span className="text-xs text-on-surface-variant shrink-0">
-          {dateLabel}
-        </span>
-      </div>
-
-      {/* Outcome */}
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-on-surface-variant">Outcome</p>
-        <OutcomeToggle value={outcome} onChange={setOutcome} includeAbandoned compactLabels />
-      </div>
-
-      {/* Notes */}
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-on-surface-variant">Notes</p>
-        <textarea
-          value={notes}
-          onChange={e => setNotes(e.target.value.slice(0, 500))}
-          placeholder="Add notes..."
-          rows={3}
-          className="rounded-xl border border-outline bg-surface-variant text-on-surface p-3 resize-none focus:border-primary focus:outline-none"
-        />
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3 pb-2">
-        <Button variant="filled" onClick={() => void handleSave()} className="flex-1">
-          Save
-        </Button>
-        <Button variant="outlined" onClick={onClose} className="flex-1">
-          Cancel
-        </Button>
-      </div>
-    </div>
-  );
-}
 

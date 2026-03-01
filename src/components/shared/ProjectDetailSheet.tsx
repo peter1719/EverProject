@@ -1,11 +1,15 @@
+import { useState } from 'react';
+
 import { useSessionStore } from '@/store/sessionStore';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import { BottomSheet } from './BottomSheet';
-import type { Project } from '@/types';
+import { EditSessionSheet } from './EditSessionSheet';
+import type { Project, Session } from '@/types';
 
 interface ProjectDetailSheetProps {
   readonly project: Project | null;
   readonly onClose: () => void;
+  readonly allowEdit?: boolean;
 }
 
 function formatNoteDate(timestamp: number): string {
@@ -16,8 +20,9 @@ function formatNoteDate(timestamp: number): string {
   return `${yy}-${mm}-${dd}`;
 }
 
-export function ProjectDetailSheet({ project, onClose }: ProjectDetailSheetProps): React.ReactElement {
+export function ProjectDetailSheet({ project, onClose, allowEdit = true }: ProjectDetailSheetProps): React.ReactElement {
   const sessions = useSessionStore(s => s.sessions);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
 
   const sessionNotes = project
     ? sessions
@@ -34,6 +39,7 @@ export function ProjectDetailSheet({ project, onClose }: ProjectDetailSheetProps
   const colorHex = project ? COLOR_HEX_MAP[project.color] : '';
 
   return (
+    <>
     <BottomSheet isOpen={!!project} onClose={onClose} title={project?.name ?? ''} height="70dvh">
       {!!project && (
         <div className="flex flex-col">
@@ -64,7 +70,7 @@ export function ProjectDetailSheet({ project, onClose }: ProjectDetailSheetProps
                   const sessionNum =
                     allProjectSessions.findIndex(sess => sess.id === s.id) + 1;
                   return (
-                    <div key={s.id} className="flex items-start gap-3">
+                    <div key={s.id} className={`flex items-start gap-3 ${allowEdit ? 'cursor-pointer active:opacity-80 transition-opacity duration-100' : ''}`} onClick={allowEdit ? () => setEditingSession(s) : undefined}>
                       {/* Colored badge — sits on top of the timeline line */}
                       <div
                         className="relative z-10 shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-bold text-white"
@@ -101,5 +107,12 @@ export function ProjectDetailSheet({ project, onClose }: ProjectDetailSheetProps
         </div>
       )}
     </BottomSheet>
+    {allowEdit && (
+      <EditSessionSheet
+        session={editingSession}
+        onClose={() => setEditingSession(null)}
+      />
+    )}
+    </>
   );
 }

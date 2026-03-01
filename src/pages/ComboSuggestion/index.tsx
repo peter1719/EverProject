@@ -6,6 +6,8 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/shared/Button';
 import { Card } from '@/components/shared/Card';
 import { ProjectColorStrip } from '@/components/shared/ProjectColorStrip';
+import { BottomSheet } from '@/components/shared/BottomSheet';
+import { DurationSelector } from '@/components/shared/DurationSelector';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { suggestCombos } from '@/algorithms/combo';
@@ -32,6 +34,7 @@ interface ComboSuggestionInnerProps {
 function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): React.ReactElement {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const sessions = useSessionStore(s => s.sessions);
@@ -58,11 +61,11 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
   }, []);
 
   function handlePrev(): void {
-    if (currentIndex > 0) scrollTo(currentIndex - 1);
+    scrollTo((currentIndex - 1 + combos.length) % combos.length);
   }
 
   function handleNext(): void {
-    if (currentIndex < combos.length - 1) scrollTo(currentIndex + 1);
+    scrollTo((currentIndex + 1) % combos.length);
   }
 
   function handleStart(): void {
@@ -85,6 +88,12 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
     navigate('/timer', { state });
   }
 
+  function handleTimeChange(mins: number): void {
+    setShowTimePicker(false);
+    setCurrentIndex(0);
+    navigate(`/combo?minutes=${mins}`, { replace: true });
+  }
+
   return (
     <div className="flex flex-col h-full">
       <PageHeader
@@ -92,9 +101,12 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
         showBack
         backPath="/suggest"
         rightSlot={
-          <span className="flex items-center px-4 text-sm text-on-surface-variant">
-            {availableMinutes} min
-          </span>
+          <button
+            onClick={() => setShowTimePicker(true)}
+            className="flex items-center gap-1 mr-2 px-3 py-1.5 rounded-xl bg-surface-variant text-sm font-medium text-on-surface-variant active:opacity-80 transition-opacity duration-100"
+          >
+            {availableMinutes} min ▾
+          </button>
         }
       />
 
@@ -113,10 +125,10 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
               {/* Left arrow */}
               <button
                 onClick={handlePrev}
-                disabled={currentIndex === 0}
+                disabled={combos.length <= 1}
                 className={cn(
                   'shrink-0 rounded-full p-2 bg-surface-variant active:opacity-80 transition-opacity duration-100',
-                  currentIndex === 0 ? 'opacity-[0.38] cursor-not-allowed' : '',
+                  combos.length <= 1 ? 'opacity-[0.38] cursor-not-allowed' : '',
                 )}
                 aria-label="Previous combo"
               >
@@ -142,10 +154,10 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
               {/* Right arrow */}
               <button
                 onClick={handleNext}
-                disabled={currentIndex === combos.length - 1}
+                disabled={combos.length <= 1}
                 className={cn(
                   'shrink-0 rounded-full p-2 bg-surface-variant active:opacity-80 transition-opacity duration-100',
-                  currentIndex === combos.length - 1 ? 'opacity-[0.38] cursor-not-allowed' : '',
+                  combos.length <= 1 ? 'opacity-[0.38] cursor-not-allowed' : '',
                 )}
                 aria-label="Next combo"
               >
@@ -179,6 +191,17 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
           </>
         )}
       </div>
+
+      <BottomSheet
+        isOpen={showTimePicker}
+        onClose={() => setShowTimePicker(false)}
+        title="Change duration"
+        height="45dvh"
+      >
+        <div className="px-4 py-4">
+          <DurationSelector value={availableMinutes} onChange={handleTimeChange} />
+        </div>
+      </BottomSheet>
     </div>
   );
 }
