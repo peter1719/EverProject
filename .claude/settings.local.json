@@ -20,7 +20,8 @@
       "Bash(pip3 install websocket-client 2>&1 | tail -3)",
       "Bash(python3 -m pip install websocket-client 2>&1 | tail -3)",
       "Bash(node --version && node -e \"console.log\\(typeof WebSocket\\)\")",
-      "Bash(pkill -f \"google-chrome\" 2>/dev/null; sleep 1; echo \"killed all chrome\")"
+      "Bash(pkill -f \"google-chrome\" 2>/dev/null; sleep 1; echo \"killed all chrome\")",
+      "Bash(node --version && npm --version 2>&1)"
     ]
   }
 }
