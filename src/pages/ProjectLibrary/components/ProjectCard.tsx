@@ -9,6 +9,7 @@ import type { Project } from '@/types';
 
 interface ProjectCardProps {
   readonly project: Project;
+  readonly reorderMode?: boolean;
   readonly onStart: (project: Project) => void;
   readonly onEdit: (project: Project) => void;
   readonly onArchive: (id: string) => void;
@@ -56,6 +57,7 @@ function swipeReducer(state: SwipeState, action: SwipeAction): SwipeState {
 
 export function ProjectCard({
   project,
+  reorderMode = false,
   onStart,
   onEdit,
   onArchive,
@@ -147,6 +149,7 @@ export function ProjectCard({
   }
 
   function handleClick(): void {
+    if (reorderMode) return;
     if (hasDraggedRef.current) return;
     if (revealedSide !== null) {
       dispatchSwipe({ type: 'CLOSE_REVEAL' });
@@ -196,10 +199,12 @@ export function ProjectCard({
                 cursor: 'pointer',
                 userSelect: 'none',
               }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
+              {...(!reorderMode && {
+                onPointerDown: handlePointerDown,
+                onPointerMove: handlePointerMove,
+                onPointerUp: handlePointerUp,
+                onPointerCancel: handlePointerUp,
+              })}
               onClick={handleClick}
             >
               <div className="flex-1 overflow-hidden flex items-center gap-3 px-5 py-3">
@@ -229,12 +234,13 @@ export function ProjectCard({
                 <button
                   data-testid="play-button"
                   aria-label="Start session"
+                  disabled={reorderMode}
                   onPointerDown={e => e.stopPropagation()}
                   onClick={e => {
                     e.stopPropagation();
-                    onStart(project);
+                    if (!reorderMode) onStart(project);
                   }}
-                  className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-primary-container text-on-primary-container active:opacity-80 transition-opacity duration-100"
+                  className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-primary-container text-on-primary-container transition-opacity duration-100 disabled:opacity-30"
                 >
                   ▶
                 </button>
@@ -243,12 +249,13 @@ export function ProjectCard({
                 <button
                   data-testid="edit-button"
                   aria-label="Edit project"
+                  disabled={reorderMode}
                   onPointerDown={e => e.stopPropagation()}
                   onClick={e => {
                     e.stopPropagation();
-                    onEdit(project);
+                    if (!reorderMode) onEdit(project);
                   }}
-                  className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-surface-variant text-on-surface-variant border border-outline/40 active:opacity-80 transition-opacity duration-100"
+                  className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-surface-variant text-on-surface-variant border border-outline/40 transition-opacity duration-100 disabled:opacity-30"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -275,20 +282,25 @@ export function ProjectCard({
 
       </div>
 
-      <PixelDialog
-        isOpen={deleteDialogOpen}
-        message={`Delete "${project.name}"?\nYour session history will be kept.`}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteDialogOpen(false)}
-        confirmLabel="YES"
-        cancelLabel="NO"
-        isDanger
-      />
+      {/* Fixed-position overlays — omitted in reorderMode to avoid transform stacking context issues */}
+      {!reorderMode && (
+        <>
+          <PixelDialog
+            isOpen={deleteDialogOpen}
+            message={`Delete "${project.name}"?\nYour session history will be kept.`}
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setDeleteDialogOpen(false)}
+            confirmLabel="YES"
+            cancelLabel="NO"
+            isDanger
+          />
 
-      <ProjectDetailSheet
-        project={noteSheetOpen ? project : null}
-        onClose={() => setNoteSheetOpen(false)}
-      />
+          <ProjectDetailSheet
+            project={noteSheetOpen ? project : null}
+            onClose={() => setNoteSheetOpen(false)}
+          />
+        </>
+      )}
     </>
   );
 }

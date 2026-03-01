@@ -1,15 +1,59 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { ArrowUpDown, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { BottomSheet } from '@/components/shared/BottomSheet';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/shared/Button';
+import { SortableProjectCard } from './components/SortableProjectCard';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectForm } from './components/ProjectForm';
 import { StartSessionSheet } from './components/StartSessionSheet';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
-import type { Project } from '@/types';
+import { useSettingsStore } from '@/store/settingsStore';
+import type { Project, LibrarySort } from '@/types';
+
+const SORT_CYCLE: LibrarySort[] = ['date', 'name', 'custom'];
+
+const SORT_LABELS: Record<LibrarySort, string> = {
+  date: 'Date added',
+  name: 'Name',
+  custom: 'Custom',
+};
+
+function applySortMode(
+  projects: Project[],
+  mode: LibrarySort,
+  orderedIds: string[],
+): Project[] {
+  if (mode === 'name') {
+    return [...projects].sort((a, b) =>
+      a.name.localeCompare(b.name, 'zh-Hant', { sensitivity: 'base' }),
+    );
+  }
+  if (mode === 'date') {
+    return [...projects].sort((a, b) => b.createdAt - a.createdAt);
+  }
+  if (mode === 'custom') {
+    const indexMap = new Map(orderedIds.map((id, i) => [id, i]));
+    return [...projects].sort((a, b) => {
+      const ai = indexMap.has(a.id) ? indexMap.get(a.id)! : Infinity;
+      const bi = indexMap.has(b.id) ? indexMap.get(b.id)! : Infinity;
+      return ai - bi;
+    });
+  }
+  return projects;
+}
 
 export function ProjectLibrary(): React.ReactElement {
   const location = useLocation();
@@ -24,10 +68,15 @@ export function ProjectLibrary(): React.ReactElement {
 
   const sessions = useSessionStore(s => s.sessions);
 
+  const customOrderIds = useSettingsStore(s => s.customOrderIds);
+  const setCustomOrder = useSettingsStore(s => s.setCustomOrder);
+
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [startProject, setStartProject] = useState<Project | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [sortMode, setSortMode] = useState<LibrarySort>('custom');
+  const [isReordering, setIsReordering] = useState(false);
 
   useEffect(() => {
     const state = location.state as { openAddSheet?: boolean } | null;
@@ -37,8 +86,33 @@ export function ProjectLibrary(): React.ReactElement {
     }
   }, [location.state]);
 
-  const activeProjects = getActiveProjects(sessions);
+  const activeProjects = applySortMode(getActiveProjects(sessions), sortMode, customOrderIds);
   const archivedProjects = projects.filter(p => p.isArchived);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
+
+  function handleDragEnd(event: DragEndEvent): void {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = activeProjects.findIndex(p => p.id === active.id);
+    const newIndex = activeProjects.findIndex(p => p.id === over.id);
+    const newOrder = arrayMove(activeProjects, oldIndex, newIndex).map(p => p.id);
+    void setCustomOrder(newOrder);
+  }
+
+  function handleEnterReorder(): void {
+    setSortMode('custom');
+    if (customOrderIds.length === 0) {
+      void setCustomOrder(activeProjects.map(p => p.id));
+    }
+    setIsReordering(true);
+  }
+
+  function handleExitReorder(): void {
+    setIsReordering(false);
+  }
 
   async function handleAdd(
     data: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'isArchived'>,
@@ -67,11 +141,27 @@ export function ProjectLibrary(): React.ReactElement {
     await deleteProject(id);
   }
 
+  function handleCycleSort(): void {
+    setSortMode(current => {
+      const idx = SORT_CYCLE.indexOf(current);
+      return SORT_CYCLE[(idx + 1) % SORT_CYCLE.length];
+    });
+  }
+
   const hasNoProjects = projects.length === 0;
   const allArchived = activeProjects.length === 0 && archivedProjects.length > 0;
 
   return (
     <>
+      {/* Dim overlay — covers header, FAB, BottomNav */}
+      {isReordering && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-200"
+          onClick={handleExitReorder}
+          aria-hidden
+        />
+      )}
+
       <div className="flex flex-col h-full">
         <PageHeader title="My Library" />
 
@@ -90,18 +180,66 @@ export function ProjectLibrary(): React.ReactElement {
             </p>
           )}
 
-          {/* Active projects */}
-          {activeProjects.map(project => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onStart={setStartProject}
-              onEdit={setEditProject}
-              onArchive={handleArchive}
-              onUnarchive={handleUnarchive}
-              onDelete={handleDelete}
-            />
-          ))}
+          {/* Sort controls */}
+          {activeProjects.length > 0 && (
+            <div className="flex items-center justify-between">
+              {isReordering ? (
+                <button
+                  onClick={handleExitReorder}
+                  aria-label="Done reordering"
+                  className="flex items-center gap-1.5 px-3 h-8 rounded-xl bg-primary text-on-primary text-xs font-medium active:opacity-80 transition-opacity duration-100"
+                >
+                  Done
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleEnterReorder}
+                    aria-label="Custom order"
+                    className="flex items-center gap-1.5 px-3 h-8 rounded-xl border border-outline text-on-surface-variant bg-transparent text-xs font-medium active:opacity-80 transition-opacity duration-100"
+                  >
+                    <GripVertical className="w-3.5 h-3.5" aria-hidden />
+                    Custom order
+                  </button>
+                  <button
+                    onClick={handleCycleSort}
+                    aria-label={`Sort: ${SORT_LABELS[sortMode]}`}
+                    className="flex items-center gap-1.5 px-3 h-8 rounded-xl border border-outline text-on-surface-variant bg-transparent text-xs font-medium active:opacity-80 transition-opacity duration-100"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5" aria-hidden />
+                    {SORT_LABELS[sortMode]}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Active projects — wrapped in DnD context, floats above overlay */}
+          <div className={isReordering ? 'relative z-50 flex flex-col gap-3' : 'flex flex-col gap-3'}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={activeProjects.map(p => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {activeProjects.map(project => (
+                  <SortableProjectCard
+                    key={project.id}
+                    project={project}
+                    reorderMode={isReordering}
+                    onStart={setStartProject}
+                    onEdit={setEditProject}
+                    onArchive={handleArchive}
+                    onUnarchive={handleUnarchive}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </div>
 
           {/* Archived section toggle */}
           {archivedProjects.length > 0 && (
@@ -133,55 +271,57 @@ export function ProjectLibrary(): React.ReactElement {
         </div>
       </div>
 
-      {/* FAB — Add project */}
+      {/* FAB — hidden during reorder */}
       <button
         onClick={() => setAddSheetOpen(true)}
-        className="fixed bottom-20 right-4 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center text-2xl leading-none active:opacity-80 transition-opacity duration-100"
+        className={`fixed bottom-20 right-4 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center text-2xl leading-none active:opacity-80 transition-opacity duration-100 ${isReordering ? 'hidden' : ''}`}
         aria-label="Add project"
       >
         +
       </button>
 
-      {/* Add sheet */}
-      <BottomSheet
-        isOpen={addSheetOpen}
-        onClose={() => setAddSheetOpen(false)}
-        title="New project"
-        height="80dvh"
-      >
-        <ProjectForm
-          onSave={data => void handleAdd(data)}
-          onCancel={() => setAddSheetOpen(false)}
-        />
-      </BottomSheet>
+      {/* Sheets — unmounted during reorder to eliminate z-index conflicts */}
+      {!isReordering && (
+        <>
+          <BottomSheet
+            isOpen={addSheetOpen}
+            onClose={() => setAddSheetOpen(false)}
+            title="New project"
+            height="80dvh"
+          >
+            <ProjectForm
+              onSave={data => void handleAdd(data)}
+              onCancel={() => setAddSheetOpen(false)}
+            />
+          </BottomSheet>
 
-      {/* Edit sheet */}
-      <BottomSheet
-        isOpen={!!editProject}
-        onClose={() => setEditProject(null)}
-        title="Edit project"
-        height="80dvh"
-      >
-        {editProject && (
-          <ProjectForm
-            defaultValues={{
-              name: editProject.name,
-              color: editProject.color,
-              estimatedDurationMinutes: editProject.estimatedDurationMinutes,
-              notes: editProject.notes,
-            }}
-            onSave={data => void handleEdit(data)}
-            onCancel={() => setEditProject(null)}
+          <BottomSheet
+            isOpen={!!editProject}
+            onClose={() => setEditProject(null)}
+            title="Edit project"
+            height="80dvh"
+          >
+            {editProject && (
+              <ProjectForm
+                defaultValues={{
+                  name: editProject.name,
+                  color: editProject.color,
+                  estimatedDurationMinutes: editProject.estimatedDurationMinutes,
+                  notes: editProject.notes,
+                }}
+                onSave={data => void handleEdit(data)}
+                onCancel={() => setEditProject(null)}
+              />
+            )}
+          </BottomSheet>
+
+          <StartSessionSheet
+            project={startProject}
+            onClose={() => setStartProject(null)}
+            onUnarchive={id => void handleUnarchive(id)}
           />
-        )}
-      </BottomSheet>
-
-      {/* Start session sheet */}
-      <StartSessionSheet
-        project={startProject}
-        onClose={() => setStartProject(null)}
-        onUnarchive={id => void handleUnarchive(id)}
-      />
+        </>
+      )}
     </>
   );
 }

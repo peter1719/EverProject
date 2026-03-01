@@ -17,6 +17,8 @@ export type ProjectColor =
   | 'slate'
   | 'stone';
 
+export type LibrarySort = 'date' | 'name' | 'custom';
+
 export interface Project {
   id: string;
   name: string; // max 30 chars
@@ -51,6 +53,7 @@ export interface Session {
 
 export interface AppSettings {
   lastVisitedTab: '/library' | '/suggest' | '/dashboard';
+  customOrderIds?: string[];
 }
 
 // ── Timer (ephemeral — NOT persisted) ─────────────────────────────────────
