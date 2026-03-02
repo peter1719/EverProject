@@ -27,7 +27,7 @@ export function BottomNav(): React.ReactElement {
   }
 
   return (
-    <nav className="flex border-t border-outline/30 bg-surface px-2 pt-1" style={{ paddingBottom: 'min(env(safe-area-inset-bottom), 16px)' }}>
+    <nav className="flex border-t border-outline/30 bg-surface px-2 pt-1" style={{ paddingBottom: '0px' }}>
       {TABS.map(tab => {
         const isActive = location.pathname === tab.path;
         return (
