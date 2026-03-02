@@ -276,7 +276,7 @@ export function ProjectLibrary(): React.ReactElement {
       {/* FAB — hidden during reorder */}
       <button
         onClick={() => setAddSheetOpen(true)}
-        className={`fixed bottom-[25vh] right-4 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center text-2xl leading-none active:opacity-80 transition-opacity duration-100 ${isReordering ? 'hidden' : ''}`}
+        className={`fixed bottom-[10vh] right-4 z-30 w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center text-2xl leading-none active:opacity-80 transition-opacity duration-100 ${isReordering ? 'hidden' : ''}`}
         aria-label={t('library.addProject')}
       >
         +
