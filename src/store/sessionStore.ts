@@ -7,12 +7,19 @@ import type { Session, DailyActivity, ProjectTotal } from '@/types';
 interface SessionState {
   sessions: Session[];
   isHydrated: boolean;
+  /** Incremented each time a session image is written or deleted — triggers re-fetch in useSessionImage. */
+  imageVersions: Record<string, number>;
 }
 
 interface SessionActions {
   hydrate(): Promise<void>;
-  addSession(data: Omit<Session, 'id'>): Promise<void>;
-  updateSession(id: string, patch: Pick<Session, 'outcome' | 'notes'>): Promise<void>;
+  addSession(data: Omit<Session, 'id'>): Promise<string>;
+  updateSession(
+    id: string,
+    patch: Pick<Session, 'outcome' | 'notes'> & { hasImage?: boolean },
+  ): Promise<void>;
+  putSessionImage(sessionId: string, dataUrl: string): Promise<void>;
+  removeSessionImage(sessionId: string): Promise<void>;
   deleteSession(id: string): Promise<void>;
 }
 
@@ -39,6 +46,7 @@ export const useSessionStore = create<SessionState & SessionActions & SessionSel
   immer((set, get) => ({
     sessions: [],
     isHydrated: false,
+    imageVersions: {},
 
     async hydrate() {
       const db = await getDB();
@@ -56,6 +64,7 @@ export const useSessionStore = create<SessionState & SessionActions & SessionSel
       set(state => {
         state.sessions.push(session);
       });
+      return session.id;
     },
 
     async updateSession(id, patch) {
@@ -70,9 +79,28 @@ export const useSessionStore = create<SessionState & SessionActions & SessionSel
       });
     },
 
+    async putSessionImage(sessionId, dataUrl) {
+      const db = await getDB();
+      await db.put('sessionImages', { sessionId, dataUrl });
+      set(state => {
+        state.imageVersions[sessionId] = (state.imageVersions[sessionId] ?? 0) + 1;
+      });
+    },
+
+    async removeSessionImage(sessionId) {
+      const db = await getDB();
+      await db.delete('sessionImages', sessionId);
+      set(state => {
+        state.imageVersions[sessionId] = (state.imageVersions[sessionId] ?? 0) + 1;
+      });
+    },
+
     async deleteSession(id) {
       const db = await getDB();
-      await db.delete('sessions', id);
+      await Promise.all([
+        db.delete('sessions', id),
+        db.delete('sessionImages', id),
+      ]);
       set(state => {
         state.sessions = state.sessions.filter(s => s.id !== id);
       });

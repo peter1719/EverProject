@@ -2,7 +2,7 @@ import type { ProjectColor } from '@/types';
 
 export const APP_NAME = 'EverProject';
 export const DB_NAME = 'ever-project-db';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 export const MAX_PROJECT_NAME_LENGTH = 30;
 export const MAX_NOTES_LENGTH = 500;

@@ -16,4 +16,8 @@ export interface EverProjectDB extends DBSchema {
     key: string;
     value: AppSettings & { key: string };
   };
+  sessionImages: {
+    key: string; // sessionId
+    value: { sessionId: string; dataUrl: string };
+  };
 }

@@ -10,6 +10,7 @@ import { OutcomeToggle } from '@/components/shared/OutcomeToggle';
 import { ProjectNameRow } from '@/components/shared/ProjectNameRow';
 import { cn } from '@/lib/utils';
 import { MAX_NOTES_LENGTH } from '@/lib/constants';
+import { compressImage } from '@/lib/imageUtils';
 import type { CompleteRouterState, SessionOutcome } from '@/types';
 
 export function SessionComplete(): React.ReactElement {
@@ -44,13 +45,16 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
   } = state;
 
   const addSession = useSessionStore(s => s.addSession);
+  const putSessionImage = useSessionStore(s => s.putSessionImage);
   const projects = useProjectStore(s => s.projects);
 
   const [outcome, setOutcome] = useState<SessionOutcome>(
     initialOutcome === 'abandoned' ? 'completed' : initialOutcome,
   );
   const [notes, setNotes] = useState('');
+  const [image, setImage] = useState<string | undefined>(undefined);
   const [showQuitDialog, setShowQuitDialog] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
 
   const isCombo = projectIds.length > 1;
@@ -83,6 +87,15 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
     }
   }, [initialOutcome]);
 
+  async function handleImagePick(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImage(await compressImage(file));
+    } catch { /* ignore */ }
+    e.target.value = '';
+  }
+
   async function handleSave(): Promise<void> {
     const startedAt = startedAtRef.current || (endedAtRef.current - actualDurationMs);
     const endedAt = endedAtRef.current || startedAt + actualDurationMs;
@@ -91,7 +104,7 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
       const projectId = projectIds[0];
       if (!projectId) return;
       const proj = projects.find(p => p.id === projectId);
-      await addSession({
+      const sessionId = await addSession({
         projectId,
         projectName: proj?.name ?? projectId,
         projectColor: proj?.color ?? 'indigo',
@@ -101,9 +114,11 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
         actualDurationMinutes,
         outcome,
         notes,
+        hasImage: !!image,
         wasCombo: false,
         comboGroupId: null,
       });
+      if (image) await putSessionImage(sessionId, image);
     } else {
       const sharedComboId = comboGroupId ?? crypto.randomUUID();
       for (const projectId of startedProjectIds) {
@@ -117,20 +132,23 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
               ? outcome
               : 'completed';
         const proj = projects.find(p => p.id === projectId);
+        const isLastActive = projectId === lastActiveProjectId;
 
-        await addSession({
+        const sessionId = await addSession({
           projectId,
           projectName: proj?.name ?? projectId,
           projectColor: proj?.color ?? 'indigo',
           startedAt,
           endedAt,
           plannedDurationMinutes: proj?.estimatedDurationMinutes ?? plannedDurationMinutes,
-          actualDurationMinutes: wasSkipped || projectId !== lastActiveProjectId ? projectMinutes : actualDurationMinutes,
+          actualDurationMinutes: wasSkipped || !isLastActive ? projectMinutes : actualDurationMinutes,
           outcome: projectOutcome,
-          notes: projectId === lastActiveProjectId ? notes : '',
+          notes: isLastActive ? notes : '',
+          hasImage: isLastActive ? !!image : false,
           wasCombo: true,
           comboGroupId: sharedComboId,
         });
+        if (isLastActive && image) await putSessionImage(sessionId, image);
       }
     }
 
@@ -248,7 +266,32 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
           </p>
         </div>
 
+        {/* Image preview */}
+        {image && (
+          <div className="relative rounded-xl overflow-hidden" style={{ width: 160, aspectRatio: '4/3' }}>
+            <img
+              src={image}
+              alt="Preview"
+              className="w-full h-full object-cover object-center"
+            />
+            <button
+              type="button"
+              onClick={() => setImage(undefined)}
+              className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center text-white text-sm"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Action buttons */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={e => void handleImagePick(e)}
+        />
         <div className="flex gap-3">
           <Button variant="outlined" onClick={handleQuit} className="flex-1">
             {t('btn.quit')}
@@ -256,6 +299,18 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
           <Button variant="filled" onClick={() => void handleSave()} className="flex-1">
             {t('btn.save')}
           </Button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-12 h-12 shrink-0 bg-surface-variant border border-outline rounded-xl flex items-center justify-center text-on-surface-variant active:opacity-80 transition-opacity duration-100"
+            aria-label="Add photo"
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="M21 15l-5-5L5 21"/>
+            </svg>
+          </button>
         </div>
       </div>
 

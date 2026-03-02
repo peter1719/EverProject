@@ -45,6 +45,7 @@ export interface Session {
   actualDurationMinutes: number; // Math.round(actualDurationMs / 60000)
   outcome: SessionOutcome;
   notes: string; // max 500 chars
+  hasImage?: boolean; // true if a photo is stored in sessionImages IDB store
   wasCombo: boolean;
   comboGroupId: string | null;
 }

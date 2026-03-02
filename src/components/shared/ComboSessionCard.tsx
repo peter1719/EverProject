@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ProjectNameRow } from './ProjectNameRow';
 import { SwipeableSessionCard } from './SwipeableSessionCard';
 import { SessionListItem } from './SessionListItem';
+import { useSessionImage } from '@/hooks/useSessionImage';
+import { ImageLightbox } from './ImageLightbox';
 import type { Session, Project } from '@/types';
 
 interface ComboSessionCardProps {
@@ -27,9 +29,16 @@ export function ComboSessionCard({
   resetToken,
 }: ComboSessionCardProps): React.ReactElement {
   const [expanded, setExpanded] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const totalMinutes = sessions.reduce((s, sess) => s + sess.actualDurationMinutes, 0);
   const lastNotes = sessions.find(s => s.notes)?.notes;
+
+  const firstImageSession = sessions.find(s => s.hasImage);
+  const firstImageDataUrl = useSessionImage(
+    firstImageSession?.id ?? '',
+    !!firstImageSession,
+  );
 
   if (expanded) {
     return (
@@ -70,6 +79,7 @@ export function ComboSessionCard({
   }
 
   return (
+    <>
     <SwipeableSessionCard
       onClick={() => setExpanded(true)}
       onDelete={onDeleteGroup}
@@ -104,7 +114,36 @@ export function ComboSessionCard({
             "{lastNotes}"
           </p>
         )}
+
+        {firstImageSession && (
+          <div className="mt-1">
+            {firstImageDataUrl ? (
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); setLightboxSrc(firstImageDataUrl); }}
+                className="block rounded-xl overflow-hidden active:opacity-80 transition-opacity duration-100"
+                style={{ width: 160, aspectRatio: '4/3' }}
+              >
+                <img
+                  src={firstImageDataUrl}
+                  alt="Session photo"
+                  className="w-full h-full object-cover object-center"
+                />
+              </button>
+            ) : (
+              <div
+                className="rounded-xl bg-surface-variant animate-pulse"
+                style={{ width: 160, aspectRatio: '4/3' }}
+              />
+            )}
+          </div>
+        )}
       </div>
     </SwipeableSessionCard>
+
+    {lightboxSrc && (
+      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+    )}
+    </>
   );
 }

@@ -1,6 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ColorDot } from './ColorDot';
+import { useSessionImage } from '@/hooks/useSessionImage';
+import { ImageLightbox } from './ImageLightbox';
 import type { Session, ProjectColor, SessionOutcome } from '@/types';
 
 /** Returns icon and color class for a session outcome. Exported for re-use. */
@@ -35,6 +38,8 @@ export function SessionListItem({
   className,
 }: SessionListItemProps): React.ReactElement {
   const { icon, colorClass } = outcomeStyle(session.outcome);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const imageDataUrl = useSessionImage(session.id, !!session.hasImage);
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
@@ -55,6 +60,34 @@ export function SessionListItem({
 
       {!session.notes && showNoNotesPlaceholder && (
         <p className="text-xs text-on-surface-variant/50 pl-6">(no notes)</p>
+      )}
+
+      {session.hasImage && (
+        <div className="mt-1 pl-6">
+          {imageDataUrl ? (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); setLightboxOpen(true); }}
+              className="block rounded-xl overflow-hidden active:opacity-80 transition-opacity duration-100"
+              style={{ width: 160, aspectRatio: '4/3' }}
+            >
+              <img
+                src={imageDataUrl}
+                alt="Session photo"
+                className="w-full h-full object-cover object-center"
+              />
+            </button>
+          ) : (
+            <div
+              className="rounded-xl bg-surface-variant animate-pulse"
+              style={{ width: 160, aspectRatio: '4/3' }}
+            />
+          )}
+        </div>
+      )}
+
+      {lightboxOpen && imageDataUrl && (
+        <ImageLightbox src={imageDataUrl} onClose={() => setLightboxOpen(false)} />
       )}
     </div>
   );
