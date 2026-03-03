@@ -71,11 +71,11 @@ export function ActivityDashboard(): React.ReactElement {
 
 function OverviewTab(): React.ReactElement {
   const { t } = useTranslation();
+  const sessions = useSessionStore(s => s.sessions);
   const getTotalSessionCount = useSessionStore(s => s.getTotalSessionCount);
   const getTotalMinutes = useSessionStore(s => s.getTotalMinutes);
   const getCurrentStreak = useSessionStore(s => s.getCurrentStreak);
   const getDailyActivity = useSessionStore(s => s.getDailyActivity);
-  const getSessionsForDay = useSessionStore(s => s.getSessionsForDay);
   const deleteSession = useSessionStore(s => s.deleteSession);
   const projects = useProjectStore(s => s.projects);
 
@@ -102,7 +102,10 @@ function OverviewTab(): React.ReactElement {
     count: d.count,
   }));
 
-  const daySessionsForPanel = selectedDay ? getSessionsForDay(selectedDay) : [];
+  const daySessionsForPanel = useMemo(
+    () => selectedDay ? sessions.filter(s => toDateString(s.startedAt) === selectedDay) : [],
+    [sessions, selectedDay],
+  );
 
   return (
     <div className="flex flex-col gap-6 px-4 py-4">

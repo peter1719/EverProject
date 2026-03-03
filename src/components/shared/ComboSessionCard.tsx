@@ -33,12 +33,7 @@ export function ComboSessionCard({
 
   const totalMinutes = sessions.reduce((s, sess) => s + sess.actualDurationMinutes, 0);
   const lastNotes = sessions.find(s => s.notes)?.notes;
-
-  const firstImageSession = sessions.find(s => s.hasImage);
-  const firstImageDataUrl = useSessionImage(
-    firstImageSession?.id ?? '',
-    !!firstImageSession,
-  );
+  const imageSessions = sessions.filter(s => s.hasImage);
 
   if (expanded) {
     return (
@@ -122,27 +117,16 @@ export function ComboSessionCard({
           </p>
         )}
 
-        {firstImageSession && (
-          <div className="mt-1">
-            {firstImageDataUrl ? (
-              <button
-                type="button"
-                onClick={e => { e.stopPropagation(); setLightboxSrc(firstImageDataUrl); }}
-                className="block rounded-xl overflow-hidden active:opacity-80 transition-opacity duration-100"
-                style={{ width: 160, aspectRatio: '4/3' }}
-              >
-                <img
-                  src={firstImageDataUrl}
-                  alt="Session photo"
-                  className="w-full h-full object-cover object-center"
-                />
-              </button>
-            ) : (
-              <div
-                className="rounded-xl bg-surface-variant animate-pulse"
-                style={{ width: 160, aspectRatio: '4/3' }}
+        {imageSessions.length > 0 && (
+          <div className="mt-1 flex gap-2">
+            {imageSessions.map(s => (
+              <ComboPhotoThumb
+                key={s.id}
+                sessionId={s.id}
+                multi={imageSessions.length > 1}
+                onLightbox={setLightboxSrc}
               />
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -152,5 +136,42 @@ export function ComboSessionCard({
       <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     )}
     </>
+  );
+}
+
+// ── Sub-component: one thumbnail (calls hook once per instance) ────────────────
+
+interface ComboPhotoThumbProps {
+  readonly sessionId: string;
+  /** When true, use flex-1 so multiple thumbnails share the row equally. */
+  readonly multi: boolean;
+  readonly onLightbox: (src: string) => void;
+}
+
+function ComboPhotoThumb({ sessionId, multi, onLightbox }: ComboPhotoThumbProps): React.ReactElement {
+  const dataUrl = useSessionImage(sessionId, true);
+
+  if (!dataUrl) {
+    return (
+      <div
+        className={multi ? 'flex-1 rounded-xl bg-surface-variant animate-pulse' : 'rounded-xl bg-surface-variant animate-pulse'}
+        style={multi ? { aspectRatio: '4/3' } : { width: 160, aspectRatio: '4/3' }}
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onPointerDown={e => e.stopPropagation()}
+      onClick={e => { e.stopPropagation(); onLightbox(dataUrl); }}
+      className={multi
+        ? 'flex-1 block rounded-xl overflow-hidden active:opacity-80 transition-opacity duration-100'
+        : 'block rounded-xl overflow-hidden active:opacity-80 transition-opacity duration-100'
+      }
+      style={multi ? { aspectRatio: '4/3' } : { width: 160, aspectRatio: '4/3' }}
+    >
+      <img src={dataUrl} alt="Session photo" className="w-full h-full object-cover object-center" />
+    </button>
   );
 }

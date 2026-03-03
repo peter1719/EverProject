@@ -51,11 +51,21 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
   const [outcome, setOutcome] = useState<SessionOutcome>(
     initialOutcome === 'abandoned' ? 'completed' : initialOutcome,
   );
-  const [notes, setNotes] = useState('');
-  const [image, setImage] = useState<string | undefined>(undefined);
+  const [notesMap, setNotesMap] = useState<Record<string, string>>({});
+
+  function setProjectNotes(id: string, value: string): void {
+    setNotesMap(prev => ({ ...prev, [id]: value.slice(0, MAX_NOTES_LENGTH) }));
+  }
+
+  const [imagesMap, setImagesMap] = useState<Record<string, string>>({});
   const [showQuitDialog, setShowQuitDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadForIdRef = useRef<string>('');
 
+  function triggerImagePick(projectId: string): void {
+    uploadForIdRef.current = projectId;
+    fileInputRef.current?.click();
+  }
 
   const isCombo = projectIds.length > 1;
 
@@ -90,8 +100,12 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
   async function handleImagePick(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = e.target.files?.[0];
     if (!file) return;
+    const id = uploadForIdRef.current;
+    if (!id) return;
     try {
-      setImage(await compressImage(file));
+      setImagesMap(prev => ({ ...prev, [id]: '' })); // placeholder while compressing
+      const compressed = await compressImage(file);
+      setImagesMap(prev => ({ ...prev, [id]: compressed }));
     } catch { /* ignore */ }
     e.target.value = '';
   }
@@ -104,6 +118,7 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
       const projectId = projectIds[0];
       if (!projectId) return;
       const proj = projects.find(p => p.id === projectId);
+      const img = imagesMap[projectId];
       const sessionId = await addSession({
         projectId,
         projectName: proj?.name ?? projectId,
@@ -113,12 +128,12 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
         plannedDurationMinutes,
         actualDurationMinutes,
         outcome,
-        notes,
-        hasImage: !!image,
+        notes: notesMap[projectId] ?? '',
+        hasImage: !!img,
         wasCombo: false,
         comboGroupId: null,
       });
-      if (image) await putSessionImage(sessionId, image);
+      if (img) await putSessionImage(sessionId, img);
     } else {
       const sharedComboId = comboGroupId ?? crypto.randomUUID();
       for (const projectId of startedProjectIds) {
@@ -133,6 +148,7 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
               : 'completed';
         const proj = projects.find(p => p.id === projectId);
         const isLastActive = projectId === lastActiveProjectId;
+        const img = imagesMap[projectId];
 
         const sessionId = await addSession({
           projectId,
@@ -143,12 +159,12 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
           plannedDurationMinutes: proj?.estimatedDurationMinutes ?? plannedDurationMinutes,
           actualDurationMinutes: wasSkipped || !isLastActive ? projectMinutes : actualDurationMinutes,
           outcome: projectOutcome,
-          notes: isLastActive ? notes : '',
-          hasImage: isLastActive ? !!image : false,
+          notes: notesMap[projectId] ?? '',
+          hasImage: !!img,
           wasCombo: true,
           comboGroupId: sharedComboId,
         });
-        if (isLastActive && image) await putSessionImage(sessionId, image);
+        if (img) await putSessionImage(sessionId, img);
       }
     }
 
@@ -164,7 +180,16 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-surface">
+    <div className="flex flex-col h-full overflow-y-auto bg-surface">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => void handleImagePick(e)}
+      />
+
       {/* Completion header */}
       <div className="flex flex-col items-center gap-2 py-8">
         <h1
@@ -251,47 +276,71 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
 
         {/* Notes */}
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-on-surface-variant">
-            {t('complete.notes')}
-          </p>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value.slice(0, MAX_NOTES_LENGTH))}
-            placeholder={t('complete.addNotes')}
-            rows={4}
-            className="rounded-xl border border-outline bg-surface-variant text-on-surface p-3 resize-none focus:border-primary focus:outline-none"
-          />
-          <p className="text-xs text-on-surface-variant text-right">
-            {notes.length} / {MAX_NOTES_LENGTH}
-          </p>
+          {/* Section label row */}
+          {!isCombo ? (
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-on-surface-variant">
+                {t('complete.notes')}
+              </p>
+              <CameraButton onClick={() => triggerImagePick(projectIds[0])} />
+            </div>
+          ) : (
+            <p className="text-sm font-medium text-on-surface-variant">
+              {t('complete.notes')}
+            </p>
+          )}
+
+          {!isCombo ? (
+            <>
+              <textarea
+                value={notesMap[projectIds[0]] ?? ''}
+                onChange={e => setProjectNotes(projectIds[0], e.target.value)}
+                placeholder={t('complete.addNotes')}
+                rows={4}
+                className="rounded-xl border border-outline bg-surface-variant text-on-surface p-3 resize-none focus:border-primary focus:outline-none"
+              />
+              <ImageThumbnail
+                src={imagesMap[projectIds[0]]}
+                onRemove={() => setImagesMap(prev => { const n = { ...prev }; delete n[projectIds[0]]; return n; })}
+              />
+              <p className="text-xs text-on-surface-variant text-right">
+                {(notesMap[projectIds[0]] ?? '').length} / {MAX_NOTES_LENGTH}
+              </p>
+            </>
+          ) : (
+            startedProjectIds.map(id => {
+              const project = projects.find(p => p.id === id);
+              const val = notesMap[id] ?? '';
+              return (
+                <div key={id} className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5">
+                    {project && <ColorDot color={project.color} size={8} />}
+                    <span className="flex-1 text-xs text-on-surface-variant font-medium truncate">
+                      {project?.name ?? 'Project'}
+                    </span>
+                    <CameraButton onClick={() => triggerImagePick(id)} />
+                  </div>
+                  <textarea
+                    value={val}
+                    onChange={e => setProjectNotes(id, e.target.value)}
+                    placeholder={t('complete.addNotes')}
+                    rows={3}
+                    className="rounded-xl border border-outline bg-surface-variant text-on-surface p-3 resize-none focus:border-primary focus:outline-none"
+                  />
+                  <ImageThumbnail
+                    src={imagesMap[id]}
+                    onRemove={() => setImagesMap(prev => { const n = { ...prev }; delete n[id]; return n; })}
+                  />
+                  <p className="text-xs text-on-surface-variant text-right">
+                    {val.length} / {MAX_NOTES_LENGTH}
+                  </p>
+                </div>
+              );
+            })
+          )}
         </div>
 
-        {/* Image preview */}
-        {image && (
-          <div className="relative rounded-xl overflow-hidden" style={{ width: 160, aspectRatio: '4/3' }}>
-            <img
-              src={image}
-              alt="Preview"
-              className="w-full h-full object-cover object-center"
-            />
-            <button
-              type="button"
-              onClick={() => setImage(undefined)}
-              className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center text-white text-sm"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
         {/* Action buttons */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={e => void handleImagePick(e)}
-        />
         <div className="flex gap-3">
           <Button variant="outlined" onClick={handleQuit} className="flex-1">
             {t('btn.quit')}
@@ -299,18 +348,6 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
           <Button variant="filled" onClick={() => void handleSave()} className="flex-1">
             {t('btn.save')}
           </Button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-12 h-12 shrink-0 bg-surface-variant border border-outline rounded-xl flex items-center justify-center text-on-surface-variant active:opacity-80 transition-opacity duration-100"
-            aria-label="Add photo"
-          >
-            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <path d="M21 15l-5-5L5 21"/>
-            </svg>
-          </button>
         </div>
       </div>
 
@@ -327,3 +364,43 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
   );
 }
 
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function CameraButton({ onClick }: { readonly onClick: () => void }): React.ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-8 h-8 shrink-0 rounded-lg bg-surface-variant border border-outline flex items-center justify-center text-on-surface-variant active:opacity-80 transition-opacity duration-100"
+      aria-label="Add photo"
+    >
+      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+    </button>
+  );
+}
+
+function ImageThumbnail({
+  src,
+  onRemove,
+}: {
+  readonly src: string | undefined;
+  readonly onRemove: () => void;
+}): React.ReactElement | null {
+  if (!src) return null;
+  return (
+    <div className="relative rounded-xl overflow-hidden" style={{ width: 160, aspectRatio: '4/3' }}>
+      <img src={src} alt="Preview" className="w-full h-full object-cover object-center" />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-2 right-2 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center text-white text-sm"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}

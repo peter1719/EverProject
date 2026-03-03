@@ -5,6 +5,7 @@ import 'react-circular-progressbar/dist/styles.css';
 import { useTimerStore } from '@/store/timerStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useTimer } from '@/hooks/useTimer';
+import { Square } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
@@ -213,7 +214,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
           </p>
         )}
         {isCombo && (
-          <p className="text-sm text-on-surface-variant">
+          <p className="font-mono text-sm text-on-surface-variant">
             {t('timer.projectOf', { current: currentProjectIndex + 1, total: projectIds.length })}
           </p>
         )}
@@ -296,7 +297,8 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         )}
 
         {/* Stop & Log — always visible */}
-        <Button variant="tonal" onClick={() => setShowStopDialog(true)} className="w-full">
+        <Button variant="tonal" onClick={() => setShowStopDialog(true)} className="w-full flex items-center justify-center gap-2">
+          <Square size={16} fill="currentColor" />
           {t('timer.stopLog')}
         </Button>
 

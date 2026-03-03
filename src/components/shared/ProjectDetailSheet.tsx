@@ -4,6 +4,7 @@ import { useSessionStore } from '@/store/sessionStore';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import { BottomSheet } from './BottomSheet';
 import { EditSessionSheet } from './EditSessionSheet';
+import { SwipeableSessionCard } from './SwipeableSessionCard';
 import { useSessionImage } from '@/hooks/useSessionImage';
 import { ImageLightbox } from './ImageLightbox';
 import type { Project, Session } from '@/types';
@@ -24,8 +25,10 @@ function formatNoteDate(timestamp: number): string {
 
 export function ProjectDetailSheet({ project, onClose, allowEdit = true }: ProjectDetailSheetProps): React.ReactElement {
   const sessions = useSessionStore(s => s.sessions);
+  const deleteSession = useSessionStore(s => s.deleteSession);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [swipeResetToken, setSwipeResetToken] = useState(0);
 
   const sessionNotes = project
     ? sessions
@@ -73,15 +76,31 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
                   const sessionNum =
                     allProjectSessions.findIndex(sess => sess.id === s.id) + 1;
                   return (
-                    <NoteCard
-                      key={s.id}
-                      session={s}
-                      sessionNum={sessionNum}
-                      colorHex={colorHex}
-                      allowEdit={allowEdit}
-                      onEdit={() => setEditingSession(s)}
-                      onLightbox={setLightboxSrc}
-                    />
+                    <div key={s.id} className="flex items-start gap-3">
+                      {/* Badge — stays fixed on the timeline line, outside the swipeable card */}
+                      <div
+                        className="relative z-10 shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-bold text-white"
+                        style={{
+                          backgroundColor: colorHex,
+                          fontSize: sessionNum >= 100 ? '11px' : '14px',
+                        }}
+                      >
+                        {sessionNum}
+                      </div>
+                      {/* Note content — swipeable */}
+                      <div className="flex-1 min-w-0">
+                        <SwipeableSessionCard
+                          onClick={() => { if (allowEdit) setEditingSession(s); }}
+                          onDelete={() => { void deleteSession(s.id); setSwipeResetToken(k => k + 1); }}
+                          resetToken={swipeResetToken}
+                        >
+                          <NoteCard
+                            session={s}
+                            onLightbox={setLightboxSrc}
+                          />
+                        </SwipeableSessionCard>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -109,72 +128,49 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
 
 // ── NoteCard sub-component ────────────────────────────────────────────────────
 
+// Note content only — badge is rendered by the parent alongside SwipeableSessionCard
 function NoteCard({
   session,
-  sessionNum,
-  colorHex,
-  allowEdit,
-  onEdit,
   onLightbox,
 }: {
   session: Session;
-  sessionNum: number;
-  colorHex: string;
-  allowEdit: boolean;
-  onEdit: () => void;
   onLightbox: (src: string) => void;
 }): React.ReactElement {
   const imageDataUrl = useSessionImage(session.id, !!session.hasImage);
 
   return (
-    <div
-      className={`flex items-start gap-3 ${allowEdit ? 'cursor-pointer active:opacity-80 transition-opacity duration-100' : ''}`}
-      onClick={allowEdit ? onEdit : undefined}
-    >
-      {/* Colored badge — sits on top of the timeline line */}
-      <div
-        className="relative z-10 shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-bold text-white"
-        style={{
-          backgroundColor: colorHex,
-          fontSize: sessionNum >= 100 ? '11px' : '14px',
-        }}
-      >
-        {sessionNum}
-      </div>
-
-      {/* Note card */}
-      <div className="flex-1 min-w-0 bg-surface-variant rounded-xl px-4 py-3">
-        {session.notes && (
-          <p className="text-sm text-on-surface leading-snug">{session.notes}</p>
-        )}
-        {session.hasImage && (
-          <div className={session.notes ? 'mt-2' : ''}>
-            {imageDataUrl ? (
-              <button
-                type="button"
-                onClick={e => { e.stopPropagation(); onLightbox(imageDataUrl); }}
-                className="block rounded-xl overflow-hidden active:opacity-80 transition-opacity duration-100"
-                style={{ width: 160, aspectRatio: '4/3' }}
-              >
-                <img
-                  src={imageDataUrl}
-                  alt="Session photo"
-                  className="w-full h-full object-cover object-center"
-                />
-              </button>
-            ) : (
-              <div
-                className="rounded-xl bg-surface-variant/60 animate-pulse"
-                style={{ width: 160, aspectRatio: '4/3' }}
+    <>
+      {session.notes && (
+        <p className="text-sm text-on-surface leading-snug">{session.notes}</p>
+      )}
+      {session.hasImage && (
+        <div className={session.notes ? 'mt-2' : ''}>
+          {imageDataUrl ? (
+            <button
+              type="button"
+              onPointerDown={e => e.stopPropagation()}
+              onClick={e => { e.stopPropagation(); onLightbox(imageDataUrl); }}
+              className="block rounded-xl overflow-hidden active:opacity-80 transition-opacity duration-100"
+              style={{ width: 160, aspectRatio: '4/3' }}
+            >
+              <img
+                src={imageDataUrl}
+                alt="Session photo"
+                className="w-full h-full object-cover object-center"
               />
-            )}
-          </div>
-        )}
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-xs text-on-surface-variant">{formatNoteDate(session.startedAt)}</p>
-          <p className="text-xs text-on-surface-variant">{session.actualDurationMinutes} min</p>
+            </button>
+          ) : (
+            <div
+              className="rounded-xl bg-surface-variant/60 animate-pulse"
+              style={{ width: 160, aspectRatio: '4/3' }}
+            />
+          )}
         </div>
+      )}
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-xs text-on-surface-variant">{formatNoteDate(session.startedAt)}</p>
+        <p className="text-xs text-on-surface-variant">{session.actualDurationMinutes} min</p>
       </div>
-    </div>
+    </>
   );
 }
