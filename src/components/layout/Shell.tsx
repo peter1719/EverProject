@@ -16,7 +16,7 @@ export function Shell(): React.ReactElement {
       <UpdatePrompt />
 
       <main
-        className="flex-1 overflow-y-auto overflow-x-hidden"
+        className="flex-1 overflow-hidden"
       >
         <Outlet />
       </main>
