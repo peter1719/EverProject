@@ -42,39 +42,46 @@ export function ComboSessionCard({
 
   if (expanded) {
     return (
-      <div className="flex flex-col">
-        {/* Collapsible header */}
-        <div
-          className="bg-surface-variant shadow-sm px-4 py-4 rounded-xl flex items-center gap-2 cursor-pointer active:opacity-80 transition-opacity duration-100"
-          onClick={() => setExpanded(false)}
-        >
-          <span className="text-base text-primary">⧉</span>
-          <span className="flex-1 text-sm font-medium text-on-surface">Combo session</span>
-          <span className="text-xs text-on-surface-variant shrink-0">{totalMinutes}M</span>
-          <span className="text-xs text-on-surface-variant ml-2">▲</span>
+      <>
+        <div className="flex flex-col">
+          {/* Collapsible header */}
+          <div
+            className="bg-surface-variant shadow-sm px-4 py-4 rounded-xl flex items-center gap-2 cursor-pointer active:opacity-80 transition-opacity duration-100"
+            onClick={() => setExpanded(false)}
+          >
+            <span className="text-base text-primary">⧉</span>
+            <span className="flex-1 text-sm font-medium text-on-surface">Combo session</span>
+            <span className="text-xs text-on-surface-variant shrink-0">{totalMinutes}M</span>
+            <span className="text-xs text-on-surface-variant ml-2">▲</span>
+          </div>
+
+          {/* Individual session cards — indented with left-border hierarchy line */}
+          <div className="ml-3 flex flex-col gap-2 border-l-2 border-primary/40 pl-3 py-2 pr-1 bg-surface rounded-r-xl">
+            {sessions.map(session => {
+              const project = projects.find(p => p.id === session.projectId);
+              return (
+                <SwipeableSessionCard
+                  key={session.id}
+                  onClick={() => onEditSession(session)}
+                  onDelete={() => onDeleteSession(session)}
+                  resetToken={resetToken}
+                >
+                  <SessionListItem
+                    session={session}
+                    projectColor={project?.color ?? session.projectColor}
+                    projectName={project?.name ?? session.projectName}
+                    onLightbox={setLightboxSrc}
+                  />
+                </SwipeableSessionCard>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Individual session cards — indented with left-border hierarchy line */}
-        <div className="ml-3 flex flex-col gap-2 border-l-2 border-primary/40 pl-3 py-2 pr-1 bg-surface rounded-r-xl">
-          {sessions.map(session => {
-            const project = projects.find(p => p.id === session.projectId);
-            return (
-              <SwipeableSessionCard
-                key={session.id}
-                onClick={() => onEditSession(session)}
-                onDelete={() => onDeleteSession(session)}
-                resetToken={resetToken}
-              >
-                <SessionListItem
-                  session={session}
-                  projectColor={project?.color ?? session.projectColor}
-                  projectName={project?.name ?? session.projectName}
-                />
-              </SwipeableSessionCard>
-            );
-          })}
-        </div>
-      </div>
+        {lightboxSrc && (
+          <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+        )}
+      </>
     );
   }
 

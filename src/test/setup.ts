@@ -2,6 +2,11 @@ import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
+// Create the #phone-frame element that ImageLightbox portals into
+const phoneFrame = document.createElement('div');
+phoneFrame.id = 'phone-frame';
+document.body.appendChild(phoneFrame);
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();

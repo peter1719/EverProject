@@ -11,6 +11,7 @@ import {
   ComboSessionCard,
   DateDivider,
   EditSessionSheet,
+  ImageLightbox,
   SessionListItem,
   SwipeableSessionCard,
   TabGroup,
@@ -80,6 +81,7 @@ function OverviewTab(): React.ReactElement {
 
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [editSession, setEditSession] = useState<Session | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [scrollToEnd, setScrollToEnd] = useState(0);
   const [swipeResetToken, setSwipeResetToken] = useState(0);
   const [daysToLoad, setDaysToLoad] = useState(365);
@@ -172,7 +174,7 @@ function OverviewTab(): React.ReactElement {
                   onDelete={() => { void deleteSession(item.session.id); setSwipeResetToken(k => k + 1); }}
                   resetToken={swipeResetToken}
                 >
-                  <SingleSessionCard session={item.session} projects={projects} />
+                  <SingleSessionCard session={item.session} projects={projects} onLightbox={setLightboxSrc} />
                 </SwipeableSessionCard>
               );
             }
@@ -203,6 +205,9 @@ function OverviewTab(): React.ReactElement {
         onClose={() => setEditSession(null)}
         baseZIndex={200}
       />
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      )}
     </div>
   );
 }
@@ -250,6 +255,7 @@ function HistoryTab(): React.ReactElement {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [editSession, setEditSession] = useState<Session | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [swipeResetToken, setSwipeResetToken] = useState(0);
 
   const filteredSessions = useMemo(() => {
@@ -340,7 +346,7 @@ function HistoryTab(): React.ReactElement {
                   onDelete={() => { void deleteSession(item.session.id); setSwipeResetToken(k => k + 1); }}
                   resetToken={swipeResetToken}
                 >
-                  <SingleSessionCard session={item.session} projects={projects} />
+                  <SingleSessionCard session={item.session} projects={projects} onLightbox={setLightboxSrc} />
                 </SwipeableSessionCard>
               );
             }
@@ -375,6 +381,9 @@ function HistoryTab(): React.ReactElement {
         onClose={() => setEditSession(null)}
         baseZIndex={200}
       />
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      )}
     </div>
   );
 }
@@ -893,9 +902,11 @@ function groupSessionCards(sessions: Session[]): SessionCardItem[] {
 function SingleSessionCard({
   session,
   projects,
+  onLightbox,
 }: {
   session: Session;
   projects: ReturnType<typeof useProjectStore.getState>['projects'];
+  onLightbox?: (src: string) => void;
 }): React.ReactElement {
   const project = projects.find(p => p.id === session.projectId);
   return (
@@ -903,6 +914,7 @@ function SingleSessionCard({
       session={session}
       projectColor={project?.color ?? session.projectColor}
       projectName={project?.name ?? session.projectName}
+      onLightbox={onLightbox}
     />
   );
 }

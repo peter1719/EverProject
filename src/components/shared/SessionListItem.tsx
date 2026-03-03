@@ -1,9 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ColorDot } from './ColorDot';
 import { useSessionImage } from '@/hooks/useSessionImage';
-import { ImageLightbox } from './ImageLightbox';
 import type { Session, ProjectColor, SessionOutcome } from '@/types';
 
 /** Returns icon and color class for a session outcome. Exported for re-use. */
@@ -23,6 +21,8 @@ interface SessionListItemProps {
   projectName: string;
   /** Show "(no notes)" placeholder when there are no notes. Default: false. */
   showNoNotesPlaceholder?: boolean;
+  /** Called when the user taps the photo thumbnail. Caller is responsible for rendering the lightbox. */
+  onLightbox?: (src: string) => void;
   className?: string;
 }
 
@@ -35,10 +35,10 @@ export function SessionListItem({
   projectColor,
   projectName,
   showNoNotesPlaceholder = false,
+  onLightbox,
   className,
 }: SessionListItemProps): React.ReactElement {
   const { icon, colorClass } = outcomeStyle(session.outcome);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const imageDataUrl = useSessionImage(session.id, !!session.hasImage);
 
   return (
@@ -67,7 +67,8 @@ export function SessionListItem({
           {imageDataUrl ? (
             <button
               type="button"
-              onClick={e => { e.stopPropagation(); setLightboxOpen(true); }}
+              onPointerDown={e => e.stopPropagation()}
+              onClick={e => { e.stopPropagation(); onLightbox?.(imageDataUrl); }}
               className="block rounded-xl overflow-hidden active:opacity-80 transition-opacity duration-100"
               style={{ width: 160, aspectRatio: '4/3' }}
             >
@@ -84,10 +85,6 @@ export function SessionListItem({
             />
           )}
         </div>
-      )}
-
-      {lightboxOpen && imageDataUrl && (
-        <ImageLightbox src={imageDataUrl} onClose={() => setLightboxOpen(false)} />
       )}
     </div>
   );

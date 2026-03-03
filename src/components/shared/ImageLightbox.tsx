@@ -17,15 +17,15 @@ export function ImageLightbox({
   return createPortal(
     <div
       className="fixed inset-0 bg-black/90 flex items-center justify-center z-[300] p-4"
-      onClick={onClose}
+      onPointerDown={e => { e.preventDefault(); onClose(); }}
     >
       <img
         src={src}
         alt="Session photo"
         className="max-w-full max-h-full object-contain rounded-xl"
-        onClick={e => e.stopPropagation()}
+        onPointerDown={e => e.stopPropagation()}
       />
     </div>,
-    document.body,
+    document.getElementById('phone-frame')!,
   );
 }
