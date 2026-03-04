@@ -92,7 +92,9 @@ export function ComboSessionCard({
         <div className="flex items-center gap-2">
           <span className="text-base text-primary">⧉</span>
           <span className="flex-1 text-sm font-medium text-on-surface">Combo session</span>
-          <span className="text-xs text-on-surface-variant shrink-0">{totalMinutes}M</span>
+          <span className="text-xs text-on-surface-variant shrink-0">
+            {sessions[0] ? `${String(new Date(sessions[0].startedAt).getHours()).padStart(2, '0')}:${String(new Date(sessions[0].startedAt).getMinutes()).padStart(2, '0')} · ` : ''}{totalMinutes}M
+          </span>
         </div>
 
         {/* Per-project sub-rows */}
@@ -112,8 +114,8 @@ export function ComboSessionCard({
         })}
 
         {lastNotes && (
-          <p className="text-xs text-on-surface-variant truncate pl-4 italic">
-            "{lastNotes}"
+          <p className="text-xs text-on-surface-variant truncate pl-4">
+            {lastNotes}
           </p>
         )}
 

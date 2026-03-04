@@ -48,13 +48,13 @@ export function SessionListItem({
         <ColorDot color={projectColor} size={10} />
         <span className="flex-1 text-sm text-on-surface truncate">{projectName}</span>
         <span className="text-xs text-on-surface-variant shrink-0">
-          {session.actualDurationMinutes}M
+          {`${String(new Date(session.startedAt).getHours()).padStart(2, '0')}:${String(new Date(session.startedAt).getMinutes()).padStart(2, '0')} · ${session.actualDurationMinutes}M`}
         </span>
       </div>
 
       {session.notes && (
-        <p className="text-xs text-on-surface-variant truncate pl-6 italic">
-          "{session.notes}"
+        <p className="text-xs text-on-surface-variant truncate pl-6">
+          {session.notes}
         </p>
       )}
 

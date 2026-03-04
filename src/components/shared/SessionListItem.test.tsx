@@ -48,7 +48,7 @@ describe('SessionListItem rendering', () => {
       />,
     );
     expect(screen.getByText('Alpha')).toBeInTheDocument();
-    expect(screen.getByText('30M')).toBeInTheDocument();
+    expect(screen.getByText(/· 30M/)).toBeInTheDocument();
   });
 
   it('does not render photo area when hasImage is falsy', () => {

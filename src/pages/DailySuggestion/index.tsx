@@ -213,7 +213,7 @@ function SuggestionCard({
         <p className="text-sm text-on-surface-variant flex-1 min-w-0 leading-snug line-clamp-2">
           {notesExcerpt
             ? `${notesExcerpt}${project.notes.length > 80 ? '…' : ''}`
-            : <span className="italic opacity-50">{t('suggest.noNote')}</span>}
+            : <span className="opacity-50">{t('suggest.noNote')}</span>}
         </p>
       </div>
 

@@ -20,7 +20,9 @@ function formatNoteDate(timestamp: number): string {
   const yy = String(d.getFullYear()).slice(2);
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
-  return `${yy}-${mm}-${dd}`;
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${yy}-${mm}-${dd} ${hh}:${min}`;
 }
 
 export function ProjectDetailSheet({ project, onClose, allowEdit = true }: ProjectDetailSheetProps): React.ReactElement {
@@ -30,17 +32,15 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [swipeResetToken, setSwipeResetToken] = useState(0);
 
-  const sessionNotes = project
-    ? sessions
-        .filter(s => s.projectId === project.id && (s.notes.trim() !== '' || !!s.hasImage))
-        .sort((a, b) => b.startedAt - a.startedAt)
-    : [];
-
+  // All sessions for this project, oldest-first (used for badge numbering).
   const allProjectSessions = project
     ? sessions
         .filter(s => s.projectId === project.id)
         .sort((a, b) => a.startedAt - b.startedAt)
     : [];
+
+  // Same set displayed newest-first in the timeline.
+  const sessionNotes = [...allProjectSessions].reverse();
 
   const colorHex = project ? COLOR_HEX_MAP[project.color] : '';
 
@@ -107,7 +107,7 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
             </div>
           ) : (
             <p className="text-sm text-on-surface-variant/50 italic text-center py-8 px-4">
-              {project.notes ? 'No session notes yet.' : 'No notes yet.'}
+              No sessions yet.
             </p>
           )}
         </div>
