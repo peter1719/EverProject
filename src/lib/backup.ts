@@ -1,6 +1,7 @@
 import { getDB } from '@/db';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
+import type { Project, Session } from '@/types';
 
 export async function exportData(includeImages: boolean): Promise<void> {
   const db = await getDB();
@@ -35,10 +36,10 @@ export async function importData(
   ) {
     throw new Error('Invalid backup file');
   }
-  const { projects, sessions, sessionImages = [] } = data as {
-    projects: unknown[];
-    sessions: unknown[];
-    sessionImages?: unknown[];
+  const { projects, sessions, sessionImages = [] } = data as unknown as {
+    projects: Project[];
+    sessions: Session[];
+    sessionImages?: { sessionId: string; dataUrl: string }[];
   };
   const db = await getDB();
   await db.clear('projects');
