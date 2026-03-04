@@ -131,6 +131,18 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'stats.openSettings': 'Settings',
     'stats.sessionCount': '{count} session',
     'stats.sessionCountPlural': '{count} sessions',
+
+    // ── Data / Backup ────────────────────────────────────────────────────────
+    'settings.data': 'Data',
+    'settings.data.export': 'Export backup',
+    'settings.data.exportChoose': 'Choose export format',
+    'settings.data.exportFull': 'Include photos',
+    'settings.data.exportDataOnly': 'Data only',
+    'settings.data.exporting': 'Exporting…',
+    'settings.data.import': 'Choose backup file',
+    'settings.data.importConfirm': 'Restore {p} projects, {s} sessions, {i} photos? Current data will be replaced.',
+    'settings.data.importSuccess': 'Restored successfully',
+    'settings.data.importError': 'Invalid backup file',
   },
 
   'zh-TW': {
@@ -263,5 +275,17 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'stats.openSettings': '設定',
     'stats.sessionCount': '{count} 次',
     'stats.sessionCountPlural': '{count} 次',
+
+    // ── Data / Backup ────────────────────────────────────────────────────────
+    'settings.data': '資料',
+    'settings.data.export': '匯出備份',
+    'settings.data.exportChoose': '選擇備份格式',
+    'settings.data.exportFull': '含照片',
+    'settings.data.exportDataOnly': '僅資料',
+    'settings.data.exporting': '匯出中…',
+    'settings.data.import': '選擇備份檔案',
+    'settings.data.importConfirm': '將還原 {p} 個專案、{s} 個紀錄、{i} 張照片，現有資料將被覆蓋。',
+    'settings.data.importSuccess': '還原成功',
+    'settings.data.importError': '無效的備份檔案',
   },
 };
