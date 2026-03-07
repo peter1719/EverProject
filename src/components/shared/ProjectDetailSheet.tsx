@@ -32,13 +32,13 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [swipeResetToken, setSwipeResetToken] = useState(0);
-  const [tab, setTab] = useState<'notes' | 'todo'>('notes');
+  const [tab, setTab] = useState<'notes' | 'todo'>('todo');
   const [trackedProjectId, setTrackedProjectId] = useState<string | undefined>(project?.id);
 
   // Reset tab when project changes (getDerivedStateFromProps pattern — avoids useEffect)
   if (project?.id !== trackedProjectId) {
     setTrackedProjectId(project?.id);
-    setTab('notes');
+    setTab('todo');
   }
 
   // All sessions for this project, oldest-first (used for badge numbering).
@@ -60,7 +60,7 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
         <div className="flex flex-col">
           {/* Tab switcher */}
           <div className="flex border-b border-outline/20 mx-4 mt-2">
-            {(['notes', 'todo'] as const).map(t => (
+            {(['todo', 'notes'] as const).map(t => (
               <button
                 key={t}
                 type="button"

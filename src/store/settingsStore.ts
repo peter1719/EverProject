@@ -6,7 +6,7 @@ import type { AppSettings, AppTheme, AppLanguage } from '@/types';
 const SETTINGS_KEY = 'settings';
 
 const DEFAULT_SETTINGS: AppSettings = {
-  lastVisitedTab: '/suggest',
+  lastVisitedTab: '/library',
   customOrderIds: [],
   theme: 'system',
   language: 'en',

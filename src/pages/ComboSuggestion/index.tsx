@@ -38,6 +38,7 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const swipeStartX = useRef<number | null>(null);
 
   const sessions = useSessionStore(s => s.sessions);
   const getActiveProjects = useProjectStore(s => s.getActiveProjects);
@@ -141,7 +142,17 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
               <div
                 ref={carouselRef}
                 className="flex-1 flex overflow-x-hidden"
-                style={{ scrollSnapType: 'x mandatory' }}
+                style={{ scrollSnapType: 'x mandatory', touchAction: 'pan-y' }}
+                onPointerDown={e => { swipeStartX.current = e.clientX; }}
+                onPointerUp={e => {
+                  if (swipeStartX.current === null) return;
+                  const delta = e.clientX - swipeStartX.current;
+                  swipeStartX.current = null;
+                  if (Math.abs(delta) < 40) return;
+                  if (delta < 0) handleNext();
+                  else handlePrev();
+                }}
+                onPointerCancel={() => { swipeStartX.current = null; }}
               >
                 {combos.map((combo, i) => (
                   <div

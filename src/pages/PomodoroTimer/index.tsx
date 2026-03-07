@@ -97,7 +97,8 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
   const [flashComplete, setFlashComplete] = useState(false);
 
   useEffect(() => {
-    if (phase === 'idle') {
+    const currentPhase = useTimerStore.getState().phase;
+    if (currentPhase === 'idle' || currentPhase === 'finished') {
       startTimer(
         routerState.projectIds,
         routerState.totalMinutes,
@@ -278,7 +279,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
 
         {/* Ring — absolute centre */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="relative w-[min(90vw,60vh)] aspect-square">
+        <div className="relative w-[min(90vw,60vh,390px)] aspect-square">
           <RingTicks totalSeconds={currentProjectDurationSecs} />
           {flashComplete && (
             <div className="absolute inset-0 flex items-center justify-center z-10">

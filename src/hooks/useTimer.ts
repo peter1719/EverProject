@@ -131,6 +131,7 @@ export function useTimer(onProjectComplete?: () => void): void {
     };
 
     navigate('/complete', { state: payload });
+    useTimerStore.getState().resetTimer();
   }, [phase, navigate]);
 
   // ── Page Visibility reconciliation ─────────────────────────────────────────

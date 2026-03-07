@@ -59,6 +59,7 @@ const INITIAL_TIMER_STATE = {
   comboGroupId: null,
   skippedProjectIds: [] as string[],
   projectElapsedMs: {} as Record<string, number>,
+  projectAllocatedMinutes: {} as Record<string, number>,
 };
 
 beforeEach(() => {
@@ -130,6 +131,26 @@ describe('PomodoroTimer display', () => {
     });
     renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
     expect(screen.getByText('P1')).toBeInTheDocument();
+  });
+
+  it('starts a fresh timer when mounting with stale finished phase from previous session', () => {
+    // Regression: after natural completion, resetTimer is never called.
+    // Next mount sees phase='finished', mount effect guard (phase === 'idle') fails,
+    // so startTimer is never called and the timer loop immediately navigates to /complete.
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'finished' as const,
+      projectIds: ['old-project'],
+      remainingSeconds: 0,
+      startedAt: Date.now() - 90_000,
+    });
+
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+
+    // New session must have started — phase running, projectIds updated
+    expect(useTimerStore.getState().phase).toBe('running');
+    expect(useTimerStore.getState().projectIds).toEqual(['p1']);
+    expect(useTimerStore.getState().remainingSeconds).toBe(30 * 60);
   });
 });
 
