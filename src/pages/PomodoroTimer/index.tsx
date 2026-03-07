@@ -311,6 +311,13 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
               <span className="font-mono text-7xl font-bold text-on-surface">{timeLabel}</span>
               <div className="flex items-center gap-8">
+                <button
+                  onClick={() => setShowStopDialog(true)}
+                  aria-label={t('timer.stopLog')}
+                  className="text-on-surface active:opacity-80 transition-opacity duration-100"
+                >
+                  <Square size={32} fill="currentColor" />
+                </button>
                 {phase === 'running' && (
                   <button
                     onClick={handlePause}
@@ -329,13 +336,6 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
                     <Play size={32} fill="currentColor" />
                   </button>
                 )}
-                <button
-                  onClick={() => setShowStopDialog(true)}
-                  aria-label={t('timer.stopLog')}
-                  className="text-on-surface active:opacity-80 transition-opacity duration-100"
-                >
-                  <Square size={32} fill="currentColor" />
-                </button>
                 {isCombo && (
                   <button
                     onClick={() => setShowSkipDialog(true)}
