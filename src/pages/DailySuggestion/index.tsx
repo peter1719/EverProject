@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { ColorDot } from '@/components/shared/ColorDot';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Button } from '@/components/shared/Button';
 import { DurationSelector } from '@/components/shared/DurationSelector';
 import { ProjectDetailSheet } from '@/components/shared';
+import { ProjectProgressBar } from '@/components/shared/ProjectProgressBar';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -70,6 +70,13 @@ export function DailySuggestion(): React.ReactElement {
     ? getDaysSinceLastSession(suggestion.id, sessions)
     : null;
 
+  const suggestionTotalMinutes = useMemo(() => {
+    if (!suggestion) return 0;
+    return sessions
+      .filter(s => s.projectId === suggestion.id && s.outcome !== 'abandoned')
+      .reduce((sum, s) => sum + s.actualDurationMinutes, 0);
+  }, [suggestion, sessions]);
+
   useEffect(() => {
     if (!flipping && suggestion) {
       prevSuggestionRef.current = suggestion;
@@ -108,7 +115,7 @@ export function DailySuggestion(): React.ReactElement {
             <SuggestionCard
               project={suggestion}
               daysSince={daysSince}
-              availableMinutes={availableMinutes}
+              totalMinutes={suggestionTotalMinutes}
               onClick={() => setNoteSheetProject(suggestion)}
             />
           </div>
@@ -156,14 +163,14 @@ export function DailySuggestion(): React.ReactElement {
 interface SuggestionCardProps {
   readonly project: Project;
   readonly daysSince: number | null;
-  readonly availableMinutes: number;
+  readonly totalMinutes: number;
   readonly onClick: () => void;
 }
 
 function SuggestionCard({
   project,
   daysSince,
-  availableMinutes,
+  totalMinutes,
   onClick,
 }: SuggestionCardProps): React.ReactElement {
   const { t } = useTranslation();
@@ -179,15 +186,6 @@ function SuggestionCard({
           ? t('suggest.yesterday')
           : t('suggest.daysAgo', { n: Math.floor(daysSince) });
 
-  // When available time is very long (>200 min), show time remaining after the project
-  // instead of the project duration — more useful when planning a long block.
-  const durationTag =
-    availableMinutes > 200
-      ? `>3h left`
-      : project.estimatedDurationMinutes >= 999
-        ? '>3h'
-        : `~${project.estimatedDurationMinutes} min`;
-
   return (
     <div
       role="button"
@@ -199,17 +197,13 @@ function SuggestionCard({
     >
       {/* Project name row */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-        <ColorDot color={project.color} size={14} />
         <span className="font-display text-lg font-bold text-on-surface flex-1 truncate">
           {project.name}
         </span>
       </div>
 
-      {/* Duration tag + Note — always same height */}
+      {/* Note */}
       <div className="flex items-center gap-2 px-4 pb-3">
-        <span className="shrink-0 rounded-full bg-primary-container text-on-primary-container text-xs font-medium px-2.5 py-0.5">
-          {durationTag}
-        </span>
         <p className="text-sm text-on-surface-variant flex-1 min-w-0 leading-snug line-clamp-2">
           {notesExcerpt
             ? `${notesExcerpt}${project.notes.length > 80 ? '…' : ''}`
@@ -221,6 +215,14 @@ function SuggestionCard({
       <div className="border-t border-outline/20 px-4 py-2">
         <span className="text-xs text-on-surface-variant">{t('suggest.last', { label: recencyLabel })}</span>
       </div>
+
+      {/* Progress bar */}
+      <ProjectProgressBar
+        totalMinutes={totalMinutes}
+        estimatedDurationMinutes={project.estimatedDurationMinutes}
+        colorHex={colorHex}
+        className="border-t border-outline/20 py-3"
+      />
     </div>
   );
 }

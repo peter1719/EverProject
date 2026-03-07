@@ -7,6 +7,7 @@ import type { Project } from '@/types';
 interface Props {
   project: Project;
   reorderMode: boolean;
+  totalMinutes?: number;
   onStart: (p: Project) => void;
   onEdit: (p: Project) => void;
   onArchive: (id: string) => Promise<void>;

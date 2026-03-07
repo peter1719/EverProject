@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ArrowUpDown, GripVertical } from 'lucide-react';
 import {
@@ -87,6 +87,15 @@ export function ProjectLibrary(): React.ReactElement {
       window.history.replaceState({}, '');
     }
   }, [location.state]);
+
+  const projectTotalMinutes = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of sessions) {
+      if (s.outcome === 'abandoned') continue;
+      map.set(s.projectId, (map.get(s.projectId) ?? 0) + s.actualDurationMinutes);
+    }
+    return map;
+  }, [sessions]);
 
   const activeProjects = applySortMode(getActiveProjects(sessions), sortMode, customOrderIds);
   const archivedProjects = projects.filter(p => p.isArchived);
@@ -232,6 +241,7 @@ export function ProjectLibrary(): React.ReactElement {
                     key={project.id}
                     project={project}
                     reorderMode={isReordering}
+                    totalMinutes={projectTotalMinutes.get(project.id) ?? 0}
                     onStart={setStartProject}
                     onEdit={setEditProject}
                     onArchive={handleArchive}
@@ -261,6 +271,7 @@ export function ProjectLibrary(): React.ReactElement {
                   <ProjectCard
                     key={project.id}
                     project={project}
+                    totalMinutes={projectTotalMinutes.get(project.id) ?? 0}
                     onStart={setStartProject}
                     onEdit={setEditProject}
                     onArchive={handleArchive}

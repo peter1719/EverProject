@@ -1,15 +1,15 @@
 import { useState, useReducer, useRef, useEffect } from 'react';
-import { ColorDot } from '@/components/shared/ColorDot';
-import { DurationBadge } from '@/components/shared/DurationBadge';
+import { ProjectProgressBar } from '@/components/shared/ProjectProgressBar';
+import { cn } from '@/lib/utils';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ProjectDetailSheet } from '@/components/shared';
 import { COLOR_HEX_MAP } from '@/lib/constants';
-import { cn } from '@/lib/utils';
 import type { Project } from '@/types';
 
 interface ProjectCardProps {
   readonly project: Project;
   readonly reorderMode?: boolean;
+  readonly totalMinutes?: number;
   readonly onStart: (project: Project) => void;
   readonly onEdit: (project: Project) => void;
   readonly onArchive: (id: string) => void;
@@ -58,6 +58,7 @@ function swipeReducer(state: SwipeState, action: SwipeAction): SwipeState {
 export function ProjectCard({
   project,
   reorderMode = false,
+  totalMinutes = 0,
   onStart,
   onEdit,
   onArchive,
@@ -192,7 +193,7 @@ export function ProjectCard({
             {/* Card body */}
             <div
               data-testid="card-body"
-              className="bg-surface-variant shadow-sm h-24 w-full shrink-0 flex"
+              className="bg-surface-variant shadow-sm w-full shrink-0 flex flex-col"
               style={{
                 borderLeft: `4px solid ${colorHex}`,
                 touchAction: 'pan-y',
@@ -207,8 +208,8 @@ export function ProjectCard({
               })}
               onClick={handleClick}
             >
-              <div className="flex-1 overflow-hidden flex items-center gap-3 px-5 py-3">
-                <ColorDot color={project.color} size={14} />
+              {/* Main content row */}
+              <div className="flex-1 overflow-hidden flex items-center gap-3 px-5 pt-3 pb-2 h-[88px]">
                 <div className="flex-1 min-w-0">
                   <p
                     className={cn(
@@ -219,7 +220,6 @@ export function ProjectCard({
                     {project.name}
                   </p>
                   <div className="mt-1.5 flex items-center gap-2 min-w-0">
-                    <DurationBadge minutes={project.estimatedDurationMinutes} />
                     {project.isArchived && (
                       <span className="text-xs text-on-surface-variant shrink-0">Archived</span>
                     )}
@@ -263,6 +263,14 @@ export function ProjectCard({
                   </svg>
                 </button>
               </div>
+
+              {/* Progress bar */}
+              <ProjectProgressBar
+                totalMinutes={totalMinutes}
+                estimatedDurationMinutes={project.estimatedDurationMinutes}
+                colorHex={colorHex}
+                className="pb-3"
+              />
             </div>
 
             {/* Delete zone — revealed on swipe left; reuses existing PixelDialog */}
