@@ -18,5 +18,6 @@ export { SessionListItem, outcomeStyle } from './SessionListItem';
 export { SwipeableSessionCard } from './SwipeableSessionCard';
 export { TabGroup } from './TabGroup';
 export { ProjectDetailSheet } from './ProjectDetailSheet';
+export { TodoList } from './TodoList';
 export { EditSessionSheet } from './EditSessionSheet';
 export { ImageLightbox } from './ImageLightbox';

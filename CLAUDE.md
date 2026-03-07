@@ -155,17 +155,17 @@ const btnOutlined = 'border border-outline text-primary bg-transparent rounded-x
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `surface` | `#FAFAFA` | `#1C1B1F` | Page background |
-| `surface-variant` | `#F3F0FA` | `#2B2A33` | Card background |
-| `on-surface` | `#1C1B1F` | `#E6E1E5` | Primary text |
-| `on-surface-variant` | `#49454E` | `#CAC4D0` | Secondary text |
-| `primary` | `#6366F1` | `#C5C1FF` | Primary accent |
-| `on-primary` | `#FFFFFF` | `#1A1065` | Text on primary |
-| `primary-container` | `#E8E7FF` | `#4942C9` | Tonal button bg |
-| `on-primary-container` | `#1A1065` | `#E5E0FF` | Text on tonal |
+| `surface` | `#FDFAF4` | `#1A1208` | Page background |
+| `surface-variant` | `#FFFFFF` | `#261C0F` | Card background |
+| `on-surface` | `#1A1208` | `#F4EDE0` | Primary text |
+| `on-surface-variant` | `#7A6651` | `#A89070` | Secondary text |
+| `primary` | `#C75B21` | `#E07840` | Primary accent (warm orange) |
+| `on-primary` | `#FFFFFF` | `#1A1208` | Text on primary |
+| `primary-container` | `#FEECD8` | `#5C1E00` | Tonal button bg |
+| `on-primary-container` | `#5C1E00` | `#FEECD8` | Text on tonal |
 | `error` | `#B3261E` | `#F2B8B5` | Error states |
 | `success` | `#386A20` | `#8FD67A` | Success / Done |
 | `warning` | `#7B5800` | `#EFBF00` | Warning / Partial |
-| `outline` | `#79757F` | `#938F99` | Borders, dividers |
+| `outline` | `#B0A090` | `#5C4A35` | Borders, dividers |
 
 Fonts: **Roboto** / system-ui fallback. Sentence case everywhere; badges/tags may use ALL CAPS. All animations use `ease-out` at 250ms — no `steps()` easing.

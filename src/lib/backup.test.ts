@@ -12,12 +12,16 @@ vi.mock('@/db', () => ({ getDB: () => Promise.resolve(mockDb) }));
 // ── Store hydrate mocks ───────────────────────────────────────────────────────
 const mockProjectHydrate = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockSessionHydrate = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const mockTodoHydrate = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
 vi.mock('@/store/projectStore', () => ({
   useProjectStore: { getState: () => ({ hydrate: mockProjectHydrate }) },
 }));
 vi.mock('@/store/sessionStore', () => ({
   useSessionStore: { getState: () => ({ hydrate: mockSessionHydrate }) },
+}));
+vi.mock('@/store/todoStore', () => ({
+  useTodoStore: { getState: () => ({ hydrate: mockTodoHydrate }) },
 }));
 
 // ── URL mock ─────────────────────────────────────────────────────────────────
@@ -33,11 +37,12 @@ function makeFile(content: unknown): File {
 }
 
 const VALID_BACKUP = {
-  version: 2,
+  version: 3,
   exportedAt: '2026-03-04T00:00:00.000Z',
   projects: [{ id: 'p1', name: 'Project 1' }],
   sessions: [{ id: 's1', projectId: 'p1' }, { id: 's2', projectId: 'p1' }],
   sessionImages: [{ sessionId: 's1', dataUrl: 'data:image/jpeg;base64,abc' }],
+  todos: [{ id: 't1', projectId: 'p1', text: 'Test todo', isDone: false, createdAt: 1000 }],
 };
 
 // ── Blob capturing ────────────────────────────────────────────────────────────
@@ -54,6 +59,7 @@ beforeEach(() => {
   mockDb.clear.mockResolvedValue(undefined);
   mockProjectHydrate.mockResolvedValue(undefined);
   mockSessionHydrate.mockResolvedValue(undefined);
+  mockTodoHydrate.mockResolvedValue(undefined);
 
   blobContents = [];
   class CapturingBlob extends OrigBlob {
@@ -77,10 +83,11 @@ afterEach(() => {
 // ── exportData ───────────────────────────────────────────────────────────────
 
 describe('exportData', () => {
-  it('包含 projects、sessions、version、exportedAt（includeImages: false）', async () => {
+  it('包含 projects、sessions、todos、version、exportedAt（includeImages: false）', async () => {
     mockDb.getAll.mockImplementation((store: string) => {
       if (store === 'projects') return Promise.resolve([{ id: 'p1' }]);
       if (store === 'sessions') return Promise.resolve([{ id: 's1' }]);
+      if (store === 'todos') return Promise.resolve([{ id: 't1' }]);
       return Promise.resolve([]);
     });
 
@@ -88,10 +95,11 @@ describe('exportData', () => {
 
     expect(blobContents.length).toBeGreaterThan(0);
     const parsed = JSON.parse(blobContents[0]) as Record<string, unknown>;
-    expect(parsed).toHaveProperty('version', 2);
+    expect(parsed).toHaveProperty('version', 3);
     expect(parsed).toHaveProperty('exportedAt');
     expect(Array.isArray(parsed.projects)).toBe(true);
     expect(Array.isArray(parsed.sessions)).toBe(true);
+    expect(Array.isArray(parsed.todos)).toBe(true);
   });
 
   it('sessionImages 為空陣列（includeImages: false）', async () => {
@@ -132,25 +140,27 @@ describe('exportData', () => {
 // ── importData ───────────────────────────────────────────────────────────────
 
 describe('importData', () => {
-  it('valid file → 清除 3 個 store 並 put 回所有資料', async () => {
+  it('valid file → 清除 4 個 store 並 put 回所有資料', async () => {
     const file = makeFile(VALID_BACKUP);
     await importData(file);
 
     expect(mockDb.clear).toHaveBeenCalledWith('projects');
     expect(mockDb.clear).toHaveBeenCalledWith('sessions');
     expect(mockDb.clear).toHaveBeenCalledWith('sessionImages');
+    expect(mockDb.clear).toHaveBeenCalledWith('todos');
 
     expect(mockDb.put).toHaveBeenCalledWith('projects', VALID_BACKUP.projects[0]);
     expect(mockDb.put).toHaveBeenCalledWith('sessions', VALID_BACKUP.sessions[0]);
     expect(mockDb.put).toHaveBeenCalledWith('sessions', VALID_BACKUP.sessions[1]);
     expect(mockDb.put).toHaveBeenCalledWith('sessionImages', VALID_BACKUP.sessionImages[0]);
+    expect(mockDb.put).toHaveBeenCalledWith('todos', VALID_BACKUP.todos[0]);
   });
 
-  it('valid file → 回傳正確的 { projects, sessions, images } 數量', async () => {
+  it('valid file → 回傳正確的 { projects, sessions, images, todos } 數量', async () => {
     const file = makeFile(VALID_BACKUP);
     const result = await importData(file);
 
-    expect(result).toEqual({ projects: 1, sessions: 2, images: 1 });
+    expect(result).toEqual({ projects: 1, sessions: 2, images: 1, todos: 1 });
   });
 
   it('缺少 sessionImages 欄位 → 不報錯，images 數量為 0', async () => {
@@ -162,6 +172,17 @@ describe('importData', () => {
 
     expect(result.images).toBe(0);
     expect(mockDb.clear).toHaveBeenCalledWith('sessionImages');
+  });
+
+  it('缺少 todos 欄位 → 不報錯，todos 數量為 0', async () => {
+    const withoutTodos = Object.fromEntries(
+      Object.entries(VALID_BACKUP).filter(([k]) => k !== 'todos'),
+    );
+    const file = makeFile(withoutTodos);
+    const result = await importData(file);
+
+    expect(result.todos).toBe(0);
+    expect(mockDb.clear).toHaveBeenCalledWith('todos');
   });
 
   it('無效 JSON → throw Error', async () => {
@@ -182,11 +203,12 @@ describe('importData', () => {
     await expect(importData(file)).rejects.toThrow('Invalid backup file');
   });
 
-  it('匯入後呼叫 projectStore.hydrate() 與 sessionStore.hydrate()', async () => {
+  it('匯入後呼叫 projectStore.hydrate()、sessionStore.hydrate()、todoStore.hydrate()', async () => {
     const file = makeFile(VALID_BACKUP);
     await importData(file);
 
     expect(mockProjectHydrate).toHaveBeenCalled();
     expect(mockSessionHydrate).toHaveBeenCalled();
+    expect(mockTodoHydrate).toHaveBeenCalled();
   });
 });

@@ -29,6 +29,12 @@ export function getDB(): Promise<IDBPDatabase<EverProjectDB>> {
         if (oldVersion < 2) {
           db.createObjectStore('sessionImages', { keyPath: 'sessionId' });
         }
+
+        // v3 — add todos store
+        if (oldVersion < 3) {
+          const todoStore = db.createObjectStore('todos', { keyPath: 'id' });
+          todoStore.createIndex('projectId', 'projectId');
+        }
       },
 
       // This connection is blocking a newer version — close it so the upgrade can proceed.

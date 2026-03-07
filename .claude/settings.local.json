@@ -21,7 +21,13 @@
       "Bash(python3 -m pip install websocket-client 2>&1 | tail -3)",
       "Bash(node --version && node -e \"console.log\\(typeof WebSocket\\)\")",
       "Bash(pkill -f \"google-chrome\" 2>/dev/null; sleep 1; echo \"killed all chrome\")",
-      "Bash(node --version && npm --version 2>&1)"
+      "Bash(node --version && npm --version 2>&1)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:laplusda.com)",
+      "Bash(xargs grep:*)",
+      "Bash(npx vitest:*)",
+      "Bash(start:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

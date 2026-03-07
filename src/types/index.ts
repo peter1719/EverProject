@@ -30,6 +30,17 @@ export interface Project {
   updatedAt: number; // Unix timestamp ms
 }
 
+// ── TodoItem ───────────────────────────────────────────────────────────────
+
+export interface TodoItem {
+  id: string;
+  projectId: string;
+  text: string;
+  isDone: boolean;
+  createdAt: number; // Unix ms
+  order?: number;   // custom sort index (0, 1, 2 …); absent = sort by createdAt
+}
+
 // ── Session ────────────────────────────────────────────────────────────────
 
 export type SessionOutcome = 'completed' | 'partial' | 'abandoned';

@@ -5,6 +5,7 @@ import { COLOR_HEX_MAP } from '@/lib/constants';
 import { BottomSheet } from './BottomSheet';
 import { EditSessionSheet } from './EditSessionSheet';
 import { SwipeableSessionCard } from './SwipeableSessionCard';
+import { TodoList } from './TodoList';
 import { useSessionImage } from '@/hooks/useSessionImage';
 import { ImageLightbox } from './ImageLightbox';
 import type { Project, Session } from '@/types';
@@ -31,6 +32,14 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [swipeResetToken, setSwipeResetToken] = useState(0);
+  const [tab, setTab] = useState<'notes' | 'todo'>('notes');
+  const [trackedProjectId, setTrackedProjectId] = useState<string | undefined>(project?.id);
+
+  // Reset tab when project changes (getDerivedStateFromProps pattern — avoids useEffect)
+  if (project?.id !== trackedProjectId) {
+    setTrackedProjectId(project?.id);
+    setTab('notes');
+  }
 
   // All sessions for this project, oldest-first (used for badge numbering).
   const allProjectSessions = project
@@ -49,6 +58,29 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
     <BottomSheet isOpen={!!project} onClose={onClose} title={project?.name ?? ''} height="70dvh">
       {!!project && (
         <div className="flex flex-col">
+          {/* Tab switcher */}
+          <div className="flex border-b border-outline/20 mx-4 mt-2">
+            {(['notes', 'todo'] as const).map(t => (
+              <button
+                key={t}
+                type="button"
+                className={`flex-1 py-2 text-sm font-medium transition-colors duration-150 ${
+                  tab === t
+                    ? 'border-b-2 border-primary text-primary'
+                    : 'text-on-surface-variant'
+                }`}
+                onClick={() => setTab(t)}
+              >
+                {t === 'notes' ? 'Notes' : 'TODO'}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'todo' && (
+            <TodoList projectId={project.id} colorHex={colorHex} />
+          )}
+
+          {tab === 'notes' && <>
           {/* Project-level note — pinned at top with colored left border */}
           {project.notes && (
             <div
@@ -110,6 +142,7 @@ export function ProjectDetailSheet({ project, onClose, allowEdit = true }: Proje
               No sessions yet.
             </p>
           )}
+          </>}
         </div>
       )}
     </BottomSheet>
