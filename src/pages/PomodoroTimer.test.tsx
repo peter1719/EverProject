@@ -294,6 +294,62 @@ describe('PomodoroTimer SKIP button', () => {
   });
 });
 
+// ── notes button & detail sheet ───────────────────────────────────────────────
+
+describe('PomodoroTimer notes button', () => {
+  beforeEach(() => {
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'running',
+      projectIds: ['p1'],
+      remainingSeconds: 1800,
+    });
+  });
+
+  it('renders a notes button next to the project name', () => {
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+    expect(screen.getByRole('button', { name: /notes/i })).toBeInTheDocument();
+  });
+
+  it('clicking notes button opens the detail sheet', async () => {
+    const user = userEvent.setup();
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+    // Sheet content (TODO tab) not visible before opening
+    expect(screen.queryByText('TODO')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /notes/i }));
+    // Sheet is open: both Notes and TODO tabs render
+    expect(screen.getByText('TODO')).toBeInTheDocument();
+  });
+
+  it('pause icon button has no visible text (icon-only)', () => {
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+    const pauseBtn = screen.getByRole('button', { name: /pause/i });
+    expect(pauseBtn.textContent?.trim()).toBe('');
+  });
+
+  it('stop icon button has no visible text (icon-only)', () => {
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+    const stopBtn = screen.getByRole('button', { name: /stop/i });
+    expect(stopBtn.textContent?.trim()).toBe('');
+  });
+
+  it('skip icon is disabled on the last project of a combo', () => {
+    useProjectStore.setState({
+      projects: [makeProject('p1'), makeProject('p2', 30)],
+      isHydrated: true,
+    });
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'running',
+      projectIds: ['p1', 'p2'],
+      currentProjectIndex: 1,
+      remainingSeconds: 1800,
+    });
+    renderTimer({ projectIds: ['p1', 'p2'], totalMinutes: 60, comboGroupId: 'combo-1' });
+    expect(screen.getByRole('button', { name: /skip/i })).toBeDisabled();
+  });
+});
+
 // ── combo pills ───────────────────────────────────────────────────────────────
 
 describe('PomodoroTimer combo pills', () => {

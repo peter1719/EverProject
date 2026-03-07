@@ -77,6 +77,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'combo.changeDuration': 'Change duration',
 
     // ── Pomodoro Timer ──────────────────────────────────────────────────────
+    'timer.notes': 'Notes',
     'timer.quit': '✕ Quit',
     'timer.paused': '❚❚ Paused',
     'timer.complete': 'Complete!',
@@ -221,6 +222,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'combo.changeDuration': '更改時長',
 
     // ── Pomodoro Timer ──────────────────────────────────────────────────────
+    'timer.notes': '備註',
     'timer.quit': '✕ 放棄',
     'timer.paused': '❚❚ 已暫停',
     'timer.complete': '完成！',

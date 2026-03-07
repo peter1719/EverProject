@@ -115,7 +115,7 @@ function SwipeableTodoRow({
         }}
       >
         <div
-          className="h-14 w-full shrink-0 flex items-center"
+          className="w-full shrink-0 flex items-center min-h-14 py-3"
           style={{ touchAction: 'pan-y', userSelect: 'none' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -355,26 +355,34 @@ export function TodoList({ projectId, colorHex }: TodoListProps): React.ReactEle
               onDelete={() => { void deleteTodo(todo.id); }}
               onTap={() => { if (editingId !== todo.id) startEdit(todo); }}
             >
-              <div className="flex items-center gap-3 px-4 w-full h-full">
+              <div className="flex items-start gap-3 px-4 w-full">
                 <button
                   type="button"
-                  className="shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors duration-150"
+                  className="shrink-0 mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors duration-150"
                   style={{ borderColor: `${colorHex}80` }}
                   onPointerDown={e => e.stopPropagation()}
                   onClick={() => { void toggleTodo(todo.id); }}
                 />
                 {editingId === todo.id ? (
-                  <input
+                  <textarea
                     autoFocus
-                    className="flex-1 bg-transparent text-sm text-on-surface outline-none"
+                    rows={1}
+                    className="flex-1 bg-transparent text-sm text-on-surface outline-none resize-none overflow-hidden leading-5"
                     value={editText}
-                    onChange={e => setEditText(e.target.value)}
+                    ref={el => {
+                      if (el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+                    }}
+                    onChange={e => {
+                      setEditText(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
                     onBlur={() => { void commitEdit(todo.id); }}
-                    onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) e.currentTarget.blur(); }}
                     onPointerDown={e => e.stopPropagation()}
                   />
                 ) : (
-                  <span className="flex-1 text-sm text-on-surface select-none">
+                  <span className="flex-1 text-sm text-on-surface select-none break-words whitespace-pre-wrap min-w-0">
                     {todo.text || <span className="italic text-on-surface-variant/40">（空白）</span>}
                   </span>
                 )}
@@ -388,10 +396,10 @@ export function TodoList({ projectId, colorHex }: TodoListProps): React.ReactEle
               onDelete={() => { void deleteTodo(todo.id); }}
               onTap={() => { void toggleTodo(todo.id); }}
             >
-              <div className="flex items-center gap-3 px-4 w-full h-full">
+              <div className="flex items-start gap-3 px-4 w-full">
                 <button
                   type="button"
-                  className="shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center"
+                  className="shrink-0 mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center"
                   style={{ backgroundColor: colorHex, borderColor: colorHex }}
                   onPointerDown={e => e.stopPropagation()}
                   onClick={() => { void toggleTodo(todo.id); }}
@@ -400,7 +408,7 @@ export function TodoList({ projectId, colorHex }: TodoListProps): React.ReactEle
                     <polyline points="1,5 4.5,8.5 11,1" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
-                <span className="flex-1 text-sm line-through text-on-surface-variant/40 select-none">
+                <span className="flex-1 text-sm line-through text-on-surface-variant/40 select-none break-words whitespace-pre-wrap min-w-0">
                   {todo.text}
                 </span>
               </div>

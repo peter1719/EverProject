@@ -5,11 +5,11 @@ import 'react-circular-progressbar/dist/styles.css';
 import { useTimerStore } from '@/store/timerStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useTimer } from '@/hooks/useTimer';
-import { Square } from 'lucide-react';
+import { Square, Pause, Play, SkipForward, FileText } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
-import { Button } from '@/components/shared/Button';
+import { ProjectDetailSheet } from '@/components/shared/ProjectDetailSheet';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { TimerRouterState, CompleteRouterState } from '@/types';
@@ -23,6 +23,47 @@ export function PomodoroTimer(): React.ReactElement {
   }
 
   return <TimerPage routerState={routerState} />;
+}
+
+// ── Ring tick marks ───────────────────────────────────────────────────────────
+
+function RingTicks({ totalSeconds }: { readonly totalSeconds: number }): React.ReactElement | null {
+  const count = Math.min(Math.floor(totalSeconds / 60), 60);
+  if (count < 2) return null;
+
+  const cx = 50;
+  const cy = 50;
+  // react-circular-progressbar with strokeWidth=10 draws at r=45 (center of stroke)
+  // Outer edge of stroke ≈ 50, inner edge ≈ 40
+  const outerR = 49.5;
+
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      aria-hidden
+    >
+      {Array.from({ length: count }, (_, i) => {
+        const angle = -Math.PI / 2 + (i / count) * 2 * Math.PI;
+        const isMajor = i % 5 === 0;
+        const innerR = isMajor ? 44 : 47;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return (
+          <line
+            key={i}
+            x1={cx + outerR * cos}
+            y1={cy + outerR * sin}
+            x2={cx + innerR * cos}
+            y2={cy + innerR * sin}
+            stroke="rgba(26,18,8,0.25)"
+            strokeWidth={isMajor ? 1.2 : 0.7}
+            strokeLinecap="round"
+          />
+        );
+      })}
+    </svg>
+  );
 }
 
 // ── Inner component ───────────────────────────────────────────────────────────
@@ -51,6 +92,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
   const [showQuitDialog, setShowQuitDialog] = useState(false);
   const [showSkipDialog, setShowSkipDialog] = useState(false);
   const [showStopDialog, setShowStopDialog] = useState(false);
+  const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [flashNext, setFlashNext] = useState(false);
   const [flashComplete, setFlashComplete] = useState(false);
 
@@ -192,37 +234,52 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         </span>
       </div>
 
-      {/* Current project header */}
-      <div className="flex flex-col items-center gap-1 px-4 py-2">
-        <div className="flex items-center gap-2">
-          {currentProject && <ColorDot color={currentProject.color} size={12} />}
-          <p className="font-display text-xl font-bold text-on-surface text-center truncate max-w-[240px]">
-            {currentProject?.name ?? 'Project'}
-          </p>
+      {/* Ring + header — ring centred, name floated 15vh above */}
+      <div className="flex-1 relative">
+        {/* Project name & time — bottom edge 15vh above screen centre */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 px-4 w-full"
+          style={{ bottom: 'calc(50% + min(45vw, 30vh) + 1.5rem)' }}
+        >
+          <div className="flex items-center gap-2">
+            {currentProject && <ColorDot color={currentProject.color} size={12} />}
+            <p className="font-display text-3xl font-bold text-on-surface text-center truncate max-w-[240px]">
+              {currentProject?.name ?? 'Project'}
+            </p>
+            {currentProject && (
+              <button
+                onClick={() => setShowDetailSheet(true)}
+                aria-label={t('timer.notes')}
+                className="text-on-surface-variant active:opacity-80 transition-opacity duration-100 p-1"
+              >
+                <FileText size={22} />
+              </button>
+            )}
+          </div>
+          {/* Elapsed / total */}
+          {!flashComplete && !flashNext && (
+            <p className="font-mono text-2xl font-bold text-on-surface-variant">
+              {(() => {
+                const elapsed = currentProjectDurationSecs - remainingSeconds;
+                const eMM = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                const eSS = String(elapsed % 60).padStart(2, '0');
+                const tMM = String(Math.floor(currentProjectDurationSecs / 60)).padStart(2, '0');
+                const tSS = String(currentProjectDurationSecs % 60).padStart(2, '0');
+                return `${eMM}:${eSS} / ${tMM}:${tSS}`;
+              })()}
+            </p>
+          )}
+          {isCombo && (
+            <p className="font-mono text-sm text-on-surface-variant">
+              {t('timer.projectOf', { current: currentProjectIndex + 1, total: projectIds.length })}
+            </p>
+          )}
         </div>
-        {/* Elapsed / total */}
-        {!flashComplete && !flashNext && (
-          <p className="font-mono text-xl font-bold text-on-surface-variant">
-            {(() => {
-              const elapsed = currentProjectDurationSecs - remainingSeconds;
-              const eMM = String(Math.floor(elapsed / 60)).padStart(2, '0');
-              const eSS = String(elapsed % 60).padStart(2, '0');
-              const tMM = String(Math.floor(currentProjectDurationSecs / 60)).padStart(2, '0');
-              const tSS = String(currentProjectDurationSecs % 60).padStart(2, '0');
-              return `${eMM}:${eSS} / ${tMM}:${tSS}`;
-            })()}
-          </p>
-        )}
-        {isCombo && (
-          <p className="font-mono text-sm text-on-surface-variant">
-            {t('timer.projectOf', { current: currentProjectIndex + 1, total: projectIds.length })}
-          </p>
-        )}
-      </div>
 
-      {/* Ring */}
-      <div className="flex-1 flex items-center justify-center px-8 py-2">
-        <div className="relative w-full max-w-[260px] aspect-square">
+        {/* Ring — absolute centre */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="relative w-[min(90vw,60vh)] aspect-square">
+          <RingTicks totalSeconds={currentProjectDurationSecs} />
           {flashComplete && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-xl font-bold">
@@ -239,7 +296,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
           )}
           <CircularProgressbar
             value={flashComplete ? 100 : progress}
-            text={flashComplete || flashNext ? '' : timeLabel}
+            text=""
             styles={buildStyles({
               strokeLinecap: 'round',
               pathColor: flashComplete ? '#2D6A2D' : colorHex,
@@ -250,6 +307,49 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
             })}
             strokeWidth={10}
           />
+          {!flashComplete && !flashNext && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+              <span className="font-mono text-7xl font-bold text-on-surface">{timeLabel}</span>
+              <div className="flex items-center gap-8">
+                {phase === 'running' && (
+                  <button
+                    onClick={handlePause}
+                    aria-label={t('timer.pause')}
+                    className="text-on-surface active:opacity-80 transition-opacity duration-100"
+                  >
+                    <Pause size={32} />
+                  </button>
+                )}
+                {phase === 'paused' && (
+                  <button
+                    onClick={handleResume}
+                    aria-label={t('timer.resume')}
+                    className="text-on-surface active:opacity-80 transition-opacity duration-100"
+                  >
+                    <Play size={32} fill="currentColor" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowStopDialog(true)}
+                  aria-label={t('timer.stopLog')}
+                  className="text-on-surface active:opacity-80 transition-opacity duration-100"
+                >
+                  <Square size={32} fill="currentColor" />
+                </button>
+                {isCombo && (
+                  <button
+                    onClick={() => setShowSkipDialog(true)}
+                    disabled={!isSkipEnabled}
+                    aria-label={t('timer.skipProject')}
+                    className="text-on-surface active:opacity-80 transition-opacity duration-100 disabled:opacity-30"
+                  >
+                    <SkipForward size={32} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         </div>
       </div>
 
@@ -280,40 +380,6 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
           })}
         </div>
       )}
-
-      {/* Controls */}
-      <div className="flex flex-col gap-3 px-4 pb-6">
-        {/* Primary: Pause / Resume */}
-        {phase === 'running' && (
-          <Button variant="filled" onClick={handlePause} className="w-full">
-            {t('timer.pause')}
-          </Button>
-        )}
-
-        {phase === 'paused' && (
-          <Button variant="filled" onClick={handleResume} className="w-full">
-            {t('timer.resume')}
-          </Button>
-        )}
-
-        {/* Stop & Log — always visible */}
-        <Button variant="tonal" onClick={() => setShowStopDialog(true)} className="w-full flex items-center justify-center gap-2">
-          <Square size={16} fill="currentColor" />
-          {t('timer.stopLog')}
-        </Button>
-
-        {/* Skip Project — only shown for combo sessions */}
-        {isCombo && (
-          <Button
-            variant="outlined"
-            disabled={!isSkipEnabled}
-            onClick={() => setShowSkipDialog(true)}
-            className="w-full text-primary"
-          >
-            {t('timer.skipProject')}
-          </Button>
-        )}
-      </div>
 
       {/* Quit dialog */}
       <PixelDialog
@@ -349,6 +415,12 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         cancelLabel={t('timer.keepGoing')}
         onConfirm={handleStopAndLogConfirm}
         onCancel={() => setShowStopDialog(false)}
+      />
+
+      <ProjectDetailSheet
+        project={showDetailSheet ? (currentProject ?? null) : null}
+        onClose={() => setShowDetailSheet(false)}
+        allowEdit={false}
       />
     </div>
   );
