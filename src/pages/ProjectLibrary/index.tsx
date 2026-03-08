@@ -191,7 +191,7 @@ export function ProjectLibrary(): React.ReactElement {
       <div className="flex flex-col h-full">
         <PageHeader title={t('page.library')} />
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 flex flex-col gap-3">
           {hasNoProjects && (
             <EmptyState
               title={t('library.noProjects')}

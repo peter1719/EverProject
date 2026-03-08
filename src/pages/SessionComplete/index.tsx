@@ -180,7 +180,7 @@ function SessionCompleteInner({ state }: SessionCompleteInnerProps): React.React
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto bg-surface">
+    <div className="flex flex-col h-full overflow-y-auto overscroll-contain bg-surface">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}

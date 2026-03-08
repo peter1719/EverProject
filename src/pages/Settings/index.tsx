@@ -235,7 +235,7 @@ export function Settings(): React.ReactElement {
     <div className="flex flex-col h-full">
       <PageHeader title={t('page.settings')} showBack backPath="/dashboard" />
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-6">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-6 flex flex-col gap-6">
         {/* Appearance section */}
         <div className="flex flex-col gap-3">
           <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider px-1">

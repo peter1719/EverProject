@@ -33,6 +33,7 @@ export function ProjectForm({
     register,
     control,
     handleSubmit,
+    reset,
     watch,
     formState: { errors },
   } = useForm<ProjectFormValues>({
@@ -54,6 +55,7 @@ export function ProjectForm({
       estimatedDurationMinutes: data.estimatedDurationMinutes,
       notes: data.notes,
     });
+    reset();
   }
 
   return (

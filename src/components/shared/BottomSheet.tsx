@@ -38,12 +38,6 @@ export function BottomSheet({
     velocity: number;
   } | null>(null);
 
-  // Prevent body scroll while open
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
-
   // Close on Escape key
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
@@ -166,7 +160,7 @@ export function BottomSheet({
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {children}
         </div>
       </div>

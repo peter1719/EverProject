@@ -92,6 +92,10 @@ body,
   overflow: hidden;
 }
 
+html {
+  overscroll-behavior: none;
+}
+
 body {
   background-color: var(--surface);
   color: var(--on-surface);

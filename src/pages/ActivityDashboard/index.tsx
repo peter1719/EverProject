@@ -60,7 +60,7 @@ export function ActivityDashboard(): React.ReactElement {
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overscroll-contain">
         {activeView === 'overview' ? <OverviewTab /> : <HistoryTab />}
       </div>
     </div>

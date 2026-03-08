@@ -87,7 +87,7 @@ export function DailySuggestion(): React.ReactElement {
     <div className="flex flex-col h-full">
       <PageHeader title={t('page.suggest')} />
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-6">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 flex flex-col gap-6">
         {/* Time selector */}
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium text-on-surface-variant">{t('suggest.timeQuestion')}</p>
