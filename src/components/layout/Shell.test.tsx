@@ -88,6 +88,21 @@ describe('Shell main element', () => {
     renderShell('/complete');
     expect(screen.getByRole('main')).toBeInTheDocument();
   });
+
+  it('main has overflow-hidden class to contain page scroll', () => {
+    renderShell('/library');
+    expect(screen.getByRole('main')).toHaveClass('overflow-hidden');
+  });
+
+  it('main does NOT have overflow-y-auto class (regression guard)', () => {
+    renderShell('/library');
+    expect(screen.getByRole('main')).not.toHaveClass('overflow-y-auto');
+  });
+
+  it('main retains overflow-hidden on fullscreen routes (/timer)', () => {
+    renderShell('/timer');
+    expect(screen.getByRole('main')).toHaveClass('overflow-hidden');
+  });
 });
 
 // ── child outlet ──────────────────────────────────────────────────────────────
