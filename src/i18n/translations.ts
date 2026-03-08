@@ -24,6 +24,11 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'settings.language.en': 'English',
     'settings.language.zhTW': '繁體中文',
 
+    // ── PWA Update ──────────────────────────────────────────────────────────
+    'pwa.updateAvailable': 'New version available',
+    'pwa.update': 'Update',
+    'pwa.later': 'Later',
+
     // ── Common buttons ──────────────────────────────────────────────────────
     'btn.back': '← Back',
     'btn.cancel': 'Cancel',
@@ -175,6 +180,11 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'settings.language': '語言',
     'settings.language.en': 'English',
     'settings.language.zhTW': '繁體中文',
+
+    // ── PWA Update ──────────────────────────────────────────────────────────
+    'pwa.updateAvailable': '有新版本可用',
+    'pwa.update': '更新',
+    'pwa.later': '稍後',
 
     // ── Common buttons ──────────────────────────────────────────────────────
     'btn.back': '← 返回',
