@@ -32,7 +32,7 @@ export function StartSessionSheet({
   function handleStart(): void {
     if (!project) return;
     navigate('/timer', {
-      state: { projectIds: [project.id], totalMinutes: effectiveMinutes },
+      state: { projectIds: [project.id], totalMinutes: effectiveMinutes, origin: '/library' },
     });
     onClose();
   }

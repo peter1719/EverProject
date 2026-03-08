@@ -73,6 +73,7 @@ export function DailySuggestion(): React.ReactElement {
     const state: TimerRouterState = {
       projectIds: [project.id],
       totalMinutes: availableMinutes,
+      origin: '/suggest',
     };
     navigate('/timer', { state });
   }

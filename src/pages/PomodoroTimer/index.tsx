@@ -228,7 +228,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
   function handleQuitConfirm(): void {
     void clearTimerDraft();
     resetTimer();
-    navigate('/suggest');
+    navigate(routerState.origin ?? '/suggest');
   }
 
   function handleSkipConfirm(): void {

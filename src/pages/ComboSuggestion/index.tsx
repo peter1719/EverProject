@@ -87,6 +87,7 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
       totalMinutes: availableMinutes,
       comboGroupId,
       projectAllocatedMinutes,
+      origin: '/suggest',
     };
     navigate('/timer', { state });
   }

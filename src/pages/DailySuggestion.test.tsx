@@ -161,7 +161,7 @@ describe('DailySuggestion START TIMER', () => {
     await user.click(screen.getByRole('button', { name: /START TIMER/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith('/timer', {
-      state: { projectIds: ['p1'], totalMinutes: 30 },
+      state: { projectIds: ['p1'], totalMinutes: 30, origin: '/suggest' },
     });
   });
 });

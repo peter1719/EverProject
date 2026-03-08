@@ -145,6 +145,7 @@ export interface TimerRouterState {
   totalMinutes: number;
   comboGroupId?: string;
   projectAllocatedMinutes?: Record<string, number>; // per-project override (partial combos)
+  origin?: string; // page to return to on quit (e.g. '/library', '/suggest')
 }
 
 export interface CompleteRouterState {

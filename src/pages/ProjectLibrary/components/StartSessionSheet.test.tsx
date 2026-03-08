@@ -99,7 +99,7 @@ describe('StartSessionSheet START button', () => {
 
     await user.click(screen.getByText('▶ Start'));
     expect(mockNavigate).toHaveBeenCalledWith('/timer', {
-      state: { projectIds: ['proj-1'], totalMinutes: 45 },
+      state: { projectIds: ['proj-1'], totalMinutes: 45, origin: '/library' },
     });
   });
 
@@ -119,7 +119,7 @@ describe('StartSessionSheet START button', () => {
     await user.click(screen.getByRole('button', { name: '90' }));
     await user.click(screen.getByText('▶ Start'));
     expect(mockNavigate).toHaveBeenCalledWith('/timer', {
-      state: { projectIds: ['proj-1'], totalMinutes: 90 },
+      state: { projectIds: ['proj-1'], totalMinutes: 90, origin: '/library' },
     });
   });
 });
