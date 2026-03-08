@@ -6,12 +6,13 @@ import { Button } from '@/components/shared/Button';
 import { DurationSelector } from '@/components/shared/DurationSelector';
 import { ProjectDetailSheet } from '@/components/shared';
 import { ProjectProgressBar } from '@/components/shared/ProjectProgressBar';
+import { ColorFilterDropdown } from '@/pages/ProjectLibrary/components/ColorFilterDropdown';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { suggestProject, getDaysSinceLastSession } from '@/algorithms/suggestion';
-import { COLOR_HEX_MAP } from '@/lib/constants';
-import type { Project, TimerRouterState } from '@/types';
+import { COLOR_HEX_MAP, COLOR_PALETTE } from '@/lib/constants';
+import type { Project, ProjectColor, TimerRouterState } from '@/types';
 
 const DEFAULT_MINUTES = 45;
 
@@ -23,22 +24,38 @@ export function DailySuggestion(): React.ReactElement {
   const [excludeId, setExcludeId] = useState<string | undefined>(undefined);
   const [flipping, setFlipping] = useState(false);
   const [noteSheetProject, setNoteSheetProject] = useState<Project | null>(null);
+  const [colorFilter, setColorFilter] = useState<ProjectColor | null>(null);
   const prevSuggestionRef = useRef<Project | null>(null);
 
   const sessions = useSessionStore(s => s.sessions);
   const getActiveProjects = useProjectStore(s => s.getActiveProjects);
   const activeProjects = getActiveProjects(sessions);
 
+  const usedColors = useMemo(
+    () => COLOR_PALETTE.filter(c => activeProjects.some(p => p.color === c)),
+    [activeProjects],
+  );
+
+  const filteredProjects = useMemo(
+    () => colorFilter ? activeProjects.filter(p => p.color === colorFilter) : activeProjects,
+    [activeProjects, colorFilter],
+  );
+
   const suggestion = useMemo(() => {
     return suggestProject({
-      projects: activeProjects,
+      projects: filteredProjects,
       sessions,
       availableMinutes,
       seed,
       excludeId,
     });
-  }, [activeProjects, sessions, availableMinutes, seed, excludeId]);
+  }, [filteredProjects, sessions, availableMinutes, seed, excludeId]);
 
+  function handleColorFilterChange(color: ProjectColor | null): void {
+    setColorFilter(color);
+    setSeed(0);
+    setExcludeId(undefined);
+  }
 
   function handleRollAgain(): void {
     const currentId = suggestion?.id;
@@ -65,6 +82,7 @@ export function DailySuggestion(): React.ReactElement {
   }
 
   const hasNoProjects = activeProjects.length === 0;
+  const hasNoFiltered = filteredProjects.length === 0 && !hasNoProjects;
 
   const daysSince = suggestion
     ? getDaysSinceLastSession(suggestion.id, sessions)
@@ -90,7 +108,16 @@ export function DailySuggestion(): React.ReactElement {
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 flex flex-col gap-6">
         {/* Time selector */}
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-on-surface-variant">{t('suggest.timeQuestion')}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-on-surface-variant">{t('suggest.timeQuestion')}</p>
+            <div className="relative">
+              <ColorFilterDropdown
+                colors={usedColors}
+                value={colorFilter}
+                onChange={handleColorFilterChange}
+              />
+            </div>
+          </div>
           <DurationSelector value={availableMinutes} onChange={setAvailableMinutes} />
         </div>
 
@@ -102,6 +129,13 @@ export function DailySuggestion(): React.ReactElement {
           />
         )}
 
+        {/* Empty state: no projects match filter */}
+        {hasNoFiltered && (
+          <EmptyState
+            title={t('suggest.noProjectsFilter')}
+            subtitle={t('suggest.noProjectsFilterSub')}
+          />
+        )}
 
         {/* Suggestion card */}
         {suggestion && (
@@ -127,7 +161,7 @@ export function DailySuggestion(): React.ReactElement {
             <Button
               variant="outlined"
               onClick={handleRollAgain}
-              disabled={activeProjects.length <= 1}
+              disabled={filteredProjects.length <= 1}
               className="w-full"
             >
               {t('suggest.rollAgain')}

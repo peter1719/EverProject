@@ -183,3 +183,98 @@ describe('DailySuggestion TRY COMBO', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/combo?minutes=90');
   });
 });
+
+// ── color filter ──────────────────────────────────────────────────────────────
+
+describe('DailySuggestion color filter', () => {
+  it('shows filter button', () => {
+    useProjectStore.setState({
+      projects: [makeProject({ id: 'p1', color: 'indigo' })],
+      isHydrated: true,
+    });
+    renderPage();
+    expect(screen.getByRole('button', { name: /filter by color/i })).toBeInTheDocument();
+  });
+
+  it('only suggests project matching selected color', async () => {
+    const user = userEvent.setup();
+    useProjectStore.setState({
+      projects: [
+        makeProject({ id: 'p1', name: 'Indigo Project', color: 'indigo' }),
+        makeProject({ id: 'p2', name: 'Rose Project', color: 'rose' }),
+      ],
+      isHydrated: true,
+    });
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: /filter by color/i }));
+    await user.click(screen.getByRole('button', { name: /filter by indigo/i }));
+
+    expect(screen.getByText('Indigo Project')).toBeInTheDocument();
+    expect(screen.queryByText('Rose Project')).not.toBeInTheDocument();
+  });
+
+  it('shows empty state when no projects match color filter', async () => {
+    const user = userEvent.setup();
+    useProjectStore.setState({
+      projects: [
+        makeProject({ id: 'p1', color: 'indigo' }),
+        makeProject({ id: 'p2', color: 'rose' }),
+      ],
+      isHydrated: true,
+    });
+    renderPage();
+
+    // Select rose filter (rose exists in dropdown)
+    await user.click(screen.getByRole('button', { name: /filter by color/i }));
+    await user.click(screen.getByRole('button', { name: /filter by rose/i }));
+
+    // Archive the rose project while filter is active;
+    // update sessions to trigger a re-render (component subscribes to sessions)
+    act(() => {
+      useProjectStore.setState({
+        projects: [
+          makeProject({ id: 'p1', color: 'indigo' }),
+          makeProject({ id: 'p2', color: 'rose', isArchived: true }),
+        ],
+        isHydrated: true,
+      });
+      useSessionStore.setState({
+        sessions: [
+          {
+            id: 's1',
+            projectId: 'p1',
+            projectName: 'p1',
+            projectColor: 'indigo',
+            startedAt: Date.now(),
+            endedAt: Date.now(),
+            plannedDurationMinutes: 30,
+            actualDurationMinutes: 25,
+            outcome: 'completed',
+            notes: '',
+          },
+        ],
+        isHydrated: true,
+      });
+    });
+
+    expect(screen.getByText(/沒有符合此顏色的專案|No projects match/i)).toBeInTheDocument();
+  });
+
+  it('ROLL AGAIN is disabled when only 1 project matches filter', async () => {
+    const user = userEvent.setup();
+    useProjectStore.setState({
+      projects: [
+        makeProject({ id: 'p1', color: 'indigo' }),
+        makeProject({ id: 'p2', color: 'rose' }),
+      ],
+      isHydrated: true,
+    });
+    renderPage();
+
+    await user.click(screen.getByRole('button', { name: /filter by color/i }));
+    await user.click(screen.getByRole('button', { name: /filter by indigo/i }));
+
+    expect(screen.getByRole('button', { name: /ROLL AGAIN/i })).toBeDisabled();
+  });
+});

@@ -62,6 +62,8 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'suggest.daysAgo': '{n} days ago',
     'suggest.last': 'Last: {label}',
     'suggest.noNote': 'No note',
+    'suggest.noProjectsFilter': 'No projects match this color.',
+    'suggest.noProjectsFilterSub': 'Try a different filter or clear it.',
 
     // ── Combo Suggestion ────────────────────────────────────────────────────
     'combo.noCombo': 'No combos for {minutes} min.',
@@ -208,6 +210,8 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'suggest.daysAgo': '{n} 天前',
     'suggest.last': '上次：{label}',
     'suggest.noNote': '沒有備註',
+    'suggest.noProjectsFilter': '沒有符合此顏色的專案。',
+    'suggest.noProjectsFilterSub': '請換一個顏色或清除篩選。',
 
     // ── Combo Suggestion ────────────────────────────────────────────────────
     'combo.noCombo': '{minutes} 分鐘沒有適合的組合。',
