@@ -315,7 +315,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
                 <button
                   onClick={() => setShowStopDialog(true)}
                   aria-label={t('timer.stopLog')}
-                  className="text-on-surface active:opacity-80 transition-opacity duration-100"
+                  className="text-on-surface-variant active:opacity-80 transition-opacity duration-100"
                 >
                   <Square size={32} fill="currentColor" />
                 </button>
@@ -323,7 +323,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
                   <button
                     onClick={handlePause}
                     aria-label={t('timer.pause')}
-                    className="text-on-surface active:opacity-80 transition-opacity duration-100"
+                    className="text-on-surface-variant active:opacity-80 transition-opacity duration-100"
                   >
                     <Pause size={32} />
                   </button>
@@ -332,7 +332,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
                   <button
                     onClick={handleResume}
                     aria-label={t('timer.resume')}
-                    className="text-on-surface active:opacity-80 transition-opacity duration-100"
+                    className="text-on-surface-variant active:opacity-80 transition-opacity duration-100"
                   >
                     <Play size={32} fill="currentColor" />
                   </button>
@@ -342,7 +342,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
                     onClick={() => setShowSkipDialog(true)}
                     disabled={!isSkipEnabled}
                     aria-label={t('timer.skipProject')}
-                    className="text-on-surface active:opacity-80 transition-opacity duration-100 disabled:opacity-30"
+                    className="text-on-surface-variant active:opacity-80 transition-opacity duration-100 disabled:opacity-30"
                   >
                     <SkipForward size={32} />
                   </button>
