@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ProjectDetailSheet } from './ProjectDetailSheet';
 import { useSessionStore } from '@/store/sessionStore';
 import type { Project, Session } from '@/types';
@@ -17,6 +18,7 @@ vi.mock('@/db', () => ({
       delete: vi.fn().mockResolvedValue(undefined),
       get: vi.fn().mockResolvedValue(undefined),
       getAll: vi.fn().mockResolvedValue([]),
+      getAllFromIndex: vi.fn().mockResolvedValue([]),
     }),
 }));
 
@@ -64,6 +66,15 @@ function renderSheet(project: Project | null) {
   );
 }
 
+async function renderSheetOnNotesTab(project: Project | null) {
+  const user = userEvent.setup();
+  const result = renderSheet(project);
+  if (project) {
+    await user.click(screen.getByRole('button', { name: 'Notes' }));
+  }
+  return result;
+}
+
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 const project = makeProject({ id: 'p1', name: 'My Project' });
@@ -73,38 +84,38 @@ beforeEach(() => {
 });
 
 describe('ProjectDetailSheet — session note visibility', () => {
-  it('shows a session with non-empty notes', () => {
+  it('shows a session with non-empty notes', async () => {
     const now = Date.now();
     useSessionStore.setState({
       sessions: [makeSession({ id: 's1', projectId: 'p1', notes: 'great run', startedAt: now })],
       isHydrated: true,
       imageVersions: {},
     });
-    renderSheet(project);
+    await renderSheetOnNotesTab(project);
     expect(screen.getByText('great run')).toBeInTheDocument();
   });
 
-  it('shows a session with empty notes (date/duration always visible)', () => {
+  it('shows a session with empty notes (date/duration always visible)', async () => {
     const now = Date.now();
     useSessionStore.setState({
       sessions: [makeSession({ id: 's1', projectId: 'p1', notes: '', startedAt: now })],
       isHydrated: true,
       imageVersions: {},
     });
-    renderSheet(project);
+    await renderSheetOnNotesTab(project);
     expect(screen.queryByText(/no sessions yet/i)).not.toBeInTheDocument();
     // Badge "1" should be visible
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
-  it('shows a session whose notes are only whitespace', () => {
+  it('shows a session whose notes are only whitespace', async () => {
     const now = Date.now();
     useSessionStore.setState({
       sessions: [makeSession({ id: 's1', projectId: 'p1', notes: '   ', startedAt: now })],
       isHydrated: true,
       imageVersions: {},
     });
-    renderSheet(project);
+    await renderSheetOnNotesTab(project);
     expect(screen.queryByText(/no sessions yet/i)).not.toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
   });
@@ -120,7 +131,7 @@ describe('ProjectDetailSheet — session note visibility', () => {
     expect(screen.queryByText(/no sessions yet/i)).not.toBeInTheDocument();
   });
 
-  it('shows ALL sessions regardless of whether they have notes', () => {
+  it('shows ALL sessions regardless of whether they have notes', async () => {
     const now = Date.now();
     useSessionStore.setState({
       sessions: [
@@ -131,7 +142,7 @@ describe('ProjectDetailSheet — session note visibility', () => {
       isHydrated: true,
       imageVersions: {},
     });
-    renderSheet(project);
+    await renderSheetOnNotesTab(project);
     expect(screen.getByText('first note')).toBeInTheDocument();
     expect(screen.getByText('third note')).toBeInTheDocument();
     // All 3 badges are rendered
@@ -153,7 +164,7 @@ describe('ProjectDetailSheet — session note visibility', () => {
     expect(screen.queryByText('other project note')).not.toBeInTheDocument();
   });
 
-  it('badge numbers reflect chronological order across ALL project sessions', () => {
+  it('badge numbers reflect chronological order across ALL project sessions', async () => {
     const now = Date.now();
     useSessionStore.setState({
       sessions: [
@@ -164,7 +175,7 @@ describe('ProjectDetailSheet — session note visibility', () => {
       isHydrated: true,
       imageVersions: {},
     });
-    renderSheet(project);
+    await renderSheetOnNotesTab(project);
     // All 3 sessions shown with correct badge numbers
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
@@ -177,7 +188,7 @@ describe('ProjectDetailSheet — session note visibility', () => {
    * corruption.  Previously `s.notes.trim()` would throw TypeError, causing
    * the entire filter to fail and preventing ALL notes from rendering.
    */
-  it('does not crash when a session has undefined notes (legacy IDB data)', () => {
+  it('does not crash when a session has undefined notes (legacy IDB data)', async () => {
     const now = Date.now();
     useSessionStore.setState({
       sessions: [
@@ -189,7 +200,7 @@ describe('ProjectDetailSheet — session note visibility', () => {
       isHydrated: true,
       imageVersions: {},
     });
-    expect(() => renderSheet(project)).not.toThrow();
+    await renderSheetOnNotesTab(project);
     expect(screen.getByText('visible note')).toBeInTheDocument();
   });
 

@@ -177,6 +177,84 @@ describe('ProjectLibrary adding a project', () => {
   });
 });
 
+// ── color filter ──────────────────────────────────────────────────────────────
+
+describe('ProjectLibrary color filter', () => {
+  it('filter button renders when projects exist', () => {
+    useProjectStore.setState({
+      projects: [makeProject({ id: 'p1', name: 'Alpha', color: 'indigo' })],
+      isHydrated: true,
+    });
+    renderLibrary();
+    expect(screen.getByRole('button', { name: 'Filter by color' })).toBeInTheDocument();
+  });
+
+  it('dropdown opens on click and shows All option', async () => {
+    const user = userEvent.setup();
+    useProjectStore.setState({
+      projects: [makeProject({ id: 'p1', name: 'Alpha', color: 'indigo' })],
+      isHydrated: true,
+    });
+    renderLibrary();
+    await user.click(screen.getByRole('button', { name: 'Filter by color' }));
+    expect(screen.getByText('All')).toBeInTheDocument();
+  });
+
+  it('selecting a color filters projects', async () => {
+    const user = userEvent.setup();
+    useProjectStore.setState({
+      projects: [
+        makeProject({ id: 'p1', name: 'Indigo Project', color: 'indigo' }),
+        makeProject({ id: 'p2', name: 'Red Project', color: 'red' }),
+      ],
+      isHydrated: true,
+    });
+    renderLibrary();
+    await user.click(screen.getByRole('button', { name: 'Filter by color' }));
+    await user.click(screen.getByRole('button', { name: 'Filter by indigo' }));
+    expect(screen.getByText('Indigo Project')).toBeInTheDocument();
+    expect(screen.queryByText('Red Project')).not.toBeInTheDocument();
+  });
+
+  it('selecting All resets filter', async () => {
+    const user = userEvent.setup();
+    useProjectStore.setState({
+      projects: [
+        makeProject({ id: 'p1', name: 'Indigo Project', color: 'indigo' }),
+        makeProject({ id: 'p2', name: 'Red Project', color: 'red' }),
+      ],
+      isHydrated: true,
+    });
+    renderLibrary();
+    await user.click(screen.getByRole('button', { name: 'Filter by color' }));
+    await user.click(screen.getByRole('button', { name: 'Filter by indigo' }));
+    await user.click(screen.getByRole('button', { name: 'Filter by color' }));
+    await user.click(screen.getByRole('button', { name: 'All' }));
+    expect(screen.getByText('Indigo Project')).toBeInTheDocument();
+    expect(screen.getByText('Red Project')).toBeInTheDocument();
+  });
+
+  it('filter applies to archived projects too', async () => {
+    const user = userEvent.setup();
+    useProjectStore.setState({
+      projects: [
+        makeProject({ id: 'p1', name: 'Active Indigo', color: 'indigo' }),
+        makeProject({ id: 'p2', name: 'Archived Indigo', color: 'indigo', isArchived: true }),
+        makeProject({ id: 'p3', name: 'Archived Red', color: 'red', isArchived: true }),
+      ],
+      isHydrated: true,
+    });
+    renderLibrary();
+    // Select indigo filter
+    await user.click(screen.getByRole('button', { name: 'Filter by color' }));
+    await user.click(screen.getByRole('button', { name: 'Filter by indigo' }));
+    // Expand archived section
+    await user.click(screen.getByText(/Show archived/i));
+    expect(screen.getByText('Archived Indigo')).toBeInTheDocument();
+    expect(screen.queryByText('Archived Red')).not.toBeInTheDocument();
+  });
+});
+
 // ── start session sheet ───────────────────────────────────────────────────────
 
 describe('ProjectLibrary start session sheet', () => {

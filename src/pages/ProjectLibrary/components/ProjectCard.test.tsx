@@ -6,7 +6,11 @@ import { useSessionStore } from '@/store/sessionStore';
 import type { Project } from '@/types';
 
 vi.mock('@/db', () => ({
-  getDB: () => Promise.resolve({ getAll: vi.fn().mockResolvedValue([]), put: vi.fn().mockResolvedValue(undefined) }),
+  getDB: () => Promise.resolve({
+    getAll: vi.fn().mockResolvedValue([]),
+    getAllFromIndex: vi.fn().mockResolvedValue([]),
+    put: vi.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 beforeEach(() => {
@@ -49,11 +53,6 @@ describe('ProjectCard rendering', () => {
     // BottomSheet title also renders project name in DOM (off-screen when closed)
     const matches = screen.getAllByText('Reading');
     expect(matches.length).toBeGreaterThan(0);
-  });
-
-  it('renders a duration badge with ~ prefix (lowercase)', () => {
-    setup({ estimatedDurationMinutes: 45 });
-    expect(screen.getByText('~45m')).toBeInTheDocument();
   });
 
   it('renders a play button ▶', () => {

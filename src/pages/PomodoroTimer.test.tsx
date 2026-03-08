@@ -16,7 +16,10 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('@/db', () => ({
-  getDB: () => Promise.resolve({ put: vi.fn().mockResolvedValue(undefined) }),
+  getDB: () => Promise.resolve({
+    put: vi.fn().mockResolvedValue(undefined),
+    getAllFromIndex: vi.fn().mockResolvedValue([]),
+  }),
 }));
 
 // Stub useTimer hook to prevent rAF loops in jsdom

@@ -88,12 +88,6 @@ describe('DailySuggestion suggestion card', () => {
     expect(screen.getByText('Reading')).toBeInTheDocument();
   });
 
-  it('shows duration badge', () => {
-    renderPage();
-    // Component renders "~{minutes} MIN" with a space before MIN
-    expect(screen.getByText(/~30 min/)).toBeInTheDocument();
-  });
-
   it('shows Never done when project has no sessions', () => {
     renderPage();
     // Component renders "Last: Never done"

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ArrowUpDown, GripVertical } from 'lucide-react';
+import { ColorFilterDropdown } from './components/ColorFilterDropdown';
 import {
   DndContext,
   PointerSensor,
@@ -22,7 +23,8 @@ import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
-import type { Project, LibrarySort } from '@/types';
+import { COLOR_PALETTE } from '@/lib/constants';
+import type { Project, LibrarySort, ProjectColor } from '@/types';
 
 const SORT_CYCLE: LibrarySort[] = ['date', 'name', 'custom'];
 
@@ -79,6 +81,7 @@ export function ProjectLibrary(): React.ReactElement {
   const [showArchived, setShowArchived] = useState(false);
   const [sortMode, setSortMode] = useState<LibrarySort>('custom');
   const [isReordering, setIsReordering] = useState(false);
+  const [colorFilter, setColorFilter] = useState<ProjectColor | null>(null);
 
   useEffect(() => {
     const state = location.state as { openAddSheet?: boolean } | null;
@@ -99,6 +102,18 @@ export function ProjectLibrary(): React.ReactElement {
 
   const activeProjects = applySortMode(getActiveProjects(sessions), sortMode, customOrderIds);
   const archivedProjects = projects.filter(p => p.isArchived);
+
+  const usedColors = useMemo(
+    () => COLOR_PALETTE.filter(c => projects.some(p => p.color === c)),
+    [projects],
+  );
+
+  const filteredActive = colorFilter
+    ? activeProjects.filter(p => p.color === colorFilter)
+    : activeProjects;
+  const filteredArchived = colorFilter
+    ? archivedProjects.filter(p => p.color === colorFilter)
+    : archivedProjects;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -160,7 +175,7 @@ export function ProjectLibrary(): React.ReactElement {
   }
 
   const hasNoProjects = projects.length === 0;
-  const allArchived = activeProjects.length === 0 && archivedProjects.length > 0;
+  const allArchived = filteredActive.length === 0 && filteredArchived.length > 0;
 
   return (
     <>
@@ -212,14 +227,21 @@ export function ProjectLibrary(): React.ReactElement {
                     <GripVertical className="w-3.5 h-3.5" aria-hidden />
                     {t('library.customOrder')}
                   </button>
-                  <button
-                    onClick={handleCycleSort}
-                    aria-label={`Sort: ${SORT_LABELS[sortMode]}`}
-                    className="flex items-center gap-1.5 px-3 h-8 rounded-xl border border-outline text-on-surface-variant bg-transparent text-xs font-medium active:opacity-80 transition-opacity duration-100"
-                  >
-                    <ArrowUpDown className="w-3.5 h-3.5" aria-hidden />
-                    {SORT_LABELS[sortMode]}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCycleSort}
+                      aria-label={`Sort: ${SORT_LABELS[sortMode]}`}
+                      className="flex items-center gap-1.5 px-3 h-8 rounded-xl border border-outline text-on-surface-variant bg-transparent text-xs font-medium active:opacity-80 transition-opacity duration-100"
+                    >
+                      <ArrowUpDown className="w-3.5 h-3.5" aria-hidden />
+                      {SORT_LABELS[sortMode]}
+                    </button>
+                    <ColorFilterDropdown
+                      colors={usedColors}
+                      value={colorFilter}
+                      onChange={setColorFilter}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -233,10 +255,10 @@ export function ProjectLibrary(): React.ReactElement {
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={activeProjects.map(p => p.id)}
+                items={filteredActive.map(p => p.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {activeProjects.map(project => (
+                {filteredActive.map(project => (
                   <SortableProjectCard
                     key={project.id}
                     project={project}
@@ -254,7 +276,7 @@ export function ProjectLibrary(): React.ReactElement {
           </div>
 
           {/* Archived section toggle */}
-          {archivedProjects.length > 0 && (
+          {filteredArchived.length > 0 && (
             <div className="flex flex-col gap-3 mt-2">
               <Button
                 variant="outlined"
@@ -262,12 +284,12 @@ export function ProjectLibrary(): React.ReactElement {
                 className="w-full"
               >
                 {showArchived
-                  ? t('library.hideArchived', { count: archivedProjects.length })
-                  : t('library.showArchived', { count: archivedProjects.length })}
+                  ? t('library.hideArchived', { count: filteredArchived.length })
+                  : t('library.showArchived', { count: filteredArchived.length })}
               </Button>
 
               {showArchived &&
-                archivedProjects.map(project => (
+                filteredArchived.map(project => (
                   <ProjectCard
                     key={project.id}
                     project={project}
