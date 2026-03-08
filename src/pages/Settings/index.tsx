@@ -258,6 +258,11 @@ export function Settings(): React.ReactElement {
 
         {/* Data section */}
         <DataSection />
+
+        {/* Version */}
+        <p className="text-xs text-on-surface-variant/50 text-center pb-2">
+          v{__APP_VERSION__}
+        </p>
       </div>
     </div>
   );

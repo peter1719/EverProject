@@ -20,7 +20,18 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     void navigator.serviceWorker
       .register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL })
       .then(registration => {
-        // Check for updates periodically
+        // Proactively check for updates on launch (important for iOS PWA which
+        // doesn't poll in the background like Android Chrome does).
+        void registration.update();
+
+        // Re-check whenever the user returns to the app (e.g. switching back
+        // from another app on iPhone).
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            void registration.update();
+          }
+        });
+
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (!newWorker) return;
