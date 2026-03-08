@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useTimerStore } from './timerStore';
+import type { TimerDraft } from '@/types';
 
 const INITIAL_STATE = {
   phase: 'idle' as const,
@@ -236,6 +237,70 @@ describe('resetTimer', () => {
     expect(s.comboGroupId).toBeNull();
     expect(s.skippedProjectIds).toEqual([]);
     expect(s.projectElapsedMs).toEqual({});
+  });
+});
+
+// ── restoreTimer ─────────────────────────────────────────────────────────────
+
+describe('restoreTimer', () => {
+  const baseDraft: TimerDraft = {
+    key: 'timer_draft',
+    phase: 'paused',
+    projectIds: ['p1', 'p2'],
+    currentProjectIndex: 1,
+    plannedDurationMinutes: 60,
+    remainingSeconds: 1800,
+    startedAt: Date.now() - 5000,
+    comboGroupId: 'combo-abc',
+    skippedProjectIds: ['p1'],
+    projectElapsedMs: { p1: 3000, p2: 2000 },
+    projectAllocatedMinutes: { p1: 30, p2: 30 },
+  };
+
+  it('restores all fields from draft', () => {
+    useTimerStore.getState().restoreTimer(baseDraft);
+    const s = useTimerStore.getState();
+    expect(s.projectIds).toEqual(['p1', 'p2']);
+    expect(s.currentProjectIndex).toBe(1);
+    expect(s.plannedDurationMinutes).toBe(60);
+    expect(s.remainingSeconds).toBe(1800);
+    expect(s.comboGroupId).toBe('combo-abc');
+    expect(s.skippedProjectIds).toEqual(['p1']);
+    expect(s.projectElapsedMs).toEqual({ p1: 3000, p2: 2000 });
+    expect(s.projectAllocatedMinutes).toEqual({ p1: 30, p2: 30 });
+  });
+
+  it('restores phase from draft (paused)', () => {
+    useTimerStore.getState().restoreTimer(baseDraft);
+    expect(useTimerStore.getState().phase).toBe('paused');
+  });
+
+  it('restores phase from draft (running)', () => {
+    useTimerStore.getState().restoreTimer({ ...baseDraft, phase: 'running' });
+    expect(useTimerStore.getState().phase).toBe('running');
+  });
+
+  it('sets startedAt = now - sum(projectElapsedMs)', () => {
+    const before = Date.now();
+    useTimerStore.getState().restoreTimer(baseDraft);
+    const after = Date.now();
+    const s = useTimerStore.getState();
+    const totalElapsed = 3000 + 2000; // 5000ms
+    expect(s.startedAt).toBeGreaterThanOrEqual(before - totalElapsed);
+    expect(s.startedAt).toBeLessThanOrEqual(after - totalElapsed);
+  });
+
+  it('handles empty projectElapsedMs', () => {
+    const emptyDraft: TimerDraft = {
+      ...baseDraft,
+      projectElapsedMs: {},
+    };
+    const before = Date.now();
+    useTimerStore.getState().restoreTimer(emptyDraft);
+    const after = Date.now();
+    const s = useTimerStore.getState();
+    expect(s.startedAt).toBeGreaterThanOrEqual(before);
+    expect(s.startedAt).toBeLessThanOrEqual(after);
   });
 });
 

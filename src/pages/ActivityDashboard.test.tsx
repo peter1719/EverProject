@@ -368,7 +368,6 @@ describe('ActivityDashboard heatmap infinite scroll', () => {
     for (let i = 0; i < 4; i++) {
       Object.defineProperty(scrollEl, 'scrollLeft', { value: 0, configurable: true, writable: true });
       fireEvent.scroll(scrollEl);
-      // eslint-disable-next-line no-await-in-loop
       await vi.waitFor(() => {
         expect(cellCount()).toBeGreaterThanOrEqual((i + 2) * 363);
       });

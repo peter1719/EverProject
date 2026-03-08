@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import type { TimerState } from '@/types';
+import type { TimerDraft, TimerState } from '@/types';
 
 interface TimerActions {
   startTimer(projectIds: string[], totalMinutes: number, comboGroupId?: string, projectAllocatedMinutes?: Record<string, number>): void;
@@ -16,6 +16,8 @@ interface TimerActions {
   resetTimer(): void;
   /** Record elapsed ms for the current project. */
   recordProjectElapsed(projectId: string, elapsedMs: number): void;
+  /** Restore timer state from a persisted draft (crash recovery). */
+  restoreTimer(draft: TimerDraft): void;
 }
 
 const INITIAL_STATE: TimerState = {
@@ -119,6 +121,22 @@ export const useTimerStore = create<TimerState & TimerActions>()(
     recordProjectElapsed(projectId, elapsedMs) {
       set(state => {
         state.projectElapsedMs[projectId] = (state.projectElapsedMs[projectId] ?? 0) + elapsedMs;
+      });
+    },
+
+    restoreTimer(draft) {
+      set(state => {
+        const totalElapsedMs = Object.values(draft.projectElapsedMs).reduce((a, b) => a + b, 0);
+        state.phase = draft.phase;
+        state.projectIds = draft.projectIds;
+        state.currentProjectIndex = draft.currentProjectIndex;
+        state.plannedDurationMinutes = draft.plannedDurationMinutes;
+        state.remainingSeconds = draft.remainingSeconds;
+        state.startedAt = Date.now() - totalElapsedMs;
+        state.comboGroupId = draft.comboGroupId;
+        state.skippedProjectIds = draft.skippedProjectIds;
+        state.projectElapsedMs = draft.projectElapsedMs;
+        state.projectAllocatedMinutes = draft.projectAllocatedMinutes;
       });
     },
   })),

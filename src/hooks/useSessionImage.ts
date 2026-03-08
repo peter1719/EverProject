@@ -15,10 +15,7 @@ export function useSessionImage(sessionId: string, enabled: boolean): string | n
   const version = useSessionStore(s => s.imageVersions[sessionId] ?? 0);
 
   useEffect(() => {
-    if (!enabled) {
-      setDataUrl(null);
-      return;
-    }
+    if (!enabled) return;
     let cancelled = false;
     void (async () => {
       const db = await getDB();
@@ -30,5 +27,5 @@ export function useSessionImage(sessionId: string, enabled: boolean): string | n
     return () => { cancelled = true; };
   }, [sessionId, enabled, version]);
 
-  return dataUrl;
+  return enabled ? dataUrl : null;
 }

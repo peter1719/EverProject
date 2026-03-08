@@ -88,6 +88,22 @@ export interface TimerState {
   projectAllocatedMinutes: Record<string, number>; // override duration per project (for partial combos)
 }
 
+// ── Timer Draft (persisted to IDB for crash recovery) ─────────────────────
+
+export interface TimerDraft {
+  key: 'timer_draft';
+  phase: 'running' | 'paused';
+  projectIds: string[];
+  currentProjectIndex: number;
+  plannedDurationMinutes: number;
+  remainingSeconds: number;
+  startedAt: number | null;
+  comboGroupId: string | null;
+  skippedProjectIds: string[];
+  projectElapsedMs: Record<string, number>;
+  projectAllocatedMinutes: Record<string, number>;
+}
+
 // ── Algorithms ────────────────────────────────────────────────────────────
 
 export interface SuggestionContext {

@@ -129,32 +129,31 @@ function DataSection(): React.ReactElement {
         {t('settings.data')}
       </p>
       <div className="bg-surface-variant rounded-xl p-4 flex flex-col gap-3">
-        {/* Export button */}
-        <button
-          onClick={() => setExportDialogOpen(true)}
-          disabled={isExporting}
-          className="w-full bg-primary-container text-on-primary-container rounded-xl h-12 px-6 text-sm font-medium active:opacity-80 transition-opacity duration-100 disabled:opacity-50"
-        >
-          {isExporting ? t('settings.data.exporting') : t('settings.data.export')}
-        </button>
+        <div className="flex gap-3">
+          {/* Export button */}
+          <button
+            onClick={() => setExportDialogOpen(true)}
+            disabled={isExporting}
+            className="flex-1 bg-primary-container text-on-primary-container rounded-xl h-12 px-4 text-sm font-medium active:opacity-80 transition-opacity duration-100 disabled:opacity-50"
+          >
+            {isExporting ? t('settings.data.exporting') : t('settings.data.export')}
+          </button>
 
-        {/* Divider */}
-        <div className="border-t border-outline/20" />
-
-        {/* Import button */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          className="hidden"
-          onChange={e => void handleFileChange(e)}
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full border border-outline text-primary bg-transparent rounded-xl h-12 px-6 text-sm font-medium active:opacity-80 transition-opacity duration-100"
-        >
-          {t('settings.data.import')}
-        </button>
+          {/* Import button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={e => void handleFileChange(e)}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 border border-outline text-primary bg-transparent rounded-xl h-12 px-4 text-sm font-medium active:opacity-80 transition-opacity duration-100"
+          >
+            {t('settings.data.import')}
+          </button>
+        </div>
 
         {/* Status message */}
         {statusMessage && (

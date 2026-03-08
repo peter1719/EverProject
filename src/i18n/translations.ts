@@ -97,6 +97,10 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'timer.yesSkip': 'YES, SKIP',
     'timer.stopLogMsg': 'Stop session and log progress?',
     'timer.stopLogConfirm': 'STOP & LOG',
+    'timer.draftTitle': 'Unfinished session',
+    'timer.draftSub': '{min} min remaining',
+    'timer.draftContinue': '▶ Resume',
+    'timer.draftDiscard': 'Discard',
 
     // ── Session Complete ─────────────────────────────────────────────────────
     'complete.completed': '✓ Session complete',
@@ -245,6 +249,10 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'timer.yesSkip': '是的，跳過',
     'timer.stopLogMsg': '停止並記錄進度？',
     'timer.stopLogConfirm': '停止並記錄',
+    'timer.draftTitle': '上次計時未完成',
+    'timer.draftSub': '還剩 {min} 分鐘',
+    'timer.draftContinue': '▶ 繼續計時',
+    'timer.draftDiscard': '放棄',
 
     // ── Session Complete ─────────────────────────────────────────────────────
     'complete.completed': '✓ 工作階段完成',

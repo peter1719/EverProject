@@ -1,4 +1,4 @@
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ColorPicker } from './ColorPicker';
@@ -34,7 +34,6 @@ export function ProjectForm({
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -46,7 +45,7 @@ export function ProjectForm({
     },
   });
 
-  const notesValue = watch('notes');
+  const notesValue = useWatch({ control, name: 'notes' });
 
   function onSubmit(data: ProjectFormValues): void {
     onSave({

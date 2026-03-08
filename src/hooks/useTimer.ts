@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimerStore } from '@/store/timerStore';
 import { useProjectStore } from '@/store/projectStore';
+import { saveTimerDraft, clearTimerDraft } from '@/db/timerDraft';
 import type { CompleteRouterState } from '@/types';
 
 /**
@@ -221,5 +222,28 @@ export function useTimer(onProjectComplete?: () => void): void {
   // Reset navigate guard when a new timer starts
   useEffect(() => {
     if (phase === 'running') navigatingRef.current = false;
+  }, [phase]);
+
+  // ── Auto-save draft ────────────────────────────────────────────────────────
+  // Tracks whether the timer has ever been active during this mount.
+  // Used to guard clearTimerDraft: on initial mount with phase='idle' (before
+  // startTimer is called) we must NOT clear the draft — it may be a crash-
+  // recovery draft that PomodoroTimer will read.  Once the timer has actually
+  // run, any subsequent idle/finished transition legitimately ends the session.
+  const hasBeenActiveRef = useRef(false);
+  useEffect(() => {
+    if (phase === 'running') {
+      hasBeenActiveRef.current = true;
+      void saveTimerDraft(useTimerStore.getState());
+      const id = setInterval(() => void saveTimerDraft(useTimerStore.getState()), 10_000);
+      return () => clearInterval(id);
+    }
+    if (phase === 'paused') {
+      hasBeenActiveRef.current = true;
+      void saveTimerDraft(useTimerStore.getState());
+    }
+    if ((phase === 'finished' || phase === 'idle') && hasBeenActiveRef.current) {
+      void clearTimerDraft();
+    }
   }, [phase]);
 }

@@ -1,5 +1,5 @@
 import type { DBSchema } from 'idb';
-import type { Project, Session, AppSettings, TodoItem } from '@/types';
+import type { Project, Session, AppSettings, TodoItem, TimerDraft } from '@/types';
 
 export interface EverProjectDB extends DBSchema {
   projects: {
@@ -24,5 +24,9 @@ export interface EverProjectDB extends DBSchema {
     key: string;
     value: TodoItem;
     indexes: { projectId: IDBValidKey };
+  };
+  timerDraft: {
+    key: string;
+    value: TimerDraft;
   };
 }

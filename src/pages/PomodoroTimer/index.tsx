@@ -5,6 +5,7 @@ import 'react-circular-progressbar/dist/styles.css';
 import { useTimerStore } from '@/store/timerStore';
 import { useProjectStore } from '@/store/projectStore';
 import { useTimer } from '@/hooks/useTimer';
+import { loadTimerDraft, clearTimerDraft } from '@/db/timerDraft';
 import { Square, Pause, Play, SkipForward, FileText } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { PixelDialog } from '@/components/shared/PixelDialog';
@@ -18,11 +19,55 @@ export function PomodoroTimer(): React.ReactElement {
   const location = useLocation();
   const routerState = location.state as TimerRouterState | null;
 
-  if (!routerState?.projectIds?.length || !routerState.totalMinutes) {
+  const storePhase = useTimerStore(s => s.phase);
+  const storeProjectIds = useTimerStore(s => s.projectIds);
+  const restoreTimer = useTimerStore(s => s.restoreTimer);
+
+  // true once we've either confirmed no draft or already restored one
+  const [draftChecked, setDraftChecked] = useState(false);
+
+  const isRestored = (storePhase === 'paused' || storePhase === 'running') && storeProjectIds.length > 0;
+
+  useEffect(() => {
+    // If the store already has an active timer (e.g. navigated back), nothing to do.
+    if (isRestored) {
+      setDraftChecked(true);
+      return;
+    }
+    // Store is idle — check IDB for a crash-recovery draft.
+    // This covers both "no router state" (direct URL) AND "F5 refresh" where
+    // router state survives in browser history but the in-memory store is reset.
+    void loadTimerDraft().then(draft => {
+      if (draft) {
+        restoreTimer(draft);
+      }
+      setDraftChecked(true);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Wait for the IDB draft check to complete before rendering TimerPage.
+  // Without this gate, TimerPage (and its startTimer effect) would mount
+  // immediately when routerState is present, calling startTimer before the
+  // draft check can call restoreTimer — overwriting the draft with the full
+  // planned duration.
+  if (!draftChecked) {
+    return <></>;
+  }
+
+  const effectiveRouterState: TimerRouterState | null = routerState ?? (isRestored
+    ? {
+        projectIds: storeProjectIds,
+        totalMinutes: useTimerStore.getState().plannedDurationMinutes,
+        comboGroupId: useTimerStore.getState().comboGroupId ?? undefined,
+        projectAllocatedMinutes: useTimerStore.getState().projectAllocatedMinutes,
+      }
+    : null);
+
+  if (!effectiveRouterState?.projectIds?.length || !effectiveRouterState.totalMinutes) {
     return <Navigate to="/library" replace />;
   }
 
-  return <TimerPage routerState={routerState} />;
+  return <TimerPage routerState={effectiveRouterState} />;
 }
 
 // ── Ring tick marks ───────────────────────────────────────────────────────────
@@ -163,6 +208,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
 
   function handleStopAndLogConfirm(): void {
     setShowStopDialog(false);
+    void clearTimerDraft();
     finishTimer();
     const state = useTimerStore.getState();
     const actualDurationMs = startedAt ? Date.now() - startedAt : 0;
@@ -180,6 +226,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
   }
 
   function handleQuitConfirm(): void {
+    void clearTimerDraft();
     resetTimer();
     navigate('/suggest');
   }

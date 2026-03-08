@@ -249,7 +249,6 @@ const PAGE_SIZE = 20;
 
 function HistoryTab(): React.ReactElement {
   const { t } = useTranslation();
-  const sessions = useSessionStore(s => s.sessions);
   const getSessionsForHistory = useSessionStore(s => s.getSessionsForHistory);
   const deleteSession = useSessionStore(s => s.deleteSession);
   const projects = useProjectStore(s => s.projects);
@@ -265,7 +264,7 @@ function HistoryTab(): React.ReactElement {
     let result = getSessionsForHistory(filterProjectId ?? undefined);
     if (filterDate) result = result.filter(s => toDateString(s.startedAt) === filterDate);
     return result;
-  }, [filterProjectId, filterDate, getSessionsForHistory, sessions]);
+  }, [filterProjectId, filterDate, getSessionsForHistory]);
 
   const grouped = useMemo(() => {
     const visible = filteredSessions.slice(0, visibleCount);

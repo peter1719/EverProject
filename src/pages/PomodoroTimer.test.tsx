@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { PomodoroTimer } from './PomodoroTimer/index';
@@ -7,7 +7,7 @@ import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useTimerStore } from '@/store/timerStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import type { Project } from '@/types';
+import type { Project, TimerDraft } from '@/types';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -20,6 +20,29 @@ vi.mock('@/db', () => ({
     put: vi.fn().mockResolvedValue(undefined),
     getAllFromIndex: vi.fn().mockResolvedValue([]),
   }),
+}));
+
+// In-memory timerDraft store so integration tests can test save → load roundtrip
+let _storedDraft: TimerDraft | undefined;
+vi.mock('@/db/timerDraft', () => ({
+  saveTimerDraft: vi.fn(async (state: Parameters<typeof import('@/db/timerDraft').saveTimerDraft>[0]) => {
+    if (state.phase !== 'running' && state.phase !== 'paused') return;
+    _storedDraft = {
+      key: 'timer_draft',
+      phase: state.phase as 'running' | 'paused',
+      projectIds: state.projectIds,
+      currentProjectIndex: state.currentProjectIndex,
+      plannedDurationMinutes: state.plannedDurationMinutes,
+      remainingSeconds: state.remainingSeconds,
+      startedAt: state.startedAt,
+      comboGroupId: state.comboGroupId,
+      skippedProjectIds: state.skippedProjectIds,
+      projectElapsedMs: state.projectElapsedMs,
+      projectAllocatedMinutes: state.projectAllocatedMinutes,
+    };
+  }),
+  loadTimerDraft: vi.fn(async () => _storedDraft),
+  clearTimerDraft: vi.fn(async () => { _storedDraft = undefined; }),
 }));
 
 // Stub useTimer hook to prevent rAF loops in jsdom
@@ -67,6 +90,7 @@ const INITIAL_TIMER_STATE = {
 
 beforeEach(() => {
   mockNavigate.mockClear();
+  _storedDraft = undefined;
   useProjectStore.setState({
     projects: [makeProject('p1')],
     isHydrated: true,
@@ -82,24 +106,24 @@ beforeEach(() => {
 // ── redirect guards ───────────────────────────────────────────────────────────
 
 describe('PomodoroTimer redirect guards', () => {
-  it('redirects to /library when no router state', () => {
+  it('redirects to /library when no router state', async () => {
     renderTimer(null);
-    expect(screen.getByText('Library')).toBeInTheDocument();
+    await screen.findByText('Library');
   });
 
-  it('redirects when projectIds is empty', () => {
+  it('redirects when projectIds is empty', async () => {
     renderTimer({ projectIds: [], totalMinutes: 30 });
-    expect(screen.getByText('Library')).toBeInTheDocument();
+    await screen.findByText('Library');
   });
 });
 
 // ── timer display ─────────────────────────────────────────────────────────────
 
 describe('PomodoroTimer display', () => {
-  it('calls startTimer on mount for idle phase', () => {
+  it('calls startTimer on mount for idle phase', async () => {
     renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
-    // startTimer should have been called — timer store moves to running
-    // (Since useTimer is mocked, startTimer is called directly in TimerPage's useEffect)
+    // Wait for async IDB draft check (no draft → draftChecked=true → TimerPage mounts → startTimer)
+    await act(async () => {});
     expect(useTimerStore.getState().phase).toBe('running');
   });
 
@@ -136,7 +160,7 @@ describe('PomodoroTimer display', () => {
     expect(screen.getByText('P1')).toBeInTheDocument();
   });
 
-  it('starts a fresh timer when mounting with stale finished phase from previous session', () => {
+  it('starts a fresh timer when mounting with stale finished phase from previous session', async () => {
     // Regression: after natural completion, resetTimer is never called.
     // Next mount sees phase='finished', mount effect guard (phase === 'idle') fails,
     // so startTimer is never called and the timer loop immediately navigates to /complete.
@@ -149,6 +173,7 @@ describe('PomodoroTimer display', () => {
     });
 
     renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+    await act(async () => {});
 
     // New session must have started — phase running, projectIds updated
     expect(useTimerStore.getState().phase).toBe('running');
@@ -371,6 +396,187 @@ describe('PomodoroTimer notes button', () => {
     });
     renderTimer({ projectIds: ['p1', 'p2'], totalMinutes: 60, comboGroupId: 'combo-1' });
     expect(screen.getByRole('button', { name: /skip/i })).toBeDisabled();
+  });
+});
+
+// ── redirect guards (extended) ────────────────────────────────────────────────
+
+describe('PomodoroTimer redirect guards — refresh with draft in IDB', () => {
+  it('auto-restores from draft on /timer refresh (no router state, store idle, draft exists)', async () => {
+    // Simulate: user refreshes on /timer
+    // - timerStore is idle (ephemeral, reset on refresh)
+    // - IDB has a saved draft from the previous session
+    _storedDraft = {
+      key: 'timer_draft',
+      phase: 'running',
+      projectIds: ['p1'],
+      currentProjectIndex: 0,
+      plannedDurationMinutes: 30,
+      remainingSeconds: 600, // 10 min left
+      startedAt: Date.now() - 20 * 60_000,
+      comboGroupId: null,
+      skippedProjectIds: [],
+      projectElapsedMs: { p1: 20 * 60_000 },
+      projectAllocatedMinutes: {},
+    };
+
+    renderTimer(null); // no router state — simulates refresh
+
+    // Must NOT redirect to /library
+    expect(screen.queryByText('Library')).not.toBeInTheDocument();
+    // Must show timer with restored remaining time
+    await screen.findByText('10:00');
+    expect(useTimerStore.getState().remainingSeconds).toBe(600);
+    expect(useTimerStore.getState().phase).toBe('running');
+  });
+
+  it('redirects to /library when no router state and no draft exists', async () => {
+    _storedDraft = undefined;
+
+    renderTimer(null);
+
+    await screen.findByText('Library');
+  });
+
+  it('restores from draft even when router state is present (F5 refresh scenario)', async () => {
+    // F5 refresh: browser history preserves router state, but timerStore is reset to idle.
+    // IDB has a draft with 10 min remaining. The draft must win — do NOT restart from 30 min.
+    _storedDraft = {
+      key: 'timer_draft',
+      phase: 'running',
+      projectIds: ['p1'],
+      currentProjectIndex: 0,
+      plannedDurationMinutes: 30,
+      remainingSeconds: 600, // 10 min left
+      startedAt: Date.now() - 20 * 60_000,
+      comboGroupId: null,
+      skippedProjectIds: [],
+      projectElapsedMs: { p1: 20 * 60_000 },
+      projectAllocatedMinutes: {},
+    };
+
+    // routerState still present (browser history), timerStore is idle (page refreshed)
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+
+    // Must NOT restart from 30:00 — must show restored 10:00
+    await screen.findByText('10:00');
+    expect(screen.queryByText('30:00')).not.toBeInTheDocument();
+    expect(useTimerStore.getState().remainingSeconds).toBe(600);
+    expect(useTimerStore.getState().phase).toBe('running');
+  });
+});
+
+describe('PomodoroTimer redirect guards — store already restored', () => {
+  it('does NOT redirect to /library when store has running state (restoreTimer already called)', () => {
+    // Scenario: TimerDraftRecovery called restoreTimer, then navigate('/timer') WITHOUT state
+    // PomodoroTimer must NOT redirect — it should use the store state
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'running',
+      projectIds: ['p1'],
+      plannedDurationMinutes: 30,
+      remainingSeconds: 600,
+      startedAt: Date.now() - 20 * 60_000,
+    });
+
+    renderTimer(null); // no router state — simulates navigate('/timer') without state
+
+    // Should NOT redirect to /library
+    expect(screen.queryByText('Library')).not.toBeInTheDocument();
+    // Should show the timer UI
+    expect(screen.getByText('10:00')).toBeInTheDocument();
+  });
+});
+
+// ── crash recovery (重整 / 強制關閉後恢復) ─────────────────────────────────────
+
+describe('PomodoroTimer crash recovery', () => {
+  it('does NOT reset timer when store is already running (restoreTimer was called)', () => {
+    // Simulate what happens after user refreshes:
+    // TimerDraftRecovery calls restoreTimer → phase='running', remainingSeconds=600
+    // Then navigates to /timer with the original router state
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'running',
+      projectIds: ['p1'],
+      plannedDurationMinutes: 30,
+      remainingSeconds: 600, // 10 min remaining (was a 30-min session, 20 min elapsed)
+      startedAt: Date.now() - 20 * 60_000,
+      projectElapsedMs: { p1: 20 * 60_000 },
+    });
+
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+
+    // Mount effect must NOT call startTimer — remainingSeconds must stay at 600
+    expect(useTimerStore.getState().phase).toBe('running');
+    expect(useTimerStore.getState().remainingSeconds).toBe(600);
+  });
+
+  it('displays the restored remaining time (10:00), NOT the full planned time (30:00)', () => {
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'running',
+      projectIds: ['p1'],
+      plannedDurationMinutes: 30,
+      remainingSeconds: 600,
+    });
+
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+
+    expect(screen.getByText('10:00')).toBeInTheDocument();
+    expect(screen.queryByText('30:00')).not.toBeInTheDocument();
+  });
+
+  it('timer immediately running after restore (no extra Resume press needed)', () => {
+    useTimerStore.setState({
+      ...INITIAL_TIMER_STATE,
+      phase: 'running',
+      projectIds: ['p1'],
+      plannedDurationMinutes: 30,
+      remainingSeconds: 600,
+    });
+
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+
+    // Phase must be 'running' immediately — user should NOT need to press Resume
+    expect(useTimerStore.getState().phase).toBe('running');
+    expect(useTimerStore.getState().remainingSeconds).toBe(600);
+  });
+
+  it('full roundtrip: save draft → refresh (reset store) → load draft → restore → PomodoroTimer shows correct time', async () => {
+    const { saveTimerDraft, loadTimerDraft } = await import('@/db/timerDraft');
+
+    // 1. Timer is running with 10 min left (20 min elapsed from a 30-min session)
+    useTimerStore.getState().startTimer(['p1'], 30);
+    useTimerStore.setState({ remainingSeconds: 600 }); // simulate 20 min elapsed
+
+    // 2. Auto-save fires (normally triggered by useTimer's effect)
+    await act(async () => {
+      await saveTimerDraft(useTimerStore.getState());
+    });
+
+    // 3. Simulate refresh: timerStore resets to idle (ephemeral store cleared)
+    useTimerStore.getState().resetTimer();
+    expect(useTimerStore.getState().phase).toBe('idle');
+    expect(useTimerStore.getState().remainingSeconds).toBe(0);
+
+    // 4. TimerDraftRecovery loads draft from IDB
+    const draft = await loadTimerDraft();
+    expect(draft).toBeDefined();
+    expect(draft!.remainingSeconds).toBe(600);
+    expect(draft!.plannedDurationMinutes).toBe(30);
+
+    // 5. User clicks "Continue" → restoreTimer is called
+    useTimerStore.getState().restoreTimer(draft!);
+    expect(useTimerStore.getState().phase).toBe('running');
+    expect(useTimerStore.getState().remainingSeconds).toBe(600);
+
+    // 6. Navigate to /timer — PomodoroTimer mounts with original router state
+    renderTimer({ projectIds: ['p1'], totalMinutes: 30 });
+
+    // 7. Must show 10:00, NOT 30:00 (i.e. startTimer was NOT called by mount effect)
+    expect(screen.getByText('10:00')).toBeInTheDocument();
+    expect(screen.queryByText('30:00')).not.toBeInTheDocument();
   });
 });
 

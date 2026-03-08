@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { UpdatePrompt } from '@/components/shared/UpdatePrompt';
 import { PWAInstallBanner } from '@/components/shared/PWAInstallBanner';
+import { TimerDraftRecovery } from '@/components/TimerDraftRecovery';
 
 /** Routes that should NOT show the BottomNav */
 const FULLSCREEN_ROUTES = ['/timer', '/complete', '/settings'];
@@ -27,6 +28,8 @@ export function Shell(): React.ReactElement {
           <BottomNav />
         </>
       )}
+
+      <TimerDraftRecovery />
     </div>
   );
 }

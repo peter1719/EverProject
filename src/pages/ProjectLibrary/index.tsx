@@ -75,7 +75,8 @@ export function ProjectLibrary(): React.ReactElement {
   const customOrderIds = useSettingsStore(s => s.customOrderIds);
   const setCustomOrder = useSettingsStore(s => s.setCustomOrder);
 
-  const [addSheetOpen, setAddSheetOpen] = useState(false);
+  const locationState = location.state as { openAddSheet?: boolean } | null;
+  const [addSheetOpen, setAddSheetOpen] = useState(locationState?.openAddSheet ?? false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [startProject, setStartProject] = useState<Project | null>(null);
   const [showArchived, setShowArchived] = useState(false);
@@ -83,13 +84,13 @@ export function ProjectLibrary(): React.ReactElement {
   const [isReordering, setIsReordering] = useState(false);
   const [colorFilter, setColorFilter] = useState<ProjectColor | null>(null);
 
+  // Clear the openAddSheet flag from browser history so back-navigation
+  // doesn't re-open the sheet.
   useEffect(() => {
-    const state = location.state as { openAddSheet?: boolean } | null;
-    if (state?.openAddSheet) {
-      setAddSheetOpen(true);
+    if (locationState?.openAddSheet) {
       window.history.replaceState({}, '');
     }
-  }, [location.state]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const projectTotalMinutes = useMemo(() => {
     const map = new Map<string, number>();

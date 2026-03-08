@@ -26,6 +26,12 @@ vi.mock('@/db', () => ({
   getDB: () => Promise.resolve({ put: vi.fn() }),
 }));
 
+vi.mock('@/db/timerDraft', () => ({
+  loadTimerDraft: vi.fn().mockResolvedValue(undefined),
+  clearTimerDraft: vi.fn().mockResolvedValue(undefined),
+  saveTimerDraft: vi.fn().mockResolvedValue(undefined),
+}));
+
 function Child() {
   return <div data-testid="child-content">PAGE CONTENT</div>;
 }

@@ -69,7 +69,7 @@ describe('beforeinstallprompt event', () => {
       prompt: promptFn,
       userChoice: Promise.resolve({ outcome: 'accepted' }),
     });
-    const { result: _ } = renderHook(() => usePWAInstall());
+    renderHook(() => usePWAInstall());
     act(() => { window.dispatchEvent(event); });
     expect(preventDefaultFn).toHaveBeenCalledOnce();
   });

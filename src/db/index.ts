@@ -35,6 +35,17 @@ export function getDB(): Promise<IDBPDatabase<EverProjectDB>> {
           const todoStore = db.createObjectStore('todos', { keyPath: 'id' });
           todoStore.createIndex('projectId', 'projectId');
         }
+
+        // v4 — add timerDraft store for crash recovery
+        if (oldVersion < 4) {
+          db.createObjectStore('timerDraft', { keyPath: 'key' });
+        }
+
+        // v5 — defensive: create timerDraft if missing (handles dev environments
+        // where v4 was applied before the timerDraft migration was written)
+        if (oldVersion < 5 && !db.objectStoreNames.contains('timerDraft')) {
+          db.createObjectStore('timerDraft', { keyPath: 'key' });
+        }
       },
 
       // This connection is blocking a newer version — close it so the upgrade can proceed.
