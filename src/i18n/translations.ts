@@ -28,12 +28,6 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'pwa.updateAvailable': 'New version available',
     'pwa.update': 'Update',
     'pwa.later': 'Later',
-    'pwa.backupPromptTitle': 'Back up before updating?',
-    'pwa.backupPromptDesc': 'A new version is ready. Would you like to back up your data before applying the update?',
-    'pwa.backupAndUpdate': 'Backup & Update',
-    'pwa.updateAnyway': 'Update anyway',
-    'pwa.cancel': 'Cancel',
-    'pwa.includePhotos': 'Include photos',
 
     // ── Common buttons ──────────────────────────────────────────────────────
     'btn.back': '← Back',
@@ -192,12 +186,6 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'pwa.updateAvailable': '有新版本可用',
     'pwa.update': '更新',
     'pwa.later': '稍後',
-    'pwa.backupPromptTitle': '更新前備份資料？',
-    'pwa.backupPromptDesc': '新版本已就緒。是否在套用更新前先備份您的資料？',
-    'pwa.backupAndUpdate': '備份並更新',
-    'pwa.updateAnyway': '直接更新',
-    'pwa.cancel': '取消',
-    'pwa.includePhotos': '包含照片',
 
     // ── Common buttons ──────────────────────────────────────────────────────
     'btn.back': '← 返回',
