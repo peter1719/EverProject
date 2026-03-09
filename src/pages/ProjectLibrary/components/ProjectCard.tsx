@@ -15,6 +15,8 @@ interface ProjectCardProps {
   readonly onArchive: (id: string) => void;
   readonly onUnarchive: (id: string) => void;
   readonly onDelete: (id: string) => void;
+  /** When provided, overrides the default click-to-open-detail-sheet behaviour. */
+  readonly onCardClick?: (project: Project) => void;
 }
 
 // ── Swipe constants ────────────────────────────────────────────────────────────
@@ -64,6 +66,7 @@ export function ProjectCard({
   onArchive,
   onUnarchive,
   onDelete,
+  onCardClick,
 }: ProjectCardProps): React.ReactElement {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
@@ -154,6 +157,8 @@ export function ProjectCard({
     if (hasDraggedRef.current) return;
     if (revealedSide !== null) {
       dispatchSwipe({ type: 'CLOSE_REVEAL' });
+    } else if (onCardClick) {
+      onCardClick(project);
     } else {
       setNoteSheetOpen(true);
     }
@@ -301,12 +306,16 @@ export function ProjectCard({
             confirmLabel="YES"
             cancelLabel="NO"
             isDanger
+            className="max-w-sm mx-auto"
           />
 
-          <ProjectDetailSheet
-            project={noteSheetOpen ? project : null}
-            onClose={() => setNoteSheetOpen(false)}
-          />
+          {/* Only render the sheet when no external onCardClick handler is provided */}
+          {!onCardClick && (
+            <ProjectDetailSheet
+              project={noteSheetOpen ? project : null}
+              onClose={() => setNoteSheetOpen(false)}
+            />
+          )}
         </>
       )}
     </>

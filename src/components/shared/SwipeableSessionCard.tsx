@@ -185,6 +185,7 @@ export function SwipeableSessionCard({
           onDelete();
         }}
         onCancel={() => dispatch({ type: 'PENDING_DELETE', value: false })}
+        className="max-w-sm mx-auto"
       />
     </div>
   );

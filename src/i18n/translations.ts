@@ -152,7 +152,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'settings.data.exportFull': 'Include photos',
     'settings.data.exportDataOnly': 'Data only',
     'settings.data.exporting': 'Exporting…',
-    'settings.data.import': 'Choose backup file',
+    'settings.data.import': 'Restore data',
     'settings.data.importConfirm': 'Restore {p} projects, {s} sessions, {i} photos? Current data will be replaced.',
     'settings.data.importSuccess': 'Restored successfully',
     'settings.data.importError': 'Invalid backup file',

@@ -8,6 +8,7 @@ interface PixelDialogProps {
   readonly confirmLabel?: string;
   readonly cancelLabel?: string;
   readonly isDanger?: boolean;
+  readonly className?: string;
 }
 
 /** MD3 confirmation dialog. */
@@ -19,6 +20,7 @@ export function PixelDialog({
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   isDanger = false,
+  className,
 }: PixelDialogProps): React.ReactElement {
   if (!isOpen) return <></>;
 
@@ -33,7 +35,7 @@ export function PixelDialog({
       <div
         role="alertdialog"
         aria-modal="true"
-        className="fixed left-4 right-4 top-1/2 -translate-y-1/2 bg-surface rounded-xl p-6 shadow-xl border border-outline/20"
+        className={cn('fixed left-4 right-4 top-1/2 -translate-y-1/2 bg-surface rounded-xl p-6 shadow-xl border border-outline/20', className)}
         style={{ zIndex: 201 }}
       >
         <p className="text-base text-on-surface leading-relaxed mb-6">

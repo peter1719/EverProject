@@ -19,14 +19,12 @@ export function StartSessionSheet({
   onUnarchive,
 }: StartSessionSheetProps): React.ReactElement {
   const navigate = useNavigate();
-  const [selectedMinutes, setSelectedMinutes] = useState<number>(
-    project?.estimatedDurationMinutes ?? 30,
-  );
+  const [selectedMinutes, setSelectedMinutes] = useState<number>(30);
 
-  const effectiveMinutes = project
-    ? (DURATION_OPTIONS.includes(selectedMinutes as (typeof DURATION_OPTIONS)[number])
-        ? selectedMinutes
-        : project.estimatedDurationMinutes)
+  const effectiveMinutes = DURATION_OPTIONS.includes(
+    selectedMinutes as (typeof DURATION_OPTIONS)[number],
+  )
+    ? selectedMinutes
     : 30;
 
   function handleStart(): void {

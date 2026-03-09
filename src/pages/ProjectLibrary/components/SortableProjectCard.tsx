@@ -13,6 +13,7 @@ interface Props {
   onArchive: (id: string) => Promise<void>;
   onUnarchive: (id: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onCardClick?: (p: Project) => void;
 }
 
 export function SortableProjectCard({ project, reorderMode, ...cardProps }: Props) {

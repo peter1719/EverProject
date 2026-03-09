@@ -1,11 +1,25 @@
+import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import { useHydration } from '@/hooks/useHydration';
 import { useTheme } from '@/hooks/useTheme';
+import { useIsLandscapeUI } from '@/hooks/useIsLandscapeUI';
+import { useTimerStore } from '@/store/timerStore';
+import { LandscapeApp } from '@/landscape/LandscapeApp';
 
-function AppContent(): React.ReactElement {
+export function App(): React.ReactElement {
   const isHydrated = useHydration();
   useTheme();
+  const isLandscape = useIsLandscapeUI();
+  const timerPhase = useTimerStore(s => s.phase);
+
+  // When switching landscape → portrait while timer is running,
+  // imperatively navigate the portrait router to /timer so it's not lost.
+  useEffect(() => {
+    if (!isLandscape && timerPhase !== 'idle') {
+      void router.navigate('/timer');
+    }
+  }, [isLandscape, timerPhase]);
 
   if (!isHydrated) {
     return (
@@ -15,16 +29,14 @@ function AppContent(): React.ReactElement {
     );
   }
 
-  return <RouterProvider router={router} />;
-}
+  if (isLandscape) {
+    return <LandscapeApp />;
+  }
 
-export function App(): React.ReactElement {
   return (
-    // Outer wrapper: fills root, centers the phone frame on desktop
     <div className="flex h-full w-full items-stretch justify-center">
-      {/* Inner frame: full-width on mobile, capped at 430 px on desktop */}
       <div id="phone-frame" className="phone-frame relative flex h-full w-full max-w-[430px] flex-col overflow-hidden" style={{ transform: 'translateZ(0)' }}>
-        <AppContent />
+        <RouterProvider router={router} />
       </div>
     </div>
   );

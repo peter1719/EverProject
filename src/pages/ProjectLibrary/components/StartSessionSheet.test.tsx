@@ -62,11 +62,12 @@ describe('StartSessionSheet visibility', () => {
 // ── duration selection ────────────────────────────────────────────────────────
 
 describe('StartSessionSheet duration selection', () => {
-  it('defaults to the project estimatedDurationMinutes', () => {
+  it('defaults to 30 minutes regardless of project estimatedDurationMinutes', () => {
     setup({ project: makeProject({ estimatedDurationMinutes: 60 }) });
-    // The 60 button should be highlighted (indigo bg)
-    const btn = screen.getByRole('button', { name: '60' });
-    expect(btn.className).toContain('bg-primary');
+    const btn30 = screen.getByRole('button', { name: '30' });
+    const btn60 = screen.getByRole('button', { name: '60' });
+    expect(btn30.className).toContain('bg-primary');
+    expect(btn60.className).not.toContain('bg-primary');
   });
 
   it('renders all duration options including >180', () => {
@@ -99,7 +100,7 @@ describe('StartSessionSheet START button', () => {
 
     await user.click(screen.getByText('▶ Start'));
     expect(mockNavigate).toHaveBeenCalledWith('/timer', {
-      state: { projectIds: ['proj-1'], totalMinutes: 45, origin: '/library' },
+      state: { projectIds: ['proj-1'], totalMinutes: 30, origin: '/library' },
     });
   });
 
