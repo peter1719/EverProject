@@ -34,6 +34,6 @@ export function ImageLightbox({
         onClick={e => e.stopPropagation()}
       />
     </div>,
-    document.getElementById('phone-frame')!,
+    document.getElementById('phone-frame') ?? document.body,
   );
 }

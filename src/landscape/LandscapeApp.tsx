@@ -1,4 +1,5 @@
 import { Navigate, RouterProvider, createHashRouter } from 'react-router-dom';
+import { useEffect } from 'react';
 import { LandscapeShell } from './LandscapeShell';
 import { LandscapeLibrary } from './pages/LandscapeLibrary';
 import { LandscapeSuggest } from './pages/LandscapeSuggest';
@@ -26,5 +27,16 @@ const landscapeRouter = createHashRouter([
 ]);
 
 export function LandscapeApp(): React.ReactElement {
+  // Sync landscape router to current hash on mount.
+  // portrait router navigates via history.pushState which updates window.location.hash
+  // but does NOT fire popstate, so the landscape router (unmounted) misses those updates.
+  useEffect(() => {
+    const hash = window.location.hash;
+    const path = hash.startsWith('#') ? hash.slice(1) : '/library';
+    if (path && path !== '/') {
+      void landscapeRouter.navigate(path, { replace: true });
+    }
+  }, []);
+
   return <RouterProvider router={landscapeRouter} />;
 }

@@ -4,22 +4,25 @@ import { router } from './router';
 import { useHydration } from '@/hooks/useHydration';
 import { useTheme } from '@/hooks/useTheme';
 import { useIsLandscapeUI } from '@/hooks/useIsLandscapeUI';
-import { useTimerStore } from '@/store/timerStore';
 import { LandscapeApp } from '@/landscape/LandscapeApp';
 
 export function App(): React.ReactElement {
   const isHydrated = useHydration();
   useTheme();
   const isLandscape = useIsLandscapeUI();
-  const timerPhase = useTimerStore(s => s.phase);
 
-  // When switching landscape → portrait while timer is running,
-  // imperatively navigate the portrait router to /timer so it's not lost.
+  // When switching landscape → portrait, sync portrait router to the current hash path.
+  // landscape router navigates via history.pushState which updates window.location.hash
+  // but does NOT fire popstate, so the portrait router misses those updates.
   useEffect(() => {
-    if (!isLandscape && timerPhase !== 'idle') {
-      void router.navigate('/timer');
+    if (!isLandscape) {
+      const hash = window.location.hash;
+      const path = hash.startsWith('#') ? hash.slice(1) : '/library';
+      if (path && path !== '/') {
+        void router.navigate(path, { replace: true });
+      }
     }
-  }, [isLandscape, timerPhase]);
+  }, [isLandscape]);
 
   if (!isHydrated) {
     return (

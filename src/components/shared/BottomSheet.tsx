@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { useIsLandscapeUI } from '@/hooks/useIsLandscapeUI';
 
 const CLOSE_THRESHOLD = 80;    // px drag to trigger close
 const VELOCITY_THRESHOLD = 0.3; // px/ms flick velocity to trigger close
@@ -30,6 +31,7 @@ export function BottomSheet({
   baseZIndex = 100,
 }: BottomSheetProps): React.ReactElement {
   const sheetRef = useRef<HTMLDivElement>(null);
+  const isLandscape = useIsLandscapeUI();
   const pointerRef = useRef<{
     startY: number;
     pointerId: number;
@@ -131,12 +133,14 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         className={cn(
-          'safe-bottom fixed left-0 right-0 bottom-0 rounded-t-3xl bg-surface flex flex-col',
+          'safe-bottom fixed bottom-0 rounded-t-3xl bg-surface flex flex-col',
+          'left-0 right-0',
+          'landscape:left-1/4 landscape:right-1/4',
           className,
         )}
         style={{
           zIndex: baseZIndex + 1,
-          height,
+          height: isLandscape ? '100dvh' : height,
           transform: 'translateY(100%)',
         }}
       >

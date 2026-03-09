@@ -95,14 +95,14 @@ export function ProjectForm({
           name="estimatedDurationMinutes"
           control={control}
           render={({ field }) => (
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {DURATION_OPTIONS.map(mins => (
                 <button
                   key={mins}
                   type="button"
                   onClick={() => field.onChange(mins)}
                   className={cn(
-                    'h-10 px-4 rounded-xl text-sm font-medium active:opacity-80 transition-opacity duration-100',
+                    'h-10 w-full rounded-xl text-sm font-medium active:opacity-80 transition-opacity duration-100',
                     field.value === mins
                       ? 'bg-primary text-on-primary'
                       : 'border border-outline text-on-surface-variant bg-transparent',

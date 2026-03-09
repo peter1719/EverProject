@@ -759,13 +759,13 @@ function DatePicker({ value, onConfirm, onCancel }: DatePickerProps): React.Reac
       onPointerDown={onCancel}
     >
       <div
-        className="bg-surface rounded-2xl p-4 w-full max-w-sm shadow-xl"
+        className="bg-surface rounded-2xl p-4 w-full max-w-sm shadow-xl max-h-[90dvh] overflow-y-auto"
         onPointerDown={e => e.stopPropagation()}
       >
         {/* Unified calendar box */}
-        <div className="bg-surface-variant rounded-xl p-3 mb-4">
+        <div className="bg-surface-variant rounded-xl p-3 landscape:p-2 mb-4 landscape:mb-2">
           {/* Year + Month navigation */}
-          <div className="flex items-center justify-center gap-3 mb-3">
+          <div className="flex items-center justify-center gap-3 mb-3 landscape:mb-1">
             {/* Year group */}
             <div className="flex items-center gap-0.5">
               <button
@@ -815,7 +815,7 @@ function DatePicker({ value, onConfirm, onCancel }: DatePickerProps): React.Reac
           {/* Weekday headers */}
           <div className="grid grid-cols-7 mb-1">
             {WEEKDAY_INITIALS.map((d, i) => (
-              <div key={i} className="h-9 flex items-center justify-center text-xs font-medium text-on-surface-variant">
+              <div key={i} className="h-9 landscape:h-7 flex items-center justify-center text-xs font-medium text-on-surface-variant">
                 {d}
               </div>
             ))}
@@ -824,13 +824,13 @@ function DatePicker({ value, onConfirm, onCancel }: DatePickerProps): React.Reac
           {/* Day grid */}
           <div className="grid grid-cols-7">
             {days.map((day, i) => (
-              <div key={i} className="h-9 flex items-center justify-center">
+              <div key={i} className="h-9 landscape:h-7 flex items-center justify-center">
                 {day && (
                   <button
                     type="button"
                     onClick={() => setSelected(day)}
                     className={cn(
-                      'w-9 h-9 rounded-full text-sm transition-colors',
+                      'w-9 h-9 landscape:w-7 landscape:h-7 rounded-full text-sm transition-colors',
                       selected === day
                         ? 'bg-primary text-on-primary font-medium'
                         : day === todayStr

@@ -367,34 +367,34 @@ function DatePicker({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-6" onPointerDown={onCancel}>
-      <div className="bg-surface rounded-2xl p-4 w-full max-w-sm shadow-xl" onPointerDown={e => e.stopPropagation()}>
-        <div className="bg-surface-variant rounded-xl p-3 mb-4">
-          <div className="flex items-center justify-center gap-3 mb-3">
+      <div className="bg-surface rounded-2xl p-4 landscape:p-3 w-full max-w-sm shadow-xl max-h-[95dvh] overflow-y-auto" onPointerDown={e => e.stopPropagation()}>
+        <div className="bg-surface-variant rounded-xl p-3 landscape:p-2 mb-4 landscape:mb-2">
+          <div className="flex items-center justify-center gap-3 mb-3 landscape:mb-1">
             <div className="flex items-center gap-0.5">
-              <button type="button" onClick={() => setViewYear(y => y - 1)} className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20">◀</button>
+              <button type="button" onClick={() => setViewYear(y => y - 1)} className="w-8 h-8 landscape:w-7 landscape:h-7 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20">◀</button>
               <span className="w-[3.25rem] text-center text-sm font-semibold text-on-surface tabular-nums">{viewYear}</span>
-              <button type="button" onClick={() => setViewYear(y => y + 1)} className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20">▶</button>
+              <button type="button" onClick={() => setViewYear(y => y + 1)} className="w-8 h-8 landscape:w-7 landscape:h-7 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20">▶</button>
             </div>
             <div className="w-px h-5 bg-outline/30 shrink-0" />
             <div className="flex items-center gap-0.5">
-              <button type="button" onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20">◀</button>
+              <button type="button" onClick={prevMonth} className="w-8 h-8 landscape:w-7 landscape:h-7 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20">◀</button>
               <span className="w-24 text-center text-sm font-medium text-on-surface-variant">{monthName}</span>
-              <button type="button" onClick={nextMonth} className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20">▶</button>
+              <button type="button" onClick={nextMonth} className="w-8 h-8 landscape:w-7 landscape:h-7 flex items-center justify-center rounded-full text-on-surface-variant text-[11px] active:bg-outline/20">▶</button>
             </div>
           </div>
           <div className="grid grid-cols-7 mb-1">
             {WEEKDAY_INITIALS.map((d, i) => (
-              <div key={i} className="h-9 flex items-center justify-center text-xs font-medium text-on-surface-variant">{d}</div>
+              <div key={i} className="h-9 landscape:h-7 flex items-center justify-center text-xs font-medium text-on-surface-variant">{d}</div>
             ))}
           </div>
           <div className="grid grid-cols-7">
             {days.map((day, i) => (
-              <div key={i} className="h-9 flex items-center justify-center">
+              <div key={i} className="h-9 landscape:h-7 flex items-center justify-center">
                 {day && (
                   <button
                     type="button"
                     onClick={() => setSelected(day)}
-                    className={cn('w-9 h-9 rounded-full text-sm transition-colors',
+                    className={cn('w-9 h-9 landscape:w-7 landscape:h-7 rounded-full text-sm transition-colors',
                       selected === day ? 'bg-primary text-on-primary font-medium'
                         : day === todayStr ? 'border border-primary text-primary'
                         : 'text-on-surface active:bg-outline/20'

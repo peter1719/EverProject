@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant landscape (@media (orientation: landscape));
+
 /* ── Font theme utilities ────────────────────────────────────────────────────── */
 @theme {
   --font-display: 'Playfair Display', Georgia, serif;
