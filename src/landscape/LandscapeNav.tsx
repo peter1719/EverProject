@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
@@ -69,7 +70,7 @@ export function LandscapeNav(): React.ReactElement {
               : 'text-on-surface-variant hover:bg-surface',
           )}
         >
-          ⚙
+          <Settings className="w-5 h-5" />
         </button>
       </div>
     </nav>
