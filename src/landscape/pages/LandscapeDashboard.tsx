@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { CalendarSearch } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import {
   Card,
@@ -577,8 +578,9 @@ function OverviewTab(): React.ReactElement {
             </div>
           </>
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-on-surface-variant">{t('stats.clickDayHint') || 'Click a day on the heatmap'}</p>
+          <div className="flex h-full flex-col items-center justify-center gap-2">
+            <CalendarSearch className="w-6 h-6 text-on-surface-variant/50" />
+            <p className="text-sm text-on-surface-variant">{t('stats.clickDayHint')}</p>
           </div>
         )}
       </div>
