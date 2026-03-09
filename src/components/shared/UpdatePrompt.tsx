@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { exportData } from '@/lib/backup';
 
@@ -100,8 +101,8 @@ export function UpdatePrompt(): React.ReactElement {
         </div>
       </div>
 
-      {/* Backup confirmation dialog */}
-      {showBackupDialog && (
+      {/* Backup confirmation dialog — portalled to body to escape phone-frame stacking context */}
+      {showBackupDialog && createPortal(
         <>
           <div
             className="fixed inset-0 bg-black/60 pointer-events-auto"
@@ -143,7 +144,8 @@ export function UpdatePrompt(): React.ReactElement {
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </>
   );
