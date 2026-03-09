@@ -20,7 +20,7 @@ export function LandscapeNav(): React.ReactElement {
   const { t } = useTranslation();
 
   return (
-    <nav className="flex h-full w-16 shrink-0 flex-col border-r border-outline/30 bg-surface-variant py-4">
+    <nav className="safe-left flex h-full w-16 shrink-0 flex-col border-r border-outline/30 bg-surface-variant py-4">
       {/* App icon */}
       <div className="flex justify-center mb-6">
         <span className="text-lg font-bold text-primary" aria-label="EverProject">E</span>
