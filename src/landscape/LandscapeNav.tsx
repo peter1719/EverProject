@@ -28,11 +28,6 @@ export function LandscapeNav(): React.ReactElement {
         paddingLeft: 'env(safe-area-inset-left)',
       }}
     >
-      {/* App icon */}
-      <div className="flex justify-center mb-6">
-        <span className="text-lg font-bold text-primary" aria-label="EverProject">E</span>
-      </div>
-
       {/* Main nav items */}
       <div className="flex flex-1 flex-col items-center gap-1 px-2">
         {NAV_ITEMS.map(item => {

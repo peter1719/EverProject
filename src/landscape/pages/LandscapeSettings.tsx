@@ -191,7 +191,9 @@ export function LandscapeSettings(): React.ReactElement {
           {/* Data */}
           <DataSection />
 
-          <p className="text-xs text-on-surface-variant/50 text-center pb-2">EverProject v{__APP_VERSION__}</p>
+          <p className="text-xs text-on-surface-variant/50 text-center pb-2">
+            <span className="font-bold text-primary">E</span> · EverProject v{__APP_VERSION__}
+          </p>
         </div>
       </div>
     </div>
