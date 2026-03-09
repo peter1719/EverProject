@@ -13,6 +13,7 @@ export function UpdatePrompt(): React.ReactElement {
   const [visible, setVisible] = useState(false);
   const [showBackupDialog, setShowBackupDialog] = useState(false);
   const [isBacking, setIsBacking] = useState(false);
+  const [includeImages, setIncludeImages] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -44,7 +45,9 @@ export function UpdatePrompt(): React.ReactElement {
   async function handleBackupAndUpdate(): Promise<void> {
     setIsBacking(true);
     try {
-      await exportData(false);
+      await exportData(includeImages);
+      // Wait for the browser to initiate the file download before reloading
+      await new Promise(resolve => setTimeout(resolve, 1500));
     } finally {
       setIsBacking(false);
       applyUpdate();
@@ -107,7 +110,7 @@ export function UpdatePrompt(): React.ReactElement {
           <div
             className="fixed inset-0 bg-black/60 pointer-events-auto"
             style={{ zIndex: 200 }}
-            onClick={() => setShowBackupDialog(false)}
+            onClick={() => !isBacking && setShowBackupDialog(false)}
             aria-hidden
           />
           <div
@@ -119,9 +122,21 @@ export function UpdatePrompt(): React.ReactElement {
             <p className="text-base font-semibold text-on-surface mb-2">
               {t('pwa.backupPromptTitle')}
             </p>
-            <p className="text-sm text-on-surface-variant leading-relaxed mb-6">
+            <p className="text-sm text-on-surface-variant leading-relaxed mb-4">
               {t('pwa.backupPromptDesc')}
             </p>
+
+            {/* Include photos toggle */}
+            <label className="flex items-center gap-3 mb-6 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={includeImages}
+                onChange={e => setIncludeImages(e.target.checked)}
+                className="w-4 h-4 accent-primary"
+              />
+              <span className="text-sm text-on-surface-variant">{t('pwa.includePhotos')}</span>
+            </label>
+
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => { void handleBackupAndUpdate(); }}
@@ -132,13 +147,15 @@ export function UpdatePrompt(): React.ReactElement {
               </button>
               <button
                 onClick={applyUpdate}
-                className="h-12 rounded-xl border border-outline text-on-surface-variant bg-transparent font-medium active:opacity-80 transition-opacity duration-100"
+                disabled={isBacking}
+                className="h-12 rounded-xl border border-outline text-on-surface-variant bg-transparent font-medium active:opacity-80 transition-opacity duration-100 disabled:opacity-40"
               >
                 {t('pwa.updateAnyway')}
               </button>
               <button
                 onClick={() => setShowBackupDialog(false)}
-                className="h-10 text-sm text-on-surface-variant active:opacity-60 transition-opacity duration-100"
+                disabled={isBacking}
+                className="h-10 text-sm text-on-surface-variant active:opacity-60 transition-opacity duration-100 disabled:opacity-40"
               >
                 {t('pwa.cancel')}
               </button>

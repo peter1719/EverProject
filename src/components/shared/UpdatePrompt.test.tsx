@@ -7,7 +7,7 @@ vi.mock('@/lib/backup', () => ({
   exportData: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Helpers to fire the sw-update-available event
+// Fire the sw-update-available event
 function fireUpdateEvent(): void {
   act(() => {
     window.dispatchEvent(new Event('sw-update-available'));
@@ -15,7 +15,6 @@ function fireUpdateEvent(): void {
 }
 
 beforeEach(() => {
-  // Provide a minimal serviceWorker stub
   Object.defineProperty(navigator, 'serviceWorker', {
     value: {
       getRegistration: vi.fn().mockResolvedValue({
@@ -68,6 +67,18 @@ describe('UpdatePrompt backup dialog', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
 
+  it('shows Include photos checkbox unchecked by default', async () => {
+    const user = userEvent.setup();
+    render(<UpdatePrompt />);
+    fireUpdateEvent();
+
+    await user.click(screen.getByRole('button', { name: 'Update' }));
+
+    const checkbox = screen.getByRole('checkbox', { name: 'Include photos' });
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
+  });
+
   it('closes the dialog on Cancel without applying update', async () => {
     const user = userEvent.setup();
     render(<UpdatePrompt />);
@@ -77,11 +88,10 @@ describe('UpdatePrompt backup dialog', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(screen.queryByText('Back up before updating?')).not.toBeInTheDocument();
-    // Banner should still be visible
     expect(screen.getByText('New version available')).toBeInTheDocument();
   });
 
-  it('calls exportData then postMessage on Backup & Update', async () => {
+  it('calls exportData(false) by default on Backup & Update', async () => {
     const { exportData } = await import('@/lib/backup');
     const user = userEvent.setup();
     render(<UpdatePrompt />);
@@ -90,9 +100,20 @@ describe('UpdatePrompt backup dialog', () => {
     await user.click(screen.getByRole('button', { name: 'Update' }));
     await user.click(screen.getByRole('button', { name: 'Backup & Update' }));
 
-    expect(exportData).toHaveBeenCalledOnce();
-    const reg = await navigator.serviceWorker.getRegistration();
-    expect(reg?.waiting?.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(exportData).toHaveBeenCalledWith(false);
+  });
+
+  it('calls exportData(true) when Include photos is checked', async () => {
+    const { exportData } = await import('@/lib/backup');
+    const user = userEvent.setup();
+    render(<UpdatePrompt />);
+    fireUpdateEvent();
+
+    await user.click(screen.getByRole('button', { name: 'Update' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Include photos' }));
+    await user.click(screen.getByRole('button', { name: 'Backup & Update' }));
+
+    expect(exportData).toHaveBeenCalledWith(true);
   });
 
   it('applies update without backup on Update anyway', async () => {

@@ -33,6 +33,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'pwa.backupAndUpdate': 'Backup & Update',
     'pwa.updateAnyway': 'Update anyway',
     'pwa.cancel': 'Cancel',
+    'pwa.includePhotos': 'Include photos',
 
     // ── Common buttons ──────────────────────────────────────────────────────
     'btn.back': '← Back',
@@ -196,6 +197,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'pwa.backupAndUpdate': '備份並更新',
     'pwa.updateAnyway': '直接更新',
     'pwa.cancel': '取消',
+    'pwa.includePhotos': '包含照片',
 
     // ── Common buttons ──────────────────────────────────────────────────────
     'btn.back': '← 返回',
