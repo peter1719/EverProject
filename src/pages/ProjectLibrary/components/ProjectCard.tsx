@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ProjectDetailSheet } from '@/components/shared';
 import { COLOR_HEX_MAP } from '@/lib/constants';
+import { useAppStyle } from '@/hooks/useAppStyle';
 import type { Project } from '@/types';
 
 interface ProjectCardProps {
@@ -68,6 +69,7 @@ export function ProjectCard({
   onDelete,
   onCardClick,
 }: ProjectCardProps): React.ReactElement {
+  const appStyle = useAppStyle();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
   const [swipe, dispatchSwipe] = useReducer(swipeReducer, SWIPE_INITIAL);
@@ -200,7 +202,9 @@ export function ProjectCard({
               data-testid="card-body"
               className="bg-surface-variant shadow-sm w-full shrink-0 flex flex-col"
               style={{
-                borderLeft: `4px solid ${colorHex}`,
+                ...(appStyle === 'paper'
+                  ? { borderTop: `6px solid ${colorHex}` }
+                  : { borderLeft: `4px solid ${colorHex}` }),
                 touchAction: 'pan-y',
                 cursor: 'pointer',
                 userSelect: 'none',

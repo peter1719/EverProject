@@ -8,6 +8,7 @@ import { useTimer } from '@/hooks/useTimer';
 import { loadTimerDraft, clearTimerDraft } from '@/db/timerDraft';
 import { Square, Pause, Play, SkipForward, FileText } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppStyle } from '@/hooks/useAppStyle';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
 import { ProjectDetailSheet } from '@/components/shared/ProjectDetailSheet';
@@ -17,7 +18,7 @@ import type { TimerRouterState, CompleteRouterState } from '@/types';
 
 // ── Ring tick marks ───────────────────────────────────────────────────────────
 
-function RingTicks({ totalSeconds }: { readonly totalSeconds: number }): React.ReactElement | null {
+function RingTicks({ totalSeconds, tickColor }: { readonly totalSeconds: number; readonly tickColor: string }): React.ReactElement | null {
   const count = Math.min(Math.floor(totalSeconds / 60), 60);
   if (count < 2) return null;
   const cx = 50; const cy = 50; const outerR = 49.5;
@@ -34,7 +35,7 @@ function RingTicks({ totalSeconds }: { readonly totalSeconds: number }): React.R
             y1={cy + outerR * Math.sin(angle)}
             x2={cx + innerR * Math.cos(angle)}
             y2={cy + innerR * Math.sin(angle)}
-            stroke="rgba(26,18,8,0.25)"
+            stroke={tickColor}
             strokeWidth={isMajor ? 1.2 : 0.7}
             strokeLinecap="round"
           />
@@ -98,6 +99,7 @@ function TimerPage({ routerState }: { readonly routerState: TimerRouterState }):
   const projectAllocatedMinutes = useTimerStore(s => s.projectAllocatedMinutes);
   const { startTimer, pauseTimer, resumeTimer, skipProject, finishTimer, resetTimer } = useTimerStore.getState();
   const projects = useProjectStore(s => s.projects);
+  const appStyle = useAppStyle();
 
   const [showQuitDialog, setShowQuitDialog] = useState(false);
   const [showSkipDialog, setShowSkipDialog] = useState(false);
@@ -203,7 +205,7 @@ function TimerPage({ routerState }: { readonly routerState: TimerRouterState }):
   }
 
   return (
-    <div className="relative flex h-full bg-surface select-none">
+    <div className={cn('relative flex h-full bg-surface select-none', appStyle === 'paper' && 'paper-timer-page')}>
       {/* Quit — top left corner */}
       <button
         onClick={() => setShowQuitDialog(true)}
@@ -215,7 +217,10 @@ function TimerPage({ routerState }: { readonly routerState: TimerRouterState }):
       {/* ── Left: ring ──────────────────────────────────────────────── */}
       <div className="flex w-[55%] flex-col items-center justify-center relative">
         <div className="relative" style={{ width: 'min(70%, 320px)', aspectRatio: '1' }}>
-          <RingTicks totalSeconds={currentProjectDurationSecs} />
+          <RingTicks
+              totalSeconds={currentProjectDurationSecs}
+              tickColor={appStyle === 'paper' ? 'rgba(34,24,16,0.18)' : 'rgba(26,18,8,0.25)'}
+            />
           {flashComplete && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-xl font-bold">{t('timer.complete')}</p>
@@ -232,7 +237,7 @@ function TimerPage({ routerState }: { readonly routerState: TimerRouterState }):
             styles={buildStyles({
               strokeLinecap: 'round',
               pathColor: flashComplete ? '#2D6A2D' : colorHex,
-              trailColor: '#F4EDE0',
+              trailColor: appStyle === 'paper' ? '#F2EBD8' : '#F4EDE0',
               pathTransitionDuration: 1,
             })}
             strokeWidth={10}

@@ -8,6 +8,7 @@ import { useTimer } from '@/hooks/useTimer';
 import { loadTimerDraft, clearTimerDraft } from '@/db/timerDraft';
 import { Square, Pause, Play, SkipForward, FileText } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppStyle } from '@/hooks/useAppStyle';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
 import { ProjectDetailSheet } from '@/components/shared/ProjectDetailSheet';
@@ -72,7 +73,7 @@ export function PomodoroTimer(): React.ReactElement {
 
 // ── Ring tick marks ───────────────────────────────────────────────────────────
 
-function RingTicks({ totalSeconds }: { readonly totalSeconds: number }): React.ReactElement | null {
+function RingTicks({ totalSeconds, tickColor }: { readonly totalSeconds: number; readonly tickColor: string }): React.ReactElement | null {
   const count = Math.min(Math.floor(totalSeconds / 60), 60);
   if (count < 2) return null;
 
@@ -101,7 +102,7 @@ function RingTicks({ totalSeconds }: { readonly totalSeconds: number }): React.R
             y1={cy + outerR * sin}
             x2={cx + innerR * cos}
             y2={cy + innerR * sin}
-            stroke="rgba(26,18,8,0.25)"
+            stroke={tickColor}
             strokeWidth={isMajor ? 1.2 : 0.7}
             strokeLinecap="round"
           />
@@ -120,6 +121,7 @@ interface TimerPageProps {
 function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const appStyle = useAppStyle();
 
   const phase = useTimerStore(s => s.phase);
   const projectIds = useTimerStore(s => s.projectIds);
@@ -264,7 +266,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
   const skipTimeLabel = `${skipElapsedMin}:${String(skipElapsedSec).padStart(2, '0')}`;
 
   return (
-    <div className="flex flex-col h-full bg-surface select-none">
+    <div className={cn('flex flex-col h-full bg-surface select-none', appStyle === 'paper' && 'paper-timer-page')}>
       {/* Top bar: Quit */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <button
@@ -327,7 +329,10 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         {/* Ring — absolute centre */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         <div className="relative w-[min(90vw,60vh,390px)] aspect-square">
-          <RingTicks totalSeconds={currentProjectDurationSecs} />
+          <RingTicks
+            totalSeconds={currentProjectDurationSecs}
+            tickColor={appStyle === 'paper' ? 'rgba(34,24,16,0.18)' : 'rgba(26,18,8,0.25)'}
+          />
           {flashComplete && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-xl font-bold">
@@ -348,7 +353,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
             styles={buildStyles({
               strokeLinecap: 'round',
               pathColor: flashComplete ? '#2D6A2D' : colorHex,
-              trailColor: '#F4EDE0',
+              trailColor: appStyle === 'paper' ? '#F2EBD8' : '#F4EDE0',
               textColor: '#1A1208',
               textSize: '13px',
               pathTransitionDuration: 1,

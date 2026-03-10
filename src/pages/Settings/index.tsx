@@ -5,7 +5,44 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 import { exportData, importData } from '@/lib/backup';
-import type { AppTheme, AppLanguage } from '@/types';
+import type { AppTheme, AppLanguage, AppStyle } from '@/types';
+
+// ── Style options ─────────────────────────────────────────────────────────────
+
+const STYLE_OPTIONS: { value: AppStyle; labelKey: string; swatchPrimary: string }[] = [
+  { value: 'classic', labelKey: 'settings.style.classic', swatchPrimary: '#C75B21' },
+  { value: 'pixel',   labelKey: 'settings.style.pixel',   swatchPrimary: '#D62828' },
+  { value: 'paper',   labelKey: 'settings.style.paper',   swatchPrimary: '#1A4A8C' },
+  { value: 'zen',     labelKey: 'settings.style.zen',     swatchPrimary: '#4A7C59' },
+];
+
+function StylePicker(): React.ReactElement {
+  const { t } = useTranslation();
+  const appStyle = useSettingsStore(s => s.settings.appStyle) ?? 'classic';
+  const setAppStyle = useSettingsStore(s => s.setAppStyle);
+  const current = STYLE_OPTIONS.find(o => o.value === appStyle) ?? STYLE_OPTIONS[0];
+
+  return (
+    <div className="relative">
+      <div
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full pointer-events-none"
+        style={{ backgroundColor: current.swatchPrimary }}
+      />
+      <select
+        value={appStyle}
+        onChange={e => void setAppStyle(e.target.value as AppStyle)}
+        className="w-full h-11 pl-8 pr-4 rounded-xl border border-outline/30 bg-surface text-on-surface text-sm appearance-none cursor-pointer focus:outline-none focus:border-primary"
+      >
+        {STYLE_OPTIONS.map(opt => (
+          <option key={opt.value} value={opt.value}>
+            {t(opt.labelKey)}
+          </option>
+        ))}
+      </select>
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-xs">▾</span>
+    </div>
+  );
+}
 
 // ── Theme options ─────────────────────────────────────────────────────────────
 
@@ -241,6 +278,9 @@ export function Settings(): React.ReactElement {
             {t('settings.appearance')}
           </p>
           <div className="bg-surface-variant rounded-xl p-4 flex flex-col gap-3">
+            <p className="text-sm font-medium text-on-surface">{t('settings.style')}</p>
+            <StylePicker />
+            <div className="border-t border-outline/20" />
             <p className="text-sm font-medium text-on-surface">{t('settings.theme')}</p>
             <ThemeToggle />
           </div>

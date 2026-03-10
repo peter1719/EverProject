@@ -75,6 +75,126 @@ html[data-theme="dark"] {
   --outline: #5C4A35;
 }
 
+/* ── Pixel style ─────────────────────────────────────────────────────────────── */
+html[data-style="pixel"] {
+  --surface: #F0EDE0; --surface-variant: #E4E0D4;
+  --on-surface: #080808; --on-surface-variant: #484840;
+  --primary: #D62828; --on-primary: #FFFFFF;
+  --primary-container: #FFD5D5; --on-primary-container: #5A0000;
+  --error: #C0392B; --success: #27AE60; --warning: #E67E22; --outline: #948C7C;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-style="pixel"]:not([data-theme]) {
+    --surface: #0F0F1A; --surface-variant: #1A1A2E;
+    --on-surface: #E0E0FF; --on-surface-variant: #8080B0;
+    --primary: #FF4444; --on-primary: #0F0F1A;
+    --primary-container: #3D0000; --on-primary-container: #FFB0B0;
+    --error: #FF5252; --success: #69F0AE; --warning: #FFD740; --outline: #2A2A4A;
+  }
+}
+
+html[data-style="pixel"][data-theme="dark"] {
+  --surface: #0F0F1A; --surface-variant: #1A1A2E;
+  --on-surface: #E0E0FF; --on-surface-variant: #8080B0;
+  --primary: #FF4444; --on-primary: #0F0F1A;
+  --primary-container: #3D0000; --on-primary-container: #FFB0B0;
+  --error: #FF5252; --success: #69F0AE; --warning: #FFD740; --outline: #2A2A4A;
+}
+
+html[data-style="pixel"] body {
+  font-family: 'DM Mono', ui-monospace, monospace;
+}
+
+html[data-style="pixel"] * {
+  border-radius: 0 !important;
+}
+
+/* ── Paper style ─────────────────────────────────────────────────────────────── */
+html[data-style="paper"] {
+  --surface: #FAF6E9; --surface-variant: #FFFFFF;
+  --on-surface: #221810; --on-surface-variant: #6B4A32;
+  --primary: #1A4A8C; --on-primary: #FFFFFF;
+  --primary-container: #D8E8FF; --on-primary-container: #0A2040;
+  --error: #B03040; --success: #2D6030; --warning: #7C5000; --outline: #C0A878;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-style="paper"]:not([data-theme]) {
+    --surface: #1C1408; --surface-variant: #281E0E;
+    --on-surface: #EAE0C8; --on-surface-variant: #9A7C5A;
+    --primary: #7AA8F0; --on-primary: #0A1828;
+    --primary-container: #1A3060; --on-primary-container: #C0D8FF;
+    --error: #EF5350; --success: #66BB6A; --warning: #FFA726; --outline: #4A3520;
+  }
+}
+
+html[data-style="paper"][data-theme="dark"] {
+  --surface: #1C1408; --surface-variant: #281E0E;
+  --on-surface: #EAE0C8; --on-surface-variant: #9A7C5A;
+  --primary: #7AA8F0; --on-primary: #0A1828;
+  --primary-container: #1A3060; --on-primary-container: #C0D8FF;
+  --error: #EF5350; --success: #66BB6A; --warning: #FFA726; --outline: #4A3520;
+}
+
+/* ── Paper style — component overrides (all viewports) ──────────────────────── */
+html[data-style="paper"] .shadow-sm {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+html[data-style="paper"] main {
+  background-color: var(--surface);
+  background-image: radial-gradient(circle, var(--outline) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+}
+
+html[data-style="paper"] nav button[aria-current="page"] {
+  background: none !important;
+  color: var(--primary);
+  border-bottom: 2.5px solid var(--primary);
+  border-radius: 0 !important;
+  font-weight: 700;
+}
+
+/* Paper: timer page — ruled notebook page feel */
+html[data-style="paper"] .paper-timer-page {
+  background-color: var(--surface);
+  background-image: repeating-linear-gradient(
+    transparent 0px,
+    transparent 39px,
+    var(--outline) 39px,
+    var(--outline) 40px
+  );
+  background-attachment: local;
+}
+
+/* ── Zen style ───────────────────────────────────────────────────────────────── */
+html[data-style="zen"] {
+  --surface: #F5F4EF; --surface-variant: #EEECE6;
+  --on-surface: #1C1C18; --on-surface-variant: #6A6860;
+  --primary: #4A7C59; --on-primary: #FFFFFF;
+  --primary-container: #D4EAD8; --on-primary-container: #183828;
+  --error: #B03040; --success: #3A7040; --warning: #7A5800; --outline: #B8B4A8;
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-style="zen"]:not([data-theme]) {
+    --surface: #141412; --surface-variant: #1E1C1A;
+    --on-surface: #E5E2DC; --on-surface-variant: #888480;
+    --primary: #78B88A; --on-primary: #101810;
+    --primary-container: #183828; --on-primary-container: #D4EAD8;
+    --error: #EF5350; --success: #66BB6A; --warning: #FFA726; --outline: #383530;
+  }
+}
+
+html[data-style="zen"][data-theme="dark"] {
+  --surface: #141412; --surface-variant: #1E1C1A;
+  --on-surface: #E5E2DC; --on-surface-variant: #888480;
+  --primary: #78B88A; --on-primary: #101810;
+  --primary-container: #183828; --on-primary-container: #D4EAD8;
+  --error: #EF5350; --success: #66BB6A; --warning: #FFA726; --outline: #383530;
+}
+
 /* ── Reset ──────────────────────────────────────────────────────────────────── */
 @layer base {
   *,
@@ -184,6 +304,39 @@ body {
 
   html[data-theme="dark"] body {
     background-color: #0F0A05;
+  }
+
+  html[data-style="pixel"] body { background-color: #D8D4C8; }
+  html[data-style="pixel"][data-theme="dark"] body { background-color: #07070F; }
+
+  @media (prefers-color-scheme: dark) {
+    html[data-style="pixel"]:not([data-theme]) body { background-color: #07070F; }
+  }
+
+  html[data-style="paper"] body {
+    background-color: #E8E0C8;
+    background-image: radial-gradient(circle, var(--outline) 1.5px, transparent 1.5px);
+    background-size: 20px 20px;
+  }
+  html[data-style="paper"][data-theme="dark"] body {
+    background-color: #100C04;
+    background-image: radial-gradient(circle, var(--outline) 1.5px, transparent 1.5px);
+    background-size: 20px 20px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html[data-style="paper"]:not([data-theme]) body {
+      background-color: #100C04;
+      background-image: radial-gradient(circle, var(--outline) 1.5px, transparent 1.5px);
+      background-size: 20px 20px;
+    }
+  }
+
+  html[data-style="zen"] body { background-color: #E8E6E0; }
+  html[data-style="zen"][data-theme="dark"] body { background-color: #0C0C0A; }
+
+  @media (prefers-color-scheme: dark) {
+    html[data-style="zen"]:not([data-theme]) body { background-color: #0C0C0A; }
   }
 
   .phone-frame {

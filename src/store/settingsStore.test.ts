@@ -13,7 +13,7 @@ vi.mock('@/db', () => ({
 // ── Store import (after mocks) ───────────────────────────────────────────────
 import { useSettingsStore } from './settingsStore';
 
-const DEFAULT_SETTINGS = { lastVisitedTab: '/library' as const, customOrderIds: [] as string[], theme: 'system' as const, language: 'en' as const };
+const DEFAULT_SETTINGS = { lastVisitedTab: '/library' as const, customOrderIds: [] as string[], theme: 'system' as const, language: 'en' as const, appStyle: 'classic' as const };
 
 beforeEach(() => {
   useSettingsStore.setState({ settings: { ...DEFAULT_SETTINGS }, isHydrated: false });
@@ -69,5 +69,40 @@ describe('setLastVisitedTab', () => {
       await useSettingsStore.getState().setLastVisitedTab(tab);
       expect(useSettingsStore.getState().settings.lastVisitedTab).toBe(tab);
     }
+  });
+});
+
+// ── setAppStyle ───────────────────────────────────────────────────────────────
+
+describe('setAppStyle', () => {
+  it('updates appStyle in state', async () => {
+    await useSettingsStore.getState().setAppStyle('pixel');
+    expect(useSettingsStore.getState().settings.appStyle).toBe('pixel');
+  });
+
+  it('persists via db.put', async () => {
+    await useSettingsStore.getState().setAppStyle('zen');
+    expect(mockDb.put).toHaveBeenCalledOnce();
+  });
+
+  it('accepts all valid style values', async () => {
+    for (const style of ['classic', 'pixel', 'paper', 'zen'] as const) {
+      await useSettingsStore.getState().setAppStyle(style);
+      expect(useSettingsStore.getState().settings.appStyle).toBe(style);
+    }
+  });
+});
+
+// ── hydrate: appStyle fallback ────────────────────────────────────────────────
+
+describe('hydrate appStyle fallback', () => {
+  it('falls back to classic appStyle when IDB has no appStyle', async () => {
+    mockDb.get.mockResolvedValue({
+      key: 'settings',
+      lastVisitedTab: '/library',
+      theme: 'dark',
+    });
+    await useSettingsStore.getState().hydrate();
+    expect(useSettingsStore.getState().settings.appStyle).toBe('classic');
   });
 });

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { getDB } from '@/db';
-import type { AppSettings, AppTheme, AppLanguage } from '@/types';
+import type { AppSettings, AppTheme, AppLanguage, AppStyle } from '@/types';
 
 const SETTINGS_KEY = 'settings';
 
@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   customOrderIds: [],
   theme: 'system',
   language: 'en',
+  appStyle: 'classic',
 };
 
 interface SettingsState {
@@ -24,6 +25,7 @@ interface SettingsActions {
   setCustomOrder(ids: string[]): Promise<void>;
   setTheme(theme: AppTheme): Promise<void>;
   setLanguage(lang: AppLanguage): Promise<void>;
+  setAppStyle(style: AppStyle): Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState & SettingsActions>()(
@@ -77,6 +79,15 @@ export const useSettingsStore = create<SettingsState & SettingsActions>()(
       await db.put('settings', { key: SETTINGS_KEY, ...updated });
       set(state => {
         state.settings.language = lang;
+      });
+    },
+
+    async setAppStyle(style) {
+      const db = await getDB();
+      const updated: AppSettings = { ...get().settings, appStyle: style };
+      await db.put('settings', { key: SETTINGS_KEY, ...updated });
+      set(state => {
+        state.settings.appStyle = style;
       });
     },
   })),

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { useAppStyle } from '@/hooks/useAppStyle';
 
 interface CardProps {
   children: React.ReactNode;
@@ -21,6 +22,7 @@ export function Card({
   className,
   onClick,
 }: CardProps): React.ReactElement {
+  const appStyle = useAppStyle();
   return (
     <div
       onClick={onClick}
@@ -30,7 +32,11 @@ export function Card({
         padding,
         className,
       )}
-      style={stripeColor ? { borderLeft: `4px solid ${stripeColor}` } : undefined}
+      style={stripeColor
+        ? (appStyle === 'paper'
+            ? { borderTop: `6px solid ${stripeColor}` }
+            : { borderLeft: `4px solid ${stripeColor}` })
+        : undefined}
     >
       {children}
     </div>

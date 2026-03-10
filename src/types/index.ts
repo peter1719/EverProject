@@ -65,12 +65,14 @@ export interface Session {
 
 export type AppTheme = 'system' | 'light' | 'dark';
 export type AppLanguage = 'en' | 'zh-TW';
+export type AppStyle = 'classic' | 'pixel' | 'paper' | 'zen';
 
 export interface AppSettings {
   lastVisitedTab: '/library' | '/suggest' | '/dashboard';
   customOrderIds?: string[];
   theme?: AppTheme;
   language?: AppLanguage;
+  appStyle?: AppStyle;
 }
 
 // ── Timer (ephemeral — NOT persisted) ─────────────────────────────────────

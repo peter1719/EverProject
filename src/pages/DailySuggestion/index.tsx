@@ -10,6 +10,7 @@ import { ColorFilterDropdown } from '@/pages/ProjectLibrary/components/ColorFilt
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppStyle } from '@/hooks/useAppStyle';
 import { suggestProject, getDaysSinceLastSession } from '@/algorithms/suggestion';
 import { COLOR_HEX_MAP, COLOR_PALETTE } from '@/lib/constants';
 import type { Project, ProjectColor, TimerRouterState } from '@/types';
@@ -209,6 +210,7 @@ function SuggestionCard({
   onClick,
 }: SuggestionCardProps): React.ReactElement {
   const { t } = useTranslation();
+  const appStyle = useAppStyle();
   const notesExcerpt = project.notes ? project.notes.slice(0, 80) : null;
   const colorHex = COLOR_HEX_MAP[project.color];
 
@@ -228,7 +230,10 @@ function SuggestionCard({
       onClick={onClick}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
       className="bg-surface-variant rounded-xl shadow-sm overflow-hidden cursor-pointer active:opacity-80 transition-opacity duration-100"
-      style={{ borderLeft: `4px solid ${colorHex}` }}
+      style={appStyle === 'paper'
+        ? { borderTop: `6px solid ${colorHex}` }
+        : { borderLeft: `4px solid ${colorHex}` }
+      }
     >
       {/* Project name row */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
