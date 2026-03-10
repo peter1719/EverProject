@@ -12,7 +12,7 @@ export function LandscapeShell(): React.ReactElement {
 
   if (isFullscreen) {
     return (
-      <div className="flex h-full flex-col bg-surface">
+      <div className="safe-top safe-bottom flex h-full flex-col bg-surface">
         <UpdatePrompt />
         <main className="flex-1 overflow-hidden">
           <Outlet />
@@ -23,7 +23,7 @@ export function LandscapeShell(): React.ReactElement {
   }
 
   return (
-    <div className="flex h-full flex-col bg-surface">
+    <div className="safe-top safe-bottom flex h-full flex-col bg-surface">
       <UpdatePrompt />
       <div className="flex flex-1 overflow-hidden">
         <LandscapeNav />
