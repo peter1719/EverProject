@@ -13,29 +13,38 @@ createRoot(rootEl).render(
 );
 
 // ── Block iOS edge-swipe back/forward navigation ───────────────────────────
-// iOS Safari and standalone PWA treat a swipe starting from the left screen
-// edge as a "go back" gesture. Calling preventDefault() on touchstart when
-// the touch originates within 20 px of the left edge suppresses it.
-// We track touchmove direction first so we don't block simple edge taps.
+// iOS PWA (WKWebView) back gesture  = left-edge touch swiped rightward.
+// iOS PWA (WKWebView) forward gesture = right-edge touch swiped leftward.
+// preventDefault() must be called on *touchstart* (passive:false) so iOS
+// cannot claim the native gesture before touchmove fires.
+// Secondary touchmove defence covers the extended swipe zone (20–30px).
 {
   let startX = 0;
   let startY = 0;
-  let edgeTouchBlocked = false;
+  let screenW = window.innerWidth;
+  window.addEventListener('resize', () => { screenW = window.innerWidth; });
 
   document.addEventListener('touchstart', (e: TouchEvent) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    edgeTouchBlocked = false;
-  }, { passive: true });
+    // Block left-edge (back) and right-edge (forward) touches immediately.
+    if (startX < 20 || startX > screenW - 20) {
+      e.preventDefault();
+    }
+  }, { passive: false });
 
+  // Belt-and-suspenders for the extended swipe zone (20–30px each side).
   document.addEventListener('touchmove', (e: TouchEvent) => {
-    if (edgeTouchBlocked) { e.preventDefault(); return; }
+    const fromLeft  = startX < 30;
+    const fromRight = startX > screenW - 30;
+    if (!fromLeft && !fromRight) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
-    // Only suppress a rightward horizontal swipe starting from the left edge
-    if (startX < 20 && dx > 5 && Math.abs(dx) > Math.abs(dy)) {
-      edgeTouchBlocked = true;
-      e.preventDefault();
+    if (Math.abs(dx) > 3 && Math.abs(dx) > Math.abs(dy)) {
+      // Left edge swiping right = back; right edge swiping left = forward
+      if ((fromLeft && dx > 0) || (fromRight && dx < 0)) {
+        e.preventDefault();
+      }
     }
   }, { passive: false });
 }
