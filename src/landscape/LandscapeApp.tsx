@@ -32,7 +32,13 @@ export function LandscapeApp(): React.ReactElement {
   // but does NOT fire popstate, so the landscape router (unmounted) misses those updates.
   useEffect(() => {
     const hash = window.location.hash;
-    const path = hash.startsWith('#') ? hash.slice(1) : '/library';
+    // Portrait router uses pushState (pathname, no hash); landscape uses hash (#/path).
+    // When rotating portrait→landscape, hash is empty — fall back to pathname so the
+    // active portrait page (e.g. /timer) is preserved instead of resetting to /library.
+    const path =
+      hash.startsWith('#') && hash.length > 1
+        ? hash.slice(1)
+        : window.location.pathname || '/library';
     if (path && path !== '/') {
       void landscapeRouter.navigate(path, { replace: true });
     }

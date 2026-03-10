@@ -11,6 +11,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStyle } from '@/hooks/useAppStyle';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
+import { FlipClock } from '@/components/shared/FlipClock';
 import { ProjectDetailSheet } from '@/components/shared/ProjectDetailSheet';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -210,64 +211,111 @@ function TimerPage({ routerState }: { readonly routerState: TimerRouterState }):
       <button
         onClick={() => setShowQuitDialog(true)}
         className="absolute top-4 left-4 z-10 rounded-lg border border-outline/50 text-sm text-on-surface-variant px-3 py-2 active:opacity-80 transition-opacity duration-100"
+        data-quit
       >
         {t('timer.quit')}
       </button>
 
-      {/* ── Left: ring ──────────────────────────────────────────────── */}
+      {/* ── Left: ring / paper clock ─────────────────────────────────── */}
       <div className="flex w-[55%] flex-col items-center justify-center relative">
-        <div className="relative" style={{ width: 'min(70%, 320px)', aspectRatio: '1' }}>
-          <RingTicks
-              totalSeconds={currentProjectDurationSecs}
-              tickColor={appStyle === 'paper' ? 'rgba(34,24,16,0.18)' : 'rgba(26,18,8,0.25)'}
-            />
-          {flashComplete && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
+        {appStyle === 'paper' ? (
+          /* Paper mode: FlipClock + progress bar */
+          <div className="flex flex-col items-center gap-5 w-full px-6">
+            {flashComplete && (
               <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-xl font-bold">{t('timer.complete')}</p>
-            </div>
-          )}
-          {flashNext && !flashComplete && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
+            )}
+            {flashNext && !flashComplete && (
               <p className="text-warning text-base font-semibold">{t('timer.next')}</p>
-            </div>
-          )}
-          <CircularProgressbar
-            value={flashComplete ? 100 : progress}
-            text=""
-            styles={buildStyles({
-              strokeLinecap: 'round',
-              pathColor: flashComplete ? '#2D6A2D' : colorHex,
-              trailColor: appStyle === 'paper' ? '#F2EBD8' : '#F4EDE0',
-              pathTransitionDuration: 1,
-            })}
-            strokeWidth={10}
-          />
-          {!flashComplete && !flashNext && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
-              <span className="font-mono text-6xl font-bold text-on-surface">{timeLabel}</span>
-              <div className="flex items-center gap-6">
-                <button onClick={() => setShowStopDialog(true)} aria-label={t('timer.stopLog')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
-                  <Square size={28} fill="currentColor" />
-                </button>
-                {phase === 'running' && (
-                  <button onClick={() => { pauseTimer(); navigator.vibrate?.(10); }} aria-label={t('timer.pause')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
-                    <Pause size={28} />
+            )}
+            {!flashComplete && !flashNext && (
+              <>
+                <FlipClock mm={mm} ss={ss} size="md" />
+                <div className="w-full max-w-[280px]">
+                  <div className="h-2 bg-outline/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-[width] duration-1000 ease-linear"
+                      style={{ width: `${progress}%`, backgroundColor: colorHex }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <button onClick={() => setShowStopDialog(true)} aria-label={t('timer.stopLog')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
+                    <Square size={28} fill="currentColor" />
                   </button>
-                )}
-                {phase === 'paused' && (
-                  <button onClick={() => { resumeTimer(); navigator.vibrate?.(10); }} aria-label={t('timer.resume')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
-                    <Play size={28} fill="currentColor" />
-                  </button>
-                )}
-                {isCombo && (
-                  <button onClick={() => setShowSkipDialog(true)} disabled={!isSkipEnabled} aria-label={t('timer.skipProject')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100 disabled:opacity-30">
-                    <SkipForward size={28} />
-                  </button>
-                )}
+                  {phase === 'running' && (
+                    <button onClick={() => { pauseTimer(); navigator.vibrate?.(10); }} aria-label={t('timer.pause')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
+                      <Pause size={28} />
+                    </button>
+                  )}
+                  {phase === 'paused' && (
+                    <button onClick={() => { resumeTimer(); navigator.vibrate?.(10); }} aria-label={t('timer.resume')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
+                      <Play size={28} fill="currentColor" />
+                    </button>
+                  )}
+                  {isCombo && (
+                    <button onClick={() => setShowSkipDialog(true)} disabled={!isSkipEnabled} aria-label={t('timer.skipProject')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100 disabled:opacity-30">
+                      <SkipForward size={28} />
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          /* Ring layout (Classic / Pixel / Zen) */
+          <div className="relative" style={{ width: 'min(70%, 320px)', aspectRatio: '1' }}>
+            <RingTicks
+              totalSeconds={currentProjectDurationSecs}
+              tickColor="rgba(26,18,8,0.25)"
+            />
+            {flashComplete && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-xl font-bold">{t('timer.complete')}</p>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+            {flashNext && !flashComplete && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <p className="text-warning text-base font-semibold">{t('timer.next')}</p>
+              </div>
+            )}
+            <CircularProgressbar
+              value={flashComplete ? 100 : progress}
+              text=""
+              styles={buildStyles({
+                strokeLinecap: 'round',
+                pathColor: flashComplete ? '#2D6A2D' : colorHex,
+                trailColor: '#F4EDE0',
+                pathTransitionDuration: 1,
+              })}
+              strokeWidth={10}
+            />
+            {!flashComplete && !flashNext && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
+                <span className="font-mono text-6xl font-bold text-on-surface">{timeLabel}</span>
+                <div className="flex items-center gap-6">
+                  <button onClick={() => setShowStopDialog(true)} aria-label={t('timer.stopLog')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
+                    <Square size={28} fill="currentColor" />
+                  </button>
+                  {phase === 'running' && (
+                    <button onClick={() => { pauseTimer(); navigator.vibrate?.(10); }} aria-label={t('timer.pause')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
+                      <Pause size={28} />
+                    </button>
+                  )}
+                  {phase === 'paused' && (
+                    <button onClick={() => { resumeTimer(); navigator.vibrate?.(10); }} aria-label={t('timer.resume')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100">
+                      <Play size={28} fill="currentColor" />
+                    </button>
+                  )}
+                  {isCombo && (
+                    <button onClick={() => setShowSkipDialog(true)} disabled={!isSkipEnabled} aria-label={t('timer.skipProject')} className="text-on-surface-variant active:opacity-80 transition-opacity duration-100 disabled:opacity-30">
+                      <SkipForward size={28} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Right: project info ──────────────────────────────────────── */}
@@ -356,6 +404,7 @@ function TimerPage({ routerState }: { readonly routerState: TimerRouterState }):
         message={t('timer.stopLogMsg')}
         confirmLabel={t('timer.stopLogConfirm')}
         cancelLabel={t('timer.keepGoing')}
+        isDanger
         onConfirm={handleStopAndLogConfirm}
         onCancel={() => setShowStopDialog(false)}
         className="max-w-sm mx-auto"

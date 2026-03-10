@@ -156,16 +156,29 @@ html[data-style="paper"] nav button[aria-current="page"] {
   font-weight: 700;
 }
 
-/* Paper: timer page — ruled notebook page feel */
+/* Paper: timer page — ruled notebook page feel.
+   Using tiled linear-gradient + background-size instead of repeating-linear-gradient
+   to avoid sub-pixel rendering gaps at non-100% browser zoom levels. */
 html[data-style="paper"] .paper-timer-page {
   background-color: var(--surface);
-  background-image: repeating-linear-gradient(
+  background-image: linear-gradient(
     transparent 0px,
     transparent 39px,
     var(--outline) 39px,
     var(--outline) 40px
   );
-  background-attachment: local;
+  background-size: 100% 40px;
+}
+
+/* Paper: outlined buttons get surface background (prevent dot-grid bleed) */
+html[data-style="paper"] main button.bg-transparent {
+  background-color: var(--surface);
+}
+
+
+/* Paper: Quit button gets surface-variant background (prevent ruled-line bleed) */
+html[data-style="paper"] button[data-quit] {
+  background-color: var(--surface-variant);
 }
 
 /* ── Zen style ───────────────────────────────────────────────────────────────── */
@@ -248,6 +261,16 @@ body {
 @keyframes slide-up {
   from { transform: translateY(8px); opacity: 0; }
   to   { transform: translateY(0);   opacity: 1; }
+}
+
+@keyframes paper-flip-top {
+  from { transform: rotateX(0deg); }
+  to   { transform: rotateX(-90deg); }
+}
+
+@keyframes paper-flip-bottom {
+  from { transform: rotateX(90deg); }
+  to   { transform: rotateX(0deg); }
 }
 
 /* ── Safe area padding ──────────────────────────────────────────────────────── */

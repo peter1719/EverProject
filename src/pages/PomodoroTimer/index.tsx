@@ -11,6 +11,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStyle } from '@/hooks/useAppStyle';
 import { PixelDialog } from '@/components/shared/PixelDialog';
 import { ColorDot } from '@/components/shared/ColorDot';
+import { FlipClock } from '@/components/shared/FlipClock';
 import { ProjectDetailSheet } from '@/components/shared/ProjectDetailSheet';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -273,6 +274,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
           onClick={() => setShowQuitDialog(true)}
           className="rounded-lg border border-outline/50 text-sm text-on-surface-variant px-3 py-2 active:opacity-80 transition-opacity duration-100"
           aria-label={t('timer.quit')}
+          data-quit
           style={{ minHeight: 44 }}
         >
           {t('timer.quit')}
@@ -284,16 +286,13 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         </span>
       </div>
 
-      {/* Ring + header — ring centred, name floated 15vh above */}
-      <div className="flex-1 relative">
-        {/* Project name & time — bottom edge 15vh above screen centre */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 px-4 w-full"
-          style={{ bottom: 'calc(50% + min(45vw, 30vh) + 1.5rem)' }}
-        >
+      {appStyle === 'paper' ? (
+        /* ── Paper mode: FlipClock + progress bar ──────────────────────── */
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
+          {/* Project name */}
           <div className="flex items-center gap-2">
             {currentProject && <ColorDot color={currentProject.color} size={12} />}
-            <p className="font-display text-3xl font-bold text-on-surface text-center truncate max-w-[240px]">
+            <p className="font-display text-3xl font-bold text-on-surface text-center truncate max-w-[280px]">
               {currentProject?.name ?? 'Project'}
             </p>
             {currentProject && (
@@ -306,63 +305,41 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
               </button>
             )}
           </div>
-          {/* Elapsed / total */}
-          {!flashComplete && !flashNext && (
-            <p className="font-mono text-2xl font-bold text-on-surface-variant">
-              {(() => {
-                const elapsed = currentProjectDurationSecs - remainingSeconds;
-                const eMM = String(Math.floor(elapsed / 60)).padStart(2, '0');
-                const eSS = String(elapsed % 60).padStart(2, '0');
-                const tMM = String(Math.floor(currentProjectDurationSecs / 60)).padStart(2, '0');
-                const tSS = String(currentProjectDurationSecs % 60).padStart(2, '0');
-                return `${eMM}:${eSS} / ${tMM}:${tSS}`;
-              })()}
-            </p>
-          )}
-          {isCombo && (
-            <p className="font-mono text-sm text-on-surface-variant">
-              {t('timer.projectOf', { current: currentProjectIndex + 1, total: projectIds.length })}
-            </p>
-          )}
-        </div>
 
-        {/* Ring — absolute centre */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="relative w-[min(90vw,60vh,390px)] aspect-square">
-          <RingTicks
-            totalSeconds={currentProjectDurationSecs}
-            tickColor={appStyle === 'paper' ? 'rgba(34,24,16,0.18)' : 'rgba(26,18,8,0.25)'}
-          />
           {flashComplete && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-xl font-bold">
-                {t('timer.complete')}
-              </p>
-            </div>
+            <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-2xl font-bold">
+              {t('timer.complete')}
+            </p>
           )}
           {flashNext && !flashComplete && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <p className="text-warning text-base font-semibold">
-                {t('timer.next')}
-              </p>
-            </div>
+            <p className="text-warning text-base font-semibold">{t('timer.next')}</p>
           )}
-          <CircularProgressbar
-            value={flashComplete ? 100 : progress}
-            text=""
-            styles={buildStyles({
-              strokeLinecap: 'round',
-              pathColor: flashComplete ? '#2D6A2D' : colorHex,
-              trailColor: appStyle === 'paper' ? '#F2EBD8' : '#F4EDE0',
-              textColor: '#1A1208',
-              textSize: '13px',
-              pathTransitionDuration: 1,
-            })}
-            strokeWidth={10}
-          />
+
           {!flashComplete && !flashNext && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-              <span className="font-mono text-7xl font-bold text-on-surface">{timeLabel}</span>
+            <>
+              <FlipClock mm={mm} ss={ss} size="lg" />
+
+              {/* Progress bar + elapsed */}
+              <div className="w-full max-w-[340px]">
+                <div className="h-2 bg-outline/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-1000 ease-linear"
+                    style={{ width: `${progress}%`, backgroundColor: colorHex }}
+                  />
+                </div>
+                <p className="font-mono text-sm text-on-surface-variant mt-2 text-center">
+                  {(() => {
+                    const el = currentProjectDurationSecs - remainingSeconds;
+                    const eMM = String(Math.floor(el / 60)).padStart(2, '0');
+                    const eSS = String(el % 60).padStart(2, '0');
+                    const tMM = String(Math.floor(currentProjectDurationSecs / 60)).padStart(2, '0');
+                    const tSS = String(currentProjectDurationSecs % 60).padStart(2, '0');
+                    return `${eMM}:${eSS} / ${tMM}:${tSS}`;
+                  })()}
+                </p>
+              </div>
+
+              {/* Controls */}
               <div className="flex items-center gap-8">
                 <button
                   onClick={() => setShowStopDialog(true)}
@@ -400,11 +377,135 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
                   </button>
                 )}
               </div>
-            </div>
+
+              {isCombo && (
+                <p className="font-mono text-sm text-on-surface-variant">
+                  {t('timer.projectOf', { current: currentProjectIndex + 1, total: projectIds.length })}
+                </p>
+              )}
+            </>
           )}
         </div>
+      ) : (
+        /* ── Ring layout (Classic / Pixel / Zen) ───────────────────────── */
+        <div className="flex-1 relative">
+          {/* Project name & time — bottom edge above screen centre */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-0 px-4 w-full"
+            style={{ bottom: 'calc(50% + min(45vw, 30vh) + 1.5rem)' }}
+          >
+            <div className="flex items-center gap-2 leading-[40px] h-10">
+              {currentProject && <ColorDot color={currentProject.color} size={12} />}
+              <p className="font-display text-3xl font-bold text-on-surface text-center truncate max-w-[240px]">
+                {currentProject?.name ?? 'Project'}
+              </p>
+              {currentProject && (
+                <button
+                  onClick={() => setShowDetailSheet(true)}
+                  aria-label={t('timer.notes')}
+                  className="text-on-surface-variant active:opacity-80 transition-opacity duration-100 p-1"
+                >
+                  <FileText size={22} />
+                </button>
+              )}
+            </div>
+            {!flashComplete && !flashNext && (
+              <p className="font-mono text-2xl font-bold text-on-surface-variant leading-[40px]">
+                {(() => {
+                  const elapsed = currentProjectDurationSecs - remainingSeconds;
+                  const eMM = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                  const eSS = String(elapsed % 60).padStart(2, '0');
+                  const tMM = String(Math.floor(currentProjectDurationSecs / 60)).padStart(2, '0');
+                  const tSS = String(currentProjectDurationSecs % 60).padStart(2, '0');
+                  return `${eMM}:${eSS} / ${tMM}:${tSS}`;
+                })()}
+              </p>
+            )}
+            {isCombo && (
+              <p className="font-mono text-sm text-on-surface-variant">
+                {t('timer.projectOf', { current: currentProjectIndex + 1, total: projectIds.length })}
+              </p>
+            )}
+          </div>
+
+          {/* Ring — absolute centre */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="relative w-[min(90vw,60vh,390px)] aspect-square">
+            <RingTicks
+              totalSeconds={currentProjectDurationSecs}
+              tickColor="rgba(26,18,8,0.25)"
+            />
+            {flashComplete && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-xl font-bold">
+                  {t('timer.complete')}
+                </p>
+              </div>
+            )}
+            {flashNext && !flashComplete && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <p className="text-warning text-base font-semibold">{t('timer.next')}</p>
+              </div>
+            )}
+            <CircularProgressbar
+              value={flashComplete ? 100 : progress}
+              text=""
+              styles={buildStyles({
+                strokeLinecap: 'round',
+                pathColor: flashComplete ? '#2D6A2D' : colorHex,
+                trailColor: '#F4EDE0',
+                textColor: '#1A1208',
+                textSize: '13px',
+                pathTransitionDuration: 1,
+              })}
+              strokeWidth={10}
+            />
+            {!flashComplete && !flashNext && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                <span className="font-mono text-7xl font-bold text-on-surface">{timeLabel}</span>
+                <div className="flex items-center gap-8">
+                  <button
+                    onClick={() => setShowStopDialog(true)}
+                    aria-label={t('timer.stopLog')}
+                    className="text-on-surface-variant active:opacity-80 transition-opacity duration-100"
+                  >
+                    <Square size={32} fill="currentColor" />
+                  </button>
+                  {phase === 'running' && (
+                    <button
+                      onClick={handlePause}
+                      aria-label={t('timer.pause')}
+                      className="text-on-surface-variant active:opacity-80 transition-opacity duration-100"
+                    >
+                      <Pause size={32} />
+                    </button>
+                  )}
+                  {phase === 'paused' && (
+                    <button
+                      onClick={handleResume}
+                      aria-label={t('timer.resume')}
+                      className="text-on-surface-variant active:opacity-80 transition-opacity duration-100"
+                    >
+                      <Play size={32} fill="currentColor" />
+                    </button>
+                  )}
+                  {isCombo && (
+                    <button
+                      onClick={() => setShowSkipDialog(true)}
+                      disabled={!isSkipEnabled}
+                      aria-label={t('timer.skipProject')}
+                      className="text-on-surface-variant active:opacity-80 transition-opacity duration-100 disabled:opacity-30"
+                    >
+                      <SkipForward size={32} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Combo pills */}
       {isCombo && (
@@ -466,6 +567,7 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         message={t('timer.stopLogMsg')}
         confirmLabel={t('timer.stopLogConfirm')}
         cancelLabel={t('timer.keepGoing')}
+        isDanger
         onConfirm={handleStopAndLogConfirm}
         onCancel={() => setShowStopDialog(false)}
       />
