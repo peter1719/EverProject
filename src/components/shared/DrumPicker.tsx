@@ -57,7 +57,7 @@ function DrumWheel({ value, max, label, onChange }: WheelProps): React.ReactElem
   }
 
   return (
-    <div className="flex flex-col items-center gap-1 flex-1">
+    <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
       <div
         role="spinbutton"
         aria-valuenow={value}
@@ -124,7 +124,7 @@ export function DrumPicker({ days, hours, onChange }: DrumPickerProps): React.Re
   const { t } = useTranslation();
 
   return (
-    <div className="flex gap-3 w-full">
+    <div className="flex gap-2 w-36">
       <DrumWheel
         value={days}
         max={99}
