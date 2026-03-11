@@ -144,7 +144,7 @@ html[data-style="paper"] .shadow-sm {
 
 html[data-style="paper"] main {
   background-color: var(--surface);
-  background-image: radial-gradient(circle, var(--outline) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--outline) 30%, transparent) 1.5px, transparent 1.5px);
   background-size: 20px 20px;
 }
 
@@ -164,8 +164,8 @@ html[data-style="paper"] .paper-timer-page {
   background-image: linear-gradient(
     transparent 0px,
     transparent 39px,
-    var(--outline) 39px,
-    var(--outline) 40px
+    color-mix(in srgb, var(--outline) 30%, transparent) 39px,
+    color-mix(in srgb, var(--outline) 30%, transparent) 40px
   );
   background-size: 100% 40px;
 }
@@ -338,19 +338,19 @@ body {
 
   html[data-style="paper"] body {
     background-color: #E8E0C8;
-    background-image: radial-gradient(circle, var(--outline) 1.5px, transparent 1.5px);
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--outline) 30%, transparent) 1.5px, transparent 1.5px);
     background-size: 20px 20px;
   }
   html[data-style="paper"][data-theme="dark"] body {
     background-color: #100C04;
-    background-image: radial-gradient(circle, var(--outline) 1.5px, transparent 1.5px);
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--outline) 30%, transparent) 1.5px, transparent 1.5px);
     background-size: 20px 20px;
   }
 
   @media (prefers-color-scheme: dark) {
     html[data-style="paper"]:not([data-theme]) body {
       background-color: #100C04;
-      background-image: radial-gradient(circle, var(--outline) 1.5px, transparent 1.5px);
+      background-image: radial-gradient(circle, color-mix(in srgb, var(--outline) 30%, transparent) 1.5px, transparent 1.5px);
       background-size: 20px 20px;
     }
   }
