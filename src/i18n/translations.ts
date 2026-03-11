@@ -151,6 +151,25 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'stats.sessionCount': '{count} session',
     'stats.sessionCountPlural': '{count} sessions',
 
+    // ── Project Form ─────────────────────────────────────────────────────────
+    'form.projectName': 'Project name',
+    'form.projectNamePlaceholder': 'My project',
+    'form.color': 'Color',
+    'form.sessionDuration': 'Session duration',
+    'form.projectDuration': 'Project duration',
+    'form.projectDurationNoLimit': 'No limit',
+    'form.notes': 'Notes',
+    'form.notesPlaceholder': 'Optional notes...',
+    'form.save': 'Save',
+    'form.cancel': 'Cancel',
+    'form.days': 'days',
+    'form.hours': 'hr',
+    'form.error.nameRequired': 'Name required',
+    'form.error.nameMax': 'Max {max} chars',
+    'form.error.colorRequired': 'Pick a color',
+    'form.error.durationRequired': 'Pick a duration',
+    'form.error.notesMax': 'Max {max} chars',
+
     // ── Data / Backup ────────────────────────────────────────────────────────
     'settings.data': 'Data',
     'settings.data.export': 'Export backup',
@@ -313,6 +332,25 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'stats.openSettings': '設定',
     'stats.sessionCount': '{count} 次',
     'stats.sessionCountPlural': '{count} 次',
+
+    // ── Project Form ─────────────────────────────────────────────────────────
+    'form.projectName': '專案名稱',
+    'form.projectNamePlaceholder': '我的專案',
+    'form.color': '顏色',
+    'form.sessionDuration': '單次 session 時長',
+    'form.projectDuration': '計畫總時長',
+    'form.projectDurationNoLimit': '無限制',
+    'form.notes': '備註',
+    'form.notesPlaceholder': '選填備註...',
+    'form.save': '儲存',
+    'form.cancel': '取消',
+    'form.days': '天',
+    'form.hours': '小時',
+    'form.error.nameRequired': '請輸入名稱',
+    'form.error.nameMax': '最多 {max} 個字元',
+    'form.error.colorRequired': '請選擇顏色',
+    'form.error.durationRequired': '請選擇時長',
+    'form.error.notesMax': '最多 {max} 個字元',
 
     // ── Data / Backup ────────────────────────────────────────────────────────
     'settings.data': '資料',

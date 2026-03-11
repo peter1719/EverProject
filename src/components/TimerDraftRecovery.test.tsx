@@ -67,7 +67,7 @@ beforeEach(() => {
     projectElapsedMs: {},
     projectAllocatedMinutes: {},
   });
-  useProjectStore.setState({ projects: [{ id: 'p1', name: 'My Project', color: 'indigo', estimatedDurationMinutes: 30, notes: '', isArchived: false, createdAt: 1000, updatedAt: 1000 }], isHydrated: true });
+  useProjectStore.setState({ projects: [{ id: 'p1', name: 'My Project', color: 'indigo', estimatedDurationMinutes: 30, projectDurationMinutes: 0, notes: '', isArchived: false, createdAt: 1000, updatedAt: 1000 }], isHydrated: true });
   useSettingsStore.setState({ settings: { lastVisitedTab: '/library', language: 'en' } });
 });
 

@@ -2,7 +2,12 @@ import type { ProjectColor } from '@/types';
 
 export const APP_NAME = 'EverProject';
 export const DB_NAME = 'ever-project-db';
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
+
+/** Sentinel value for projectDurationMinutes meaning "no limit". */
+export const PROJECT_DURATION_NO_LIMIT = 0;
+/** Default projectDurationMinutes for migrated/legacy projects. */
+export const PROJECT_DURATION_DEFAULT_MINUTES = 180;
 
 export const MAX_PROJECT_NAME_LENGTH = 30;
 export const MAX_NOTES_LENGTH = 500;

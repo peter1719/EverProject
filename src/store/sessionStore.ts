@@ -166,6 +166,7 @@ export const useSessionStore = create<SessionState & SessionActions & SessionSel
             name: '[DELETED]',
             color: 'slate' as const,
             estimatedDurationMinutes: 0,
+            projectDurationMinutes: 0,
             notes: '',
             isArchived: true,
             createdAt: 0,

@@ -37,7 +37,7 @@ function makeFile(content: unknown): File {
 }
 
 const VALID_BACKUP = {
-  version: 3,
+  version: 4,
   exportedAt: '2026-03-04T00:00:00.000Z',
   projects: [{ id: 'p1', name: 'Project 1' }],
   sessions: [{ id: 's1', projectId: 'p1' }, { id: 's2', projectId: 'p1' }],
@@ -95,7 +95,7 @@ describe('exportData', () => {
 
     expect(blobContents.length).toBeGreaterThan(0);
     const parsed = JSON.parse(blobContents[0]) as Record<string, unknown>;
-    expect(parsed).toHaveProperty('version', 3);
+    expect(parsed).toHaveProperty('version', 4);
     expect(parsed).toHaveProperty('exportedAt');
     expect(Array.isArray(parsed.projects)).toBe(true);
     expect(Array.isArray(parsed.sessions)).toBe(true);
@@ -149,7 +149,7 @@ describe('importData', () => {
     expect(mockDb.clear).toHaveBeenCalledWith('sessionImages');
     expect(mockDb.clear).toHaveBeenCalledWith('todos');
 
-    expect(mockDb.put).toHaveBeenCalledWith('projects', VALID_BACKUP.projects[0]);
+    expect(mockDb.put).toHaveBeenCalledWith('projects', expect.objectContaining({ id: 'p1' }));
     expect(mockDb.put).toHaveBeenCalledWith('sessions', VALID_BACKUP.sessions[0]);
     expect(mockDb.put).toHaveBeenCalledWith('sessions', VALID_BACKUP.sessions[1]);
     expect(mockDb.put).toHaveBeenCalledWith('sessionImages', VALID_BACKUP.sessionImages[0]);
@@ -210,5 +210,37 @@ describe('importData', () => {
     expect(mockProjectHydrate).toHaveBeenCalled();
     expect(mockSessionHydrate).toHaveBeenCalled();
     expect(mockTodoHydrate).toHaveBeenCalled();
+  });
+
+  it('舊版備份（無 projectDurationMinutes）匯入後，每個 project 應有 projectDurationMinutes: 180', async () => {
+    const oldBackup = {
+      version: 3,
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      projects: [{ id: 'p1', name: 'Old Project' }],
+      sessions: [],
+    };
+    const file = makeFile(oldBackup);
+    await importData(file);
+
+    expect(mockDb.put).toHaveBeenCalledWith('projects', expect.objectContaining({
+      id: 'p1',
+      projectDurationMinutes: 180,
+    }));
+  });
+
+  it('有 projectDurationMinutes 的新備份，值應被保留', async () => {
+    const newBackup = {
+      version: 4,
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      projects: [{ id: 'p1', name: 'New Project', projectDurationMinutes: 720 }],
+      sessions: [],
+    };
+    const file = makeFile(newBackup);
+    await importData(file);
+
+    expect(mockDb.put).toHaveBeenCalledWith('projects', expect.objectContaining({
+      id: 'p1',
+      projectDurationMinutes: 720,
+    }));
   });
 });

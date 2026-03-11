@@ -34,6 +34,7 @@ function makeProject(overrides: Partial<Project> & { id: string }): Project {
     name: overrides.id,
     color: 'indigo',
     estimatedDurationMinutes: 30,
+    projectDurationMinutes: 0,
     notes: '',
     isArchived: false,
     createdAt: 1000,

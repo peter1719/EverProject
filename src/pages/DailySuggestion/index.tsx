@@ -97,6 +97,11 @@ export function DailySuggestion(): React.ReactElement {
       .reduce((sum, s) => sum + s.actualDurationMinutes, 0);
   }, [suggestion, sessions]);
 
+  const suggestionSessionCount = useMemo(() => {
+    if (!suggestion) return 0;
+    return sessions.filter(s => s.projectId === suggestion.id && s.outcome !== 'abandoned').length;
+  }, [suggestion, sessions]);
+
   useEffect(() => {
     if (!flipping && suggestion) {
       prevSuggestionRef.current = suggestion;
@@ -152,6 +157,7 @@ export function DailySuggestion(): React.ReactElement {
               project={suggestion}
               daysSince={daysSince}
               totalMinutes={suggestionTotalMinutes}
+              sessionCount={suggestionSessionCount}
               onClick={() => setNoteSheetProject(suggestion)}
             />
           </div>
@@ -200,6 +206,7 @@ interface SuggestionCardProps {
   readonly project: Project;
   readonly daysSince: number | null;
   readonly totalMinutes: number;
+  readonly sessionCount: number;
   readonly onClick: () => void;
 }
 
@@ -207,6 +214,7 @@ function SuggestionCard({
   project,
   daysSince,
   totalMinutes,
+  sessionCount,
   onClick,
 }: SuggestionCardProps): React.ReactElement {
   const { t } = useTranslation();
@@ -259,8 +267,9 @@ function SuggestionCard({
       {/* Progress bar */}
       <ProjectProgressBar
         totalMinutes={totalMinutes}
-        estimatedDurationMinutes={project.estimatedDurationMinutes}
+        projectDurationMinutes={project.projectDurationMinutes}
         colorHex={colorHex}
+        sessionCount={sessionCount}
         className="border-t border-outline/20 py-3"
       />
     </div>

@@ -1,5 +1,5 @@
 import { openDB, type IDBPDatabase } from 'idb';
-import { DB_NAME, DB_VERSION } from '@/lib/constants';
+import { DB_NAME, DB_VERSION, PROJECT_DURATION_DEFAULT_MINUTES } from '@/lib/constants';
 import type { EverProjectDB } from './schema';
 
 let dbPromise: Promise<IDBPDatabase<EverProjectDB>> | null = null;
@@ -11,7 +11,7 @@ let dbPromise: Promise<IDBPDatabase<EverProjectDB>> | null = null;
 export function getDB(): Promise<IDBPDatabase<EverProjectDB>> {
   if (!dbPromise) {
     dbPromise = openDB<EverProjectDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
+      upgrade(db, oldVersion, _newVersion, transaction) {
         // v1 stores — only created on fresh install
         if (oldVersion < 1) {
           const projectStore = db.createObjectStore('projects', { keyPath: 'id' });
@@ -45,6 +45,23 @@ export function getDB(): Promise<IDBPDatabase<EverProjectDB>> {
         // where v4 was applied before the timerDraft migration was written)
         if (oldVersion < 5 && !db.objectStoreNames.contains('timerDraft')) {
           db.createObjectStore('timerDraft', { keyPath: 'key' });
+        }
+
+        // v6 — add projectDurationMinutes to all existing projects (default 180 min)
+        if (oldVersion < 6) {
+          void (async () => {
+            const store = transaction.objectStore('projects');
+            let cursor = await store.openCursor();
+            while (cursor) {
+              if (!('projectDurationMinutes' in (cursor.value as object))) {
+                await cursor.update({
+                  ...(cursor.value as object),
+                  projectDurationMinutes: PROJECT_DURATION_DEFAULT_MINUTES,
+                });
+              }
+              cursor = await cursor.continue();
+            }
+          })();
         }
       },
 

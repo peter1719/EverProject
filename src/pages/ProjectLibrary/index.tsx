@@ -101,6 +101,15 @@ export function ProjectLibrary(): React.ReactElement {
     return map;
   }, [sessions]);
 
+  const projectSessionCount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of sessions) {
+      if (s.outcome === 'abandoned') continue;
+      map.set(s.projectId, (map.get(s.projectId) ?? 0) + 1);
+    }
+    return map;
+  }, [sessions]);
+
   const activeProjects = applySortMode(getActiveProjects(sessions), sortMode, customOrderIds);
   const archivedProjects = projects.filter(p => p.isArchived);
 
@@ -265,6 +274,7 @@ export function ProjectLibrary(): React.ReactElement {
                     project={project}
                     reorderMode={isReordering}
                     totalMinutes={projectTotalMinutes.get(project.id) ?? 0}
+                    sessionCount={projectSessionCount.get(project.id) ?? 0}
                     onStart={setStartProject}
                     onEdit={setEditProject}
                     onArchive={handleArchive}
@@ -295,6 +305,7 @@ export function ProjectLibrary(): React.ReactElement {
                     key={project.id}
                     project={project}
                     totalMinutes={projectTotalMinutes.get(project.id) ?? 0}
+                    sessionCount={projectSessionCount.get(project.id) ?? 0}
                     onStart={setStartProject}
                     onEdit={setEditProject}
                     onArchive={handleArchive}
@@ -343,6 +354,7 @@ export function ProjectLibrary(): React.ReactElement {
                   name: editProject.name,
                   color: editProject.color,
                   estimatedDurationMinutes: editProject.estimatedDurationMinutes,
+                  projectDurationMinutes: editProject.projectDurationMinutes,
                   notes: editProject.notes,
                 }}
                 onSave={data => void handleEdit(data)}

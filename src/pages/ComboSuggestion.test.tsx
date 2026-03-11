@@ -25,6 +25,7 @@ function makeProject(id: string, minutes: number): Project {
     name: id,
     color: 'indigo',
     estimatedDurationMinutes: minutes,
+    projectDurationMinutes: 0,
     notes: '',
     isArchived: false,
     createdAt: Date.now() - 1000,

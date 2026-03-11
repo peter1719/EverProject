@@ -11,6 +11,7 @@ interface ProjectCardProps {
   readonly project: Project;
   readonly reorderMode?: boolean;
   readonly totalMinutes?: number;
+  readonly sessionCount?: number;
   readonly onStart: (project: Project) => void;
   readonly onEdit: (project: Project) => void;
   readonly onArchive: (id: string) => void;
@@ -62,6 +63,7 @@ export function ProjectCard({
   project,
   reorderMode = false,
   totalMinutes = 0,
+  sessionCount,
   onStart,
   onEdit,
   onArchive,
@@ -276,8 +278,9 @@ export function ProjectCard({
               {/* Progress bar */}
               <ProjectProgressBar
                 totalMinutes={totalMinutes}
-                estimatedDurationMinutes={project.estimatedDurationMinutes}
+                projectDurationMinutes={project.projectDurationMinutes}
                 colorHex={colorHex}
+                sessionCount={sessionCount}
                 className="pb-3"
               />
             </div>

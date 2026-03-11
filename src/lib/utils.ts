@@ -20,6 +20,26 @@ export function formatDuration(minutes: number): string {
 }
 
 /**
+ * Formats a duration in minutes using the largest applicable unit.
+ * < 60 min  → "Xm"
+ * < 1440 min → "Xh-Ym" (Ym omitted if 0)
+ * ≥ 1440 min → "Xd-Yh-Zm" (Yh / Zm omitted if 0)
+ */
+export function formatDurationLong(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const d = Math.floor(minutes / 1440);
+  const h = Math.floor((minutes % 1440) / 60);
+  const m = minutes % 60;
+  if (d > 0) {
+    const parts: string[] = [`${d}d`];
+    if (h > 0) parts.push(`${h}h`);
+    if (m > 0) parts.push(`${m}m`);
+    return parts.join('-');
+  }
+  return m > 0 ? `${h}h-${m}m` : `${h}h`;
+}
+
+/**
  * Formats a Unix timestamp as YYYY-MM-DD string.
  * @param timestamp - Unix timestamp in ms
  */

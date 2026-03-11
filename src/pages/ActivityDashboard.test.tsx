@@ -32,6 +32,7 @@ function makeProject(id: string, name = id.toUpperCase()): Project {
     name,
     color: 'indigo',
     estimatedDurationMinutes: 30,
+    projectDurationMinutes: 0,
     notes: '',
     isArchived: false,
     createdAt: Date.now() - 1000,

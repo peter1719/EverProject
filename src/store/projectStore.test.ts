@@ -21,6 +21,7 @@ function makeProject(overrides: Partial<Project> & { id: string }): Project {
     name: overrides.id,
     color: 'indigo',
     estimatedDurationMinutes: 30,
+    projectDurationMinutes: 0,
     notes: '',
     isArchived: false,
     createdAt: Date.now(),
@@ -79,6 +80,7 @@ describe('addProject', () => {
       name: 'Reading',
       color: 'green',
       estimatedDurationMinutes: 30,
+      projectDurationMinutes: 0,
       notes: '',
       isArchived: false,
     });
@@ -93,6 +95,7 @@ describe('addProject', () => {
       name: 'Test',
       color: 'indigo',
       estimatedDurationMinutes: 45,
+      projectDurationMinutes: 0,
       notes: '',
       isArchived: false,
     });

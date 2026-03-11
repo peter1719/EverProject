@@ -23,7 +23,8 @@ export interface Project {
   id: string;
   name: string; // max 30 chars
   color: ProjectColor;
-  estimatedDurationMinutes: number; // 15 | 30 | 45 | 60 | 90 | 120 | 180
+  estimatedDurationMinutes: number; // 15 | 30 | 45 | 60 | 90 | 120 | 180 — session 時長
+  projectDurationMinutes: number; // 計畫總時長，0 = 無限制
   notes: string; // max 500 chars
   isArchived: boolean;
   createdAt: number; // Unix timestamp ms

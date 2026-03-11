@@ -39,6 +39,7 @@ function makeProject(id: string): Project {
     name: id,
     color: 'indigo',
     estimatedDurationMinutes: 30,
+    projectDurationMinutes: 0,
     notes: '',
     isArchived: false,
     createdAt: Date.now(),

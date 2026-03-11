@@ -7,7 +7,7 @@ import type { Project, Session, TodoItem } from '@/types';
 export async function exportData(includeImages: boolean): Promise<void> {
   const db = await getDB();
   const payload = {
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     projects: await db.getAll('projects'),
     sessions: await db.getAll('sessions'),
@@ -49,7 +49,12 @@ export async function importData(
   await db.clear('sessions');
   await db.clear('sessionImages');
   await db.clear('todos');
-  for (const p of projects) await db.put('projects', p);
+  for (const p of projects) {
+    await db.put('projects', {
+      projectDurationMinutes: 180, // fallback for old backups without this field
+      ...p,
+    });
+  }
   for (const s of sessions) await db.put('sessions', s);
   for (const img of sessionImages) await db.put('sessionImages', img);
   for (const t of todos) await db.put('todos', t);

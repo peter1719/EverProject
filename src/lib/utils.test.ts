@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cn, formatDuration, toDateString, daysBetween } from './utils';
+import { cn, formatDuration, formatDurationLong, toDateString, daysBetween } from './utils';
 
 // ── cn ─────────────────────────────────────────────────────────────────────
 
@@ -54,6 +54,43 @@ describe('formatDuration', () => {
 
   it('returns "3h" for 180 minutes (exact multiple)', () => {
     expect(formatDuration(180)).toBe('3h');
+  });
+});
+
+// ── formatDurationLong ─────────────────────────────────────────────────────
+
+describe('formatDurationLong', () => {
+  it('< 60 min → Xm', () => {
+    expect(formatDurationLong(45)).toBe('45m');
+    expect(formatDurationLong(0)).toBe('0m');
+    expect(formatDurationLong(59)).toBe('59m');
+  });
+
+  it('exact hours → Xh', () => {
+    expect(formatDurationLong(60)).toBe('1h');
+    expect(formatDurationLong(120)).toBe('2h');
+  });
+
+  it('hours + minutes → Xh-Ym', () => {
+    expect(formatDurationLong(90)).toBe('1h-30m');
+    expect(formatDurationLong(125)).toBe('2h-5m');
+  });
+
+  it('exact days → Xd', () => {
+    expect(formatDurationLong(1440)).toBe('1d');
+    expect(formatDurationLong(2880)).toBe('2d');
+  });
+
+  it('days + hours → Xd-Yh', () => {
+    expect(formatDurationLong(25 * 1440 + 10 * 60)).toBe('25d-10h');
+  });
+
+  it('days + hours + minutes → Xd-Yh-Zm', () => {
+    expect(formatDurationLong(3 * 1440 + 5 * 60 + 24)).toBe('3d-5h-24m');
+  });
+
+  it('days + minutes only (no hours) → Xd-Ym', () => {
+    expect(formatDurationLong(1440 + 30)).toBe('1d-30m');
   });
 });
 
