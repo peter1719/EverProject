@@ -51,8 +51,8 @@ export async function importData(
   await db.clear('todos');
   for (const p of projects) {
     await db.put('projects', {
-      projectDurationMinutes: 180, // fallback for old backups without this field
       ...p,
+      projectDurationMinutes: p.projectDurationMinutes ?? 180,
     });
   }
   for (const s of sessions) await db.put('sessions', s);

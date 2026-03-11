@@ -53,11 +53,11 @@ export function getDB(): Promise<IDBPDatabase<EverProjectDB>> {
             const store = transaction.objectStore('projects');
             let cursor = await store.openCursor();
             while (cursor) {
-              if (!('projectDurationMinutes' in (cursor.value as object))) {
-                await cursor.update({
-                  ...(cursor.value as object),
-                  projectDurationMinutes: PROJECT_DURATION_DEFAULT_MINUTES,
-                });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const val = cursor.value as any;
+              if (!('projectDurationMinutes' in val)) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                await cursor.update({ ...val, projectDurationMinutes: PROJECT_DURATION_DEFAULT_MINUTES });
               }
               cursor = await cursor.continue();
             }

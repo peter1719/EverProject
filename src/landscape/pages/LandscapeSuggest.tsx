@@ -69,7 +69,7 @@ function SuggestionCard({
       </div>
       <ProjectProgressBar
         totalMinutes={totalMinutes}
-        estimatedDurationMinutes={project.estimatedDurationMinutes}
+        projectDurationMinutes={project.projectDurationMinutes}
         colorHex={colorHex}
         className="border-t border-outline/20 py-3"
       />
