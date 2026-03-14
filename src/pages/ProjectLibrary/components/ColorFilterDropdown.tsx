@@ -39,7 +39,7 @@ export function ColorFilterDropdown({ colors, value, onChange }: Props): React.R
           />
 
           {/* Dropdown panel */}
-          <div className="absolute right-0 top-10 z-50 bg-surface-variant border border-outline rounded-xl shadow-lg py-1 flex flex-col items-center w-15">
+          <div className="color-filter-menu absolute right-0 top-10 z-50 bg-surface-variant border border-outline rounded-xl shadow-lg py-1 flex flex-col items-center w-15">
             <button
               onClick={() => handleSelect(null)}
               aria-label={t('library.filterAll')}

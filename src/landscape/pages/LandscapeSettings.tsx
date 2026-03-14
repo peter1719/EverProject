@@ -4,14 +4,8 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 import { exportData, importData } from '@/lib/backup';
+import { STYLE_OPTIONS } from '@/lib/constants';
 import type { AppTheme, AppLanguage, AppStyle } from '@/types';
-
-const STYLE_OPTIONS: { value: AppStyle; labelKey: string; swatchPrimary: string }[] = [
-  { value: 'classic', labelKey: 'settings.style.classic', swatchPrimary: '#C75B21' },
-  { value: 'pixel',   labelKey: 'settings.style.pixel',   swatchPrimary: '#D62828' },
-  { value: 'paper',   labelKey: 'settings.style.paper',   swatchPrimary: '#1A4A8C' },
-  { value: 'zen',     labelKey: 'settings.style.zen',     swatchPrimary: '#4A7C59' },
-];
 
 function StylePicker(): React.ReactElement {
   const { t } = useTranslation();

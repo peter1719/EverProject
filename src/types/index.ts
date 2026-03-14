@@ -73,7 +73,7 @@ export interface Session {
 
 export type AppTheme = 'system' | 'light' | 'dark';
 export type AppLanguage = 'en' | 'zh-TW';
-export type AppStyle = 'classic' | 'pixel' | 'paper' | 'zen';
+export type AppStyle = 'classic' | 'pixel' | 'paper' | 'zen' | 'pixel-gemini';
 
 export interface AppSettings {
   lastVisitedTab: '/library' | '/suggest' | '/dashboard';

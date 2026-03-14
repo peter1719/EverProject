@@ -10,6 +10,7 @@ import { DurationSelector } from '@/components/shared/DurationSelector';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppStyle } from '@/hooks/useAppStyle';
 import { suggestCombos } from '@/algorithms/combo';
 import { cn } from '@/lib/utils';
 import type { ComboSuggestion, TimerRouterState } from '@/types';
@@ -136,42 +137,55 @@ function ComboCard({
   readonly total: number;
 }): React.ReactElement {
   const { t } = useTranslation();
+  const appStyle = useAppStyle();
   const slackClass =
     combo.slackMinutes <= 5 ? 'text-success'
     : combo.slackMinutes <= 15 ? 'text-warning'
     : 'text-on-surface-variant';
 
   return (
-    <Card shadow padding="">
-      <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3">
-        <span className="text-sm font-medium text-primary">{t('combo.label', { index: index + 1, total })}</span>
-      </div>
-      <div className="flex flex-col gap-3 px-4 py-4">
-        {combo.projects.map((project, i) => {
-          const allocated = combo.projectMinutes[i];
-          const isPartial = allocated < project.estimatedDurationMinutes;
-          return (
-            <div key={project.id} className="flex items-center gap-3">
-              <ColorDot color={project.color} size={12} />
-              <span className="flex-1 text-sm text-on-surface truncate">
-                {project.name}
-                {isPartial && <span className="ml-1.5 text-xs text-warning">{t('combo.partial')}</span>}
-              </span>
-              <span className="text-sm text-on-surface-variant shrink-0">~{allocated} min</span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mx-4 border-t border-dashed border-outline/30" />
-      <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-sm font-medium text-on-surface">{t('combo.total', { minutes: combo.totalMinutes })}</span>
-        {combo.slackMinutes > 0 ? (
-          <span className={cn('text-sm font-medium', slackClass)}>{t('combo.free', { minutes: combo.slackMinutes })}</span>
-        ) : combo.projectMinutes.some((m, i) => m < combo.projects[i].estimatedDurationMinutes) ? (
-          <span className="text-sm font-medium text-success">{t('combo.perfectFit')}</span>
-        ) : null}
-      </div>
-      <ProjectColorStrip colors={combo.projects.map(p => p.color)} />
-    </Card>
+    <div
+      style={appStyle === 'pixel-gemini' ? { boxShadow: '4px 4px 0px 0px var(--outline)', margin: '0 4px 4px 0' } : {}}
+      className="w-full"
+    >
+      <Card
+        shadow={appStyle !== 'pixel-gemini'}
+        className={cn(
+          "overflow-hidden w-full",
+          appStyle === 'pixel-gemini' ? "border-2 border-outline rounded-none" : ""
+        )}
+        padding=""
+      >
+        <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3">
+          <span className="text-sm font-medium text-primary">{t('combo.label', { index: index + 1, total })}</span>
+        </div>
+        <div className="flex flex-col gap-3 px-4 py-4">
+          {combo.projects.map((project, i) => {
+            const allocated = combo.projectMinutes[i];
+            const isPartial = allocated < project.estimatedDurationMinutes;
+            return (
+              <div key={project.id} className="flex items-center gap-3">
+                <ColorDot color={project.color} size={12} />
+                <span className="flex-1 text-sm text-on-surface truncate">
+                  {project.name}
+                  {isPartial && <span className="ml-1.5 text-xs text-warning">{t('combo.partial')}</span>}
+                </span>
+                <span className="text-sm text-on-surface-variant shrink-0">~{allocated} min</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mx-4 border-t border-dashed border-outline/30" />
+        <div className="flex items-center justify-between px-4 py-3">
+          <span className="text-sm font-medium text-on-surface">{t('combo.total', { minutes: combo.totalMinutes })}</span>
+          {combo.slackMinutes > 0 ? (
+            <span className={cn('text-sm font-medium', slackClass)}>{t('combo.free', { minutes: combo.slackMinutes })}</span>
+          ) : combo.projectMinutes.some((m, i) => m < combo.projects[i].estimatedDurationMinutes) ? (
+            <span className="text-sm font-medium text-success">{t('combo.perfectFit')}</span>
+          ) : null}
+        </div>
+        <ProjectColorStrip colors={combo.projects.map(p => p.color)} />
+      </Card>
+    </div>
   );
 }

@@ -9,8 +9,10 @@ import { ColorFilterDropdown } from '@/pages/ProjectLibrary/components/ColorFilt
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAppStyle } from '@/hooks/useAppStyle';
 import { suggestProject, getDaysSinceLastSession } from '@/algorithms/suggestion';
 import { COLOR_HEX_MAP, COLOR_PALETTE } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 import type { Project, ProjectColor, TimerRouterState } from '@/types';
 
 const DEFAULT_MINUTES = 45;
@@ -31,6 +33,7 @@ function SuggestionCard({
   onClick,
 }: SuggestionCardProps): React.ReactElement {
   const { t } = useTranslation();
+  const appStyle = useAppStyle();
   const notesExcerpt = project.notes ? project.notes.slice(0, 120) : null;
   const colorHex = COLOR_HEX_MAP[project.color];
 
@@ -45,34 +48,44 @@ function SuggestionCard({
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
-      className="bg-surface-variant rounded-xl shadow-sm overflow-hidden cursor-pointer active:opacity-80 transition-opacity duration-100"
-      style={{ borderLeft: `4px solid ${colorHex}` }}
+      style={appStyle === 'pixel-gemini' ? { boxShadow: `4px 4px 0px 0px ${colorHex}`, margin: '0 4px 4px 0' } : {}}
+      className={appStyle === 'pixel-gemini' ? "rounded-none" : ""}
     >
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-        <span className="font-display text-xl font-bold text-on-surface flex-1 truncate">
-          {project.name}
-        </span>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+        className={cn(
+          "bg-surface-variant overflow-hidden cursor-pointer active:opacity-80 transition-opacity duration-100",
+          appStyle === 'pixel-gemini' ? "border-2 border-outline rounded-none" : "rounded-xl shadow-sm"
+        )}
+        style={{
+          ...(appStyle !== 'pixel-gemini' ? { borderLeft: `4px solid ${colorHex}` } : {})
+        }}
+      >
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <span className="font-display text-xl font-bold text-on-surface flex-1 truncate">
+            {project.name}
+          </span>
+        </div>
+        <div className="px-4 pb-3">
+          <p className="text-sm text-on-surface-variant leading-snug line-clamp-3">
+            {notesExcerpt
+              ? `${notesExcerpt}${project.notes.length > 120 ? '…' : ''}`
+              : <span className="opacity-50">{t('suggest.noNote')}</span>}
+          </p>
+        </div>
+        <div className="border-t border-outline/20 px-4 py-2">
+          <span className="text-xs text-on-surface-variant">{t('suggest.last', { label: recencyLabel })}</span>
+        </div>
+        <ProjectProgressBar
+          totalMinutes={totalMinutes}
+          projectDurationMinutes={project.projectDurationMinutes}
+          colorHex={colorHex}
+          className="border-t border-outline/20 py-3"
+        />
       </div>
-      <div className="px-4 pb-3">
-        <p className="text-sm text-on-surface-variant leading-snug line-clamp-3">
-          {notesExcerpt
-            ? `${notesExcerpt}${project.notes.length > 120 ? '…' : ''}`
-            : <span className="opacity-50">{t('suggest.noNote')}</span>}
-        </p>
-      </div>
-      <div className="border-t border-outline/20 px-4 py-2">
-        <span className="text-xs text-on-surface-variant">{t('suggest.last', { label: recencyLabel })}</span>
-      </div>
-      <ProjectProgressBar
-        totalMinutes={totalMinutes}
-        projectDurationMinutes={project.projectDurationMinutes}
-        colorHex={colorHex}
-        className="border-t border-outline/20 py-3"
-      />
     </div>
   );
 }

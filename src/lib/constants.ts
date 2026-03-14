@@ -5,7 +5,15 @@
  * Important: COLOR_BG_MAP and COLOR_HEX_MAP are static lookup maps — required for Tailwind purge.
  * Dependencies: src/types (ProjectColor)
  */
-import type { ProjectColor } from '@/types';
+import type { AppStyle, ProjectColor } from '@/types';
+
+export const STYLE_OPTIONS: { value: AppStyle; labelKey: string; swatchPrimary: string }[] = [
+  { value: 'classic',      labelKey: 'settings.style.classic',      swatchPrimary: '#C75B21' },
+  { value: 'pixel',        labelKey: 'settings.style.pixel',        swatchPrimary: '#D62828' },
+  { value: 'paper',        labelKey: 'settings.style.paper',        swatchPrimary: '#1A4A8C' },
+  { value: 'zen',          labelKey: 'settings.style.zen',          swatchPrimary: '#4A7C59' },
+  { value: 'pixel-gemini', labelKey: 'settings.style.pixel-gemini', swatchPrimary: '#D97706' },
+];
 
 export const APP_NAME = 'EverProject';
 export const DB_NAME = 'ever-project-db';

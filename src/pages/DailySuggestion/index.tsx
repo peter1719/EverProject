@@ -19,6 +19,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStyle } from '@/hooks/useAppStyle';
 import { suggestProject, getDaysSinceLastSession } from '@/algorithms/suggestion';
 import { COLOR_HEX_MAP, COLOR_PALETTE } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 import type { Project, ProjectColor, TimerRouterState } from '@/types';
 
 const DEFAULT_MINUTES = 45;
@@ -239,45 +240,53 @@ function SuggestionCard({
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
-      className="bg-surface-variant rounded-xl shadow-sm overflow-hidden cursor-pointer active:opacity-80 transition-opacity duration-100"
-      style={appStyle === 'paper'
-        ? { borderTop: `6px solid ${colorHex}` }
-        : { borderLeft: `4px solid ${colorHex}` }
-      }
+      style={appStyle === 'pixel-gemini' ? { boxShadow: `4px 4px 0px 0px ${colorHex}`, margin: '0 4px 4px 0' } : {}}
+      className={appStyle === 'pixel-gemini' ? "rounded-none" : ""}
     >
-      {/* Project name row */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-        <span className="font-display text-lg font-bold text-on-surface flex-1 truncate">
-          {project.name}
-        </span>
-      </div>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
+        className={cn(
+          "bg-surface-variant overflow-hidden cursor-pointer active:opacity-80 transition-opacity duration-100",
+          appStyle === 'pixel-gemini' ? "border-2 border-outline rounded-none" : "rounded-xl shadow-sm"
+        )}
+        style={{
+          ...(appStyle === 'paper' ? { borderTop: `6px solid ${colorHex}` } : {}),
+          ...(appStyle !== 'paper' && appStyle !== 'pixel-gemini' ? { borderLeft: `4px solid ${colorHex}` } : {})
+        }}
+      >
+        {/* Project name row */}
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <span className="font-display text-lg font-bold text-on-surface flex-1 truncate">
+            {project.name}
+          </span>
+        </div>
 
-      {/* Note */}
-      <div className="flex items-center gap-2 px-4 pb-3">
-        <p className="text-sm text-on-surface-variant flex-1 min-w-0 leading-snug line-clamp-2">
-          {notesExcerpt
-            ? `${notesExcerpt}${project.notes.length > 80 ? '…' : ''}`
-            : <span className="opacity-50">{t('suggest.noNote')}</span>}
-        </p>
-      </div>
+        {/* Note */}
+        <div className="flex items-center gap-2 px-4 pb-3">
+          <p className="text-sm text-on-surface-variant flex-1 min-w-0 leading-snug line-clamp-2">
+            {notesExcerpt
+              ? `${notesExcerpt}${project.notes.length > 80 ? '…' : ''}`
+              : <span className="opacity-50">{t('suggest.noNote')}</span>}
+          </p>
+        </div>
 
-      {/* Last done — bottom */}
-      <div className="border-t border-outline/20 px-4 py-2">
-        <span className="text-xs text-on-surface-variant">{t('suggest.last', { label: recencyLabel })}</span>
-      </div>
+        {/* Last done — bottom */}
+        <div className="border-t border-outline/20 px-4 py-2">
+          <span className="text-xs text-on-surface-variant">{t('suggest.last', { label: recencyLabel })}</span>
+        </div>
 
-      {/* Progress bar */}
-      <ProjectProgressBar
-        totalMinutes={totalMinutes}
-        projectDurationMinutes={project.projectDurationMinutes}
-        colorHex={colorHex}
-        sessionCount={sessionCount}
-        className="border-t border-outline/20 py-3"
-      />
+        {/* Progress bar */}
+        <ProjectProgressBar
+          totalMinutes={totalMinutes}
+          projectDurationMinutes={project.projectDurationMinutes}
+          colorHex={colorHex}
+          sessionCount={sessionCount}
+          className="border-t border-outline/20 py-3"
+        />
+      </div>
     </div>
   );
 }

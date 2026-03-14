@@ -293,7 +293,111 @@ function TimerPage({ routerState }: TimerPageProps): React.ReactElement {
         </span>
       </div>
 
-      {appStyle === 'paper' ? (
+      {appStyle === 'pixel-gemini' ? (
+        /* ── Pixel-Gemini mode: Blocky layout ──────────────────────── */
+        <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6">
+          {/* Project name */}
+          <div className="flex flex-col items-center gap-2 w-full">
+            {currentProject && <ColorDot color={currentProject.color} size={16} />}
+            <p className="font-mono text-xl font-bold text-on-surface uppercase tracking-widest text-center truncate w-full mt-2">
+              {currentProject?.name ?? 'Project'}
+            </p>
+            {currentProject && (
+              <button
+                onClick={() => setShowDetailSheet(true)}
+                aria-label={t('timer.notes')}
+                className="text-on-surface-variant active:translate-y-1 transition-transform p-2 border-2 border-outline shadow-[2px_2px_0px_0px_var(--outline)] bg-surface-variant mt-2"
+              >
+                <FileText size={20} />
+              </button>
+            )}
+          </div>
+
+          {flashComplete && (
+            <p className="animate-[complete-enter_300ms_ease-out_forwards] text-success text-2xl font-bold uppercase tracking-widest">
+              {t('timer.complete')}
+            </p>
+          )}
+          {flashNext && !flashComplete && (
+            <p className="text-warning text-base font-semibold uppercase tracking-widest">{t('timer.next')}</p>
+          )}
+
+          {!flashComplete && !flashNext && (
+            <>
+              {/* Timer text */}
+              <div className="text-center font-mono text-7xl font-bold text-primary tracking-widest" style={{ textShadow: '4px 4px 0 var(--primary-container)' }}>
+                {timeLabel}
+              </div>
+
+              {/* Progress bar + elapsed */}
+              <div className="w-full max-w-[320px] flex flex-col gap-4 mt-4">
+                <div className="h-6 w-full border-4 border-outline bg-surface-variant p-1 shadow-[4px_4px_0px_0px_var(--primary-container)]">
+                  <div 
+                    className="h-full transition-[width] duration-1000 ease-linear"
+                    style={{ width: `${progress}%`, backgroundColor: colorHex }}
+                  />
+                </div>
+                
+                <p className="font-mono text-sm text-on-surface-variant text-center uppercase tracking-widest">
+                  {(() => {
+                    const el = currentProjectDurationSecs - remainingSeconds;
+                    const eMM = String(Math.floor(el / 60)).padStart(2, '0');
+                    const eSS = String(el % 60).padStart(2, '0');
+                    const tMM = String(Math.floor(currentProjectDurationSecs / 60)).padStart(2, '0');
+                    const tSS = String(currentProjectDurationSecs % 60).padStart(2, '0');
+                    return `${eMM}:${eSS} / ${tMM}:${tSS}`;
+                  })()}
+                </p>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-6 mt-8">
+                <button
+                  onClick={() => setShowStopDialog(true)}
+                  aria-label={t('timer.stopLog')}
+                  className="p-4 border-2 border-outline bg-error text-white shadow-[2px_2px_0px_0px_var(--outline)] active:translate-y-1 active:shadow-none transition-all"
+                >
+                  <Square size={32} fill="currentColor" />
+                </button>
+                {phase === 'running' && (
+                  <button
+                    onClick={handlePause}
+                    aria-label={t('timer.pause')}
+                    className="p-4 border-2 border-outline bg-primary-container text-on-primary-container shadow-[4px_4px_0px_0px_var(--outline)] active:translate-y-1 active:shadow-[2px_2px_0px_0px_var(--outline)] transition-all"
+                  >
+                    <Pause size={32} fill="currentColor" />
+                  </button>
+                )}
+                {phase === 'paused' && (
+                  <button
+                    onClick={handleResume}
+                    aria-label={t('timer.resume')}
+                    className="p-4 border-2 border-outline bg-primary text-on-primary shadow-[4px_4px_0px_0px_var(--outline)] active:translate-y-1 active:shadow-[2px_2px_0px_0px_var(--outline)] transition-all"
+                  >
+                    <Play size={32} fill="currentColor" />
+                  </button>
+                )}
+                {isCombo && (
+                  <button
+                    onClick={() => setShowSkipDialog(true)}
+                    disabled={!isSkipEnabled}
+                    aria-label={t('timer.skipProject')}
+                    className="p-4 border-2 border-outline bg-surface-variant text-on-surface-variant shadow-[2px_2px_0px_0px_var(--outline)] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:active:translate-y-0 disabled:active:shadow-[2px_2px_0px_0px_var(--outline)]"
+                  >
+                    <SkipForward size={32} />
+                  </button>
+                )}
+              </div>
+
+              {isCombo && (
+                <p className="font-mono text-sm text-on-surface-variant mt-4 uppercase tracking-widest">
+                  {t('timer.projectOf', { current: currentProjectIndex + 1, total: projectIds.length })}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      ) : appStyle === 'paper' ? (
         /* ── Paper mode: FlipClock + progress bar ──────────────────────── */
         <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
           {/* Project name */}

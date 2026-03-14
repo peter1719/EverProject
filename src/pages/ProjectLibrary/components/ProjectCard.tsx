@@ -191,7 +191,14 @@ export function ProjectCard({
         </div>
 
         {/* Inner wrapper: overflow-hidden clips the sliding row; z-[1] covers archive zone */}
-        <div className="overflow-hidden rounded-xl" style={{ position: 'relative', zIndex: 1 }}>
+        <div
+          className="overflow-hidden rounded-xl"
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            ...(appStyle === 'pixel-gemini' ? { boxShadow: `4px 4px 0px 0px ${colorHex}` } : {})
+          }}
+        >
           <div
             style={{
               display: 'flex',
