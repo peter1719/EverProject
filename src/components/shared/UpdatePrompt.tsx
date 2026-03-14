@@ -1,3 +1,8 @@
+/**
+ * Service Worker update notification banner.
+ * Listens for SW updatefound events; shows a slide-in banner; reloads page on tap.
+ * Dependencies: vite-plugin-pwa (useRegisterSW)
+ */
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 

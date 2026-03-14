@@ -1,3 +1,8 @@
+/**
+ * Project detail bottom sheet (view and edit).
+ * Shows project info, TodoList, and session history; can open edit form.
+ * Dependencies: projectStore, sessionStore, todoStore, BottomSheet
+ */
 import { useState } from 'react';
 
 import { useSessionStore } from '@/store/sessionStore';

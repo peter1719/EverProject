@@ -1,3 +1,8 @@
+/**
+ * Edit session bottom sheet.
+ * Allows changing outcome and notes only (no time fields); calls sessionStore.updateSession.
+ * Dependencies: sessionStore, BottomSheet, OutcomeToggle
+ */
 import { useState, useRef } from 'react';
 
 import { BottomSheet } from './BottomSheet';

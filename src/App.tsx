@@ -1,3 +1,10 @@
+/**
+ * Root component.
+ * Handles: IDB hydration gate (useHydration — shows loading until stores are ready),
+ *          theme application (useTheme), landscape detection (useIsLandscapeUI).
+ * Renders LandscapeApp in landscape mode; RouterProvider in portrait mode.
+ * Dependencies: router, useHydration, useTheme, useIsLandscapeUI, LandscapeApp
+ */
 import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';

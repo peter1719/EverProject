@@ -1,3 +1,8 @@
+/**
+ * Scroll-wheel value picker component (used for duration selection).
+ * Gesture and mouse scroll to select values; snaps to options; triggers vibrate API for haptic feedback.
+ * Dependencies: none (pure UI)
+ */
 import { useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 

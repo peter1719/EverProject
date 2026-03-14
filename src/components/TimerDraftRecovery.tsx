@@ -1,3 +1,9 @@
+/**
+ * Timer crash recovery dialog.
+ * Reads timerDraft from IDB on mount; offers Restore or Discard options.
+ * Restore calls timerStore.restoreTimer(draft) and navigates to /timer.
+ * Dependencies: timerStore, timerDraft.ts
+ */
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTimerStore } from '@/store/timerStore';

@@ -1,3 +1,10 @@
+/**
+ * Theme and app style application hook (side-effect only, no return value).
+ * Syncs settingsStore theme/appStyle to html[data-theme] and html[data-style] attributes.
+ * 'system' theme removes data-theme, letting CSS prefers-color-scheme take over.
+ * 'classic' style removes data-style, applying default styles.
+ * Dependencies: settingsStore
+ */
 import { useEffect } from 'react';
 import { useSettingsStore } from '@/store/settingsStore';
 

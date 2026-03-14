@@ -1,3 +1,8 @@
+/**
+ * Duration badge component.
+ * Displays estimated session duration in "~N MIN" format.
+ * Dependencies: cn()
+ */
 import { formatDuration } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { useAppStyle } from '@/hooks/useAppStyle';

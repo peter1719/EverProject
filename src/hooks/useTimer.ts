@@ -1,3 +1,11 @@
+/**
+ * Core timer hook — drives the entire countdown logic.
+ * Features: rAF loop → tickTimer every second, Page Visibility API compensation for background time,
+ *           Wake Lock to keep screen on, saveTimerDraft every second for crash recovery,
+ *           navigate to /complete when timer finishes.
+ * Combo: tracks projectElapsedMs per project and advances phase accordingly.
+ * Dependencies: timerStore, projectStore, timerDraft, react-router-dom
+ */
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTimerStore } from '@/store/timerStore';

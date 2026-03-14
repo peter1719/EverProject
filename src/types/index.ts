@@ -1,3 +1,10 @@
+/**
+ * Global TypeScript type definitions — single source of truth for all interfaces and type aliases.
+ * Key types: Project, TodoItem, Session, AppSettings, TimerState, TimerDraft
+ * Algorithm types: SuggestionContext, ComboSuggestion
+ * Router payload types: TimerRouterState, CompleteRouterState
+ */
+
 // ── Project ────────────────────────────────────────────────────────────────
 
 export type ProjectColor =

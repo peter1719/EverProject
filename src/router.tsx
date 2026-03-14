@@ -1,3 +1,9 @@
+/**
+ * React Router v7 hash router configuration.
+ * Uses createHashRouter (URL format: /#/library) to avoid PWA server-side routing issues.
+ * 8 routes, all mounted under the Shell component for shared layout (BottomNav, etc.).
+ * Routes: / | /library | /suggest | /combo | /timer | /complete | /dashboard | /settings
+ */
 import { createHashRouter } from 'react-router-dom';
 import { Shell } from '@/components/layout/Shell';
 import { Home } from '@/pages/Home';

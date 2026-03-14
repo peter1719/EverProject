@@ -1,3 +1,10 @@
+/**
+ * Data backup and restore utilities.
+ * exportData(includeImages?) — exports all projects/sessions/todos/settings as JSON;
+ *   optionally includes sessionImages (base64 dataUrl); triggers browser download.
+ * importData(json) — restores data from JSON, clears existing data, resets store state.
+ * Dependencies: src/db/index.ts (getDB), projectStore, sessionStore, todoStore
+ */
 import { getDB } from '@/db';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';

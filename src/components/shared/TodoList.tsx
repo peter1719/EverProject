@@ -1,3 +1,8 @@
+/**
+ * Per-project todo list component.
+ * Add / toggle / delete / reorder todos (dnd-kit); calls todoStore actions.
+ * Dependencies: todoStore, dnd-kit
+ */
 import { useEffect, useState, useReducer, useRef } from 'react';
 import { useTodoStore } from '@/store/todoStore';
 import type { TodoItem } from '@/types';

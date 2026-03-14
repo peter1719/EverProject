@@ -1,3 +1,10 @@
+/**
+ * Multi-project combo suggestion algorithm (pure function, no side effects).
+ * Steps: top 8 by score → C(8,2)+C(8,3)+C(8,4) combinations → partial combo support →
+ *        filter ±10 min → rank → return top 3. Relaxes to ±20 min if no results.
+ * Exports: suggestCombos(context): ComboSuggestion[]
+ * Dependencies: ./suggestion (scoreAllEligible), src/types (ComboSuggestion, SuggestionContext, Project)
+ */
 import { scoreAllEligible } from './suggestion';
 import type { ComboSuggestion, SuggestionContext, Project } from '@/types';
 

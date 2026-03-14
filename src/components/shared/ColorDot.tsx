@@ -1,3 +1,8 @@
+/**
+ * Project color dot indicator.
+ * Renders a small circle in the project's color using COLOR_BG_MAP (never dynamic interpolation).
+ * Dependencies: src/lib/constants.ts (COLOR_BG_MAP)
+ */
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import type { ProjectColor } from '@/types';
 

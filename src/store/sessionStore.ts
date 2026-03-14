@@ -1,3 +1,11 @@
+/**
+ * Zustand store for Session records with Immer middleware.
+ * Append-only principle: deleteSession is the only removal; updateSession only allows outcome/notes/hasImage.
+ * Includes image management (putSessionImage/removeSessionImage) and imageVersions for re-fetch tracking.
+ * Selectors: getTotalSessionCount/Minutes, getCurrentStreak, getDailyActivity,
+ *            getProjectTotals, getSessionsForDay/History, getLastSessionForProject
+ * Dependencies: src/db/index.ts, src/lib/utils (toDateString), src/types
+ */
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { getDB } from '@/db';

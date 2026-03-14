@@ -1,3 +1,10 @@
+/**
+ * Single-project suggestion algorithm (pure function, no side effects).
+ * Scoring: recency 62.5% (14-day window) + frequency 37.5% (30-day / 20-session saturation).
+ * Project duration does NOT affect eligibility or score — all projects are always eligible.
+ * Exports: suggestProject, scoreAllEligible (shared with combo), getDurationFitScore, getDaysSinceLastSession
+ * Dependencies: src/types (Project, Session, SuggestionContext)
+ */
 import type { Project, Session, SuggestionContext } from '@/types';
 
 // Weights rescaled proportionally (5:3 ratio) after removing duration-fit component.

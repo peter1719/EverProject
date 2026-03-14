@@ -1,6 +1,7 @@
 /**
- * Same content as ProjectDetailSheet, but rendered inline (no BottomSheet wrapper).
- * Used in landscape mode to display project detail in a side panel.
+ * Project detail panel (inline/overlay view).
+ * Displays project stats, recent sessions, and todo progress summary.
+ * Dependencies: projectStore, sessionStore, todoStore
  */
 import { useState } from 'react';
 import { useSessionStore } from '@/store/sessionStore';

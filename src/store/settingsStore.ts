@@ -1,3 +1,10 @@
+/**
+ * Zustand store for app settings with Immer middleware.
+ * Manages: theme (system/light/dark), language (en/zh-TW), appStyle (classic/pixel/paper/zen),
+ *          lastVisitedTab, customOrderIds (Library custom sort order).
+ * Defaults: lastVisitedTab='/library', theme='system', language='en', appStyle='classic'
+ * Dependencies: src/db/index.ts (getDB), src/types (AppSettings, AppTheme, AppLanguage, AppStyle)
+ */
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { getDB } from '@/db';

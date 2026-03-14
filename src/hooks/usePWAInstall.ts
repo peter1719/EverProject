@@ -1,3 +1,9 @@
+/**
+ * PWA install prompt hook.
+ * Captures the beforeinstallprompt event and exposes promptInstall() for a custom install button.
+ * Returns: { canInstall: boolean, promptInstall: () => void }
+ * Dependencies: Web API (BeforeInstallPromptEvent)
+ */
 import { useState, useEffect } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {

@@ -1,3 +1,9 @@
+/**
+ * Landscape UI detection hook.
+ * Condition: innerWidth >= 480 AND width > height; debounced 150ms to prevent rotation flicker.
+ * Returns: boolean (true = show landscape UI).
+ * App.tsx uses this to choose between LandscapeApp and the standard router.
+ */
 import { useEffect, useState } from 'react';
 
 function getIsLandscape(): boolean {

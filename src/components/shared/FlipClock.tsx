@@ -1,3 +1,8 @@
+/**
+ * Flip-digit countdown display component (used on the Timer page).
+ * Formats seconds into MM:SS or HH:MM:SS with CSS flip animations.
+ * Dependencies: none (pure UI)
+ */
 import { useEffect, useState } from 'react';
 
 interface FlipDigitProps {

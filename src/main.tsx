@@ -1,3 +1,10 @@
+/**
+ * Application entry point.
+ * Handles: React root rendering (StrictMode), iOS edge-swipe gesture interception
+ *          (prevents browser swipe-back from interfering with the app),
+ *          manual Service Worker registration (injectManifest strategy — prevents mid-timer auto-update).
+ * Dependencies: App.tsx, index.css, public/sw.ts (Service Worker)
+ */
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';

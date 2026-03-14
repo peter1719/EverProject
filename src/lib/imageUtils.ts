@@ -1,3 +1,10 @@
+/**
+ * Image compression utility.
+ * compressImage(file) — uses Canvas to resize images to fit within 1024×1024,
+ * then outputs a JPEG dataUrl at 65% quality.
+ * Used by SessionComplete to reduce photo sizes before storing in IDB.
+ * Dependencies: Web API (Canvas, FileReader)
+ */
 const MAX_DIMENSION = 1024;
 const JPEG_QUALITY = 0.65;
 

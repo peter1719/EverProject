@@ -1,3 +1,10 @@
+/**
+ * Pomodoro Timer page (/timer, full-screen).
+ * Crash recovery gate on mount; driven by useTimer (rAF, Wake Lock, draft save).
+ * FlipClock countdown + circular progress ring; Pause/Resume/Skip/Quit controls.
+ * Navigates to /complete on finish.
+ * Dependencies: timerStore, useTimer, TimerDraftRecovery, react-circular-progressbar
+ */
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';

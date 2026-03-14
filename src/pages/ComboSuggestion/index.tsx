@@ -1,3 +1,9 @@
+/**
+ * Combo Suggestion page (/combo?minutes=N).
+ * Reads minutes from URL param; calls suggestCombos() for up to 3 multi-project sets.
+ * Carousel display; Start Combo navigates to /timer with comboGroupId.
+ * Dependencies: projectStore, sessionStore, suggestCombos, useSearchParams
+ */
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams, Navigate, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';

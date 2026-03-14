@@ -1,3 +1,10 @@
+/**
+ * Global constants.
+ * Includes: DB_NAME/DB_VERSION, PROJECT_DURATION sentinels, DURATION_OPTIONS,
+ *           COLOR_PALETTE (15 colors), COLOR_BG_MAP (Tailwind bg classes), COLOR_HEX_MAP (raw hex).
+ * Important: COLOR_BG_MAP and COLOR_HEX_MAP are static lookup maps — required for Tailwind purge.
+ * Dependencies: src/types (ProjectColor)
+ */
 import type { ProjectColor } from '@/types';
 
 export const APP_NAME = 'EverProject';

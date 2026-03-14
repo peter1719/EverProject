@@ -1,3 +1,10 @@
+/**
+ * Ephemeral Zustand store for timer state — intentionally NOT persisted (resets on reload).
+ * State machine: idle → running/paused → finished
+ * Supports single and combo sessions, skipProject, recordProjectElapsed, crash recovery (restoreTimer).
+ * useTimer hook drives the rAF loop; timerDraft.ts handles IDB persistence for crash recovery.
+ * Dependencies: src/types (TimerDraft, TimerState)
+ */
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { TimerDraft, TimerState } from '@/types';

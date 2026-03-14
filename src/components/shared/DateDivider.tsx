@@ -1,3 +1,8 @@
+/**
+ * Date divider component for session history lists.
+ * Formats and displays dates (e.g. "Today", "Yesterday", or full date string).
+ * Dependencies: cn()
+ */
 import { cn } from '@/lib/utils';
 
 interface DateDividerProps {

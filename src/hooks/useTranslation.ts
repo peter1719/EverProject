@@ -1,3 +1,10 @@
+/**
+ * i18n translation hook.
+ * Reads language from settingsStore ('en' | 'zh-TW') and returns t(key, vars?) function.
+ * Supports string interpolation: t('hello', { name: 'World' }) replaces {name}.
+ * Falls back to 'en' if key is missing, then to the key itself.
+ * Dependencies: settingsStore, src/i18n/translations
+ */
 import { useSettingsStore } from '@/store/settingsStore';
 import { translations } from '@/i18n/translations';
 

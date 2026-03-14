@@ -1,3 +1,10 @@
+/**
+ * Zustand store for Project CRUD with Immer middleware.
+ * Handles: add / update / archive / unarchive / delete + IDB persistence.
+ * Selectors: getActiveProjects(sessions) sorts by most recent session; getProjectById(id).
+ * Note: getActiveProjects requires a sessions argument for correct recency-based ordering.
+ * Dependencies: src/db/index.ts (getDB), src/types (Project, Session)
+ */
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { getDB } from '@/db';

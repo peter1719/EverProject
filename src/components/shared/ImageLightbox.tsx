@@ -1,3 +1,8 @@
+/**
+ * Full-screen image viewer.
+ * Dark overlay + enlarged image; closes on background tap or Escape key; rendered via React portal.
+ * Dependencies: React portal
+ */
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';

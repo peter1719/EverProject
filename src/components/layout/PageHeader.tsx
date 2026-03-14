@@ -1,3 +1,8 @@
+/**
+ * Page header component (top bar).
+ * Optional back button, title (tap to scroll to top), and right-side slot for actions.
+ * Dependencies: react-router-dom (useNavigate)
+ */
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';

@@ -1,3 +1,8 @@
+/**
+ * MD3 surface-variant card component.
+ * Supports optional left color strip (project color) and paper-style top border.
+ * Dependencies: cn()
+ */
 import { cn } from '@/lib/utils';
 import { useAppStyle } from '@/hooks/useAppStyle';
 

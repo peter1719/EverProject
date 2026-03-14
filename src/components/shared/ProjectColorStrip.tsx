@@ -1,3 +1,8 @@
+/**
+ * Project color accent strip (left-side or top-side decorative bar on cards).
+ * Renders a thin strip in the project's color using COLOR_BG_MAP.
+ * Dependencies: src/lib/constants.ts (COLOR_BG_MAP)
+ */
 import { cn } from '@/lib/utils';
 import { COLOR_HEX_MAP } from '@/lib/constants';
 import type { ProjectColor } from '@/types';

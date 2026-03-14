@@ -1,3 +1,8 @@
+/**
+ * Empty state display component.
+ * Structure: Lucide icon (48px) + title + body text + optional CTA button.
+ * Dependencies: lucide-react, cn()
+ */
 import { PackageOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './Button';

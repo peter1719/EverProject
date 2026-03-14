@@ -1,3 +1,8 @@
+/**
+ * Bottom navigation bar (3 tabs: Library / Suggest / Dashboard).
+ * Shows active tab state; updates settingsStore.lastVisitedTab on tab change.
+ * Dependencies: settingsStore, react-router-dom
+ */
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTranslation } from '@/hooks/useTranslation';

@@ -1,3 +1,8 @@
+/**
+ * Session outcome selection toggle (Completed / Partial / Abandoned).
+ * Three-segment selector; each option has a distinct color and icon.
+ * Dependencies: cn(), lucide-react
+ */
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { SessionOutcome } from '@/types';

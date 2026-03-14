@@ -1,3 +1,9 @@
+/**
+ * IDB persistence helpers for timer crash recovery.
+ * Exports: saveTimerDraft(state) / loadTimerDraft() / clearTimerDraft()
+ * useTimer hook calls saveTimerDraft every second; PomodoroTimer calls loadTimerDraft on mount.
+ * Dependencies: src/db/index.ts (getDB), src/types (TimerDraft, TimerState)
+ */
 import { getDB } from '@/db';
 import type { TimerDraft, TimerState } from '@/types';
 

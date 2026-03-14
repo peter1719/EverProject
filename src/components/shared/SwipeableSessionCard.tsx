@@ -1,3 +1,8 @@
+/**
+ * Swipeable session card with delete action.
+ * Swipe left to reveal delete button; triggers sessionStore.deleteSession.
+ * Dependencies: sessionStore, SessionListItem
+ */
 import { useReducer, useRef, useEffect } from 'react';
 import { PixelDialog } from './PixelDialog';
 

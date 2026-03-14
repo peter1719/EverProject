@@ -1,3 +1,8 @@
+/**
+ * Pixel-style confirmation dialog for destructive actions.
+ * Title + description + confirm/cancel buttons; rendered via React portal.
+ * Dependencies: React portal, cn()
+ */
 import { cn } from '@/lib/utils';
 
 interface PixelDialogProps {

@@ -1,3 +1,8 @@
+/**
+ * Project name row with color dot.
+ * ColorDot + name text — standardizes project name display across pages.
+ * Dependencies: ColorDot
+ */
 import { cn } from '@/lib/utils';
 import { ColorDot } from './ColorDot';
 import type { ProjectColor } from '@/types';

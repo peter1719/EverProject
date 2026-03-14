@@ -1,3 +1,11 @@
+/**
+ * General utility functions.
+ * cn(...classes) — clsx + tailwind-merge for conditional class merging and conflict resolution.
+ * formatDuration(minutes) → "1h 30m" string.
+ * formatDurationLong(minutes) → full format including days.
+ * toDateString(timestampMs) → "YYYY-MM-DD" string.
+ * daysBetween(a, b) → number of days between two Unix ms timestamps.
+ */
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

@@ -1,3 +1,8 @@
+/**
+ * Duration selector wrapper component.
+ * Wraps DrumPicker with DURATION_OPTIONS and formatted display labels.
+ * Dependencies: DrumPicker, src/lib/constants.ts (DURATION_OPTIONS)
+ */
 import { cn } from '@/lib/utils';
 import { DURATION_OPTIONS, OPEN_DURATION } from '@/lib/constants';
 

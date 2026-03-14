@@ -1,3 +1,9 @@
+/**
+ * Session Complete page (/complete, full-screen).
+ * Receives CompleteRouterState; shows outcome toggle, per-project notes and photo attachment.
+ * Writes Session records on save; navigates to /dashboard or /library.
+ * Dependencies: sessionStore, projectStore, imageUtils, useNavigate
+ */
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useSessionStore } from '@/store/sessionStore';

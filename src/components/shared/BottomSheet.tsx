@@ -1,3 +1,8 @@
+/**
+ * Bottom drawer sheet component.
+ * Overlay + rounded panel; closes on outside tap; rendered via React portal.
+ * Dependencies: React portal, cn()
+ */
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useIsLandscapeUI } from '@/hooks/useIsLandscapeUI';

@@ -1,3 +1,8 @@
+/**
+ * Single session list row component.
+ * Shows project color/name, duration, outcome icon, notes excerpt, and optional photo thumbnail.
+ * Dependencies: useSessionImage, cn()
+ */
 /* eslint-disable react-refresh/only-export-components */
 import { cn } from '@/lib/utils';
 import { ColorDot } from './ColorDot';

@@ -1,3 +1,9 @@
+/**
+ * IndexedDB schema definition using the idb DBSchema format.
+ * Database: ever-project-db v6 with 6 object stores:
+ *   projects, sessions, settings, sessionImages, todos, timerDraft
+ * Consumed by openDB() in src/db/index.ts.
+ */
 import type { DBSchema } from 'idb';
 import type { Project, Session, AppSettings, TodoItem, TimerDraft } from '@/types';
 

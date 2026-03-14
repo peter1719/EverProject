@@ -1,3 +1,8 @@
+/**
+ * Horizontal tab switcher component.
+ * Multiple tab options; active tab is filled; click to switch.
+ * Dependencies: cn()
+ */
 import { cn } from '@/lib/utils';
 
 interface TabOption<T extends string> {

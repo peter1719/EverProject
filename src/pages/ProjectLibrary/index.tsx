@@ -1,3 +1,9 @@
+/**
+ * Project Library page (/library, Tab 1).
+ * Browse and manage projects; tap a card to open StartSessionSheet and navigate to /timer.
+ * Sort modes: date / name / custom (dnd-kit drag-and-drop). Color filter dropdown.
+ * Dependencies: projectStore, sessionStore, settingsStore, dnd-kit
+ */
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ArrowUpDown, GripVertical } from 'lucide-react';

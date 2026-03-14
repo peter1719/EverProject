@@ -1,3 +1,10 @@
+/**
+ * Zustand store for per-project todo items (lightweight, no Immer).
+ * On-demand loading via loadTodos(projectId) — not globally hydrated.
+ * Supports: add / update / toggle / delete / reorderTodos (dnd-kit drag-and-drop).
+ * hydrate() clears in-memory state after a backup import.
+ * Dependencies: src/db/index.ts (getDB), src/types (TodoItem)
+ */
 import { create } from 'zustand';
 import { getDB } from '@/db';
 import type { TodoItem } from '@/types';

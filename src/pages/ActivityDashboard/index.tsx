@@ -1,3 +1,9 @@
+/**
+ * Activity Dashboard page (/dashboard, Tab 3).
+ * Overview tab: streak stats, 90-day heatmap (tap day → session detail), project breakdown.
+ * History tab: reverse-chronological session list with filter, edit, and delete (swipe).
+ * Dependencies: sessionStore, projectStore, EditSessionSheet, ImageLightbox
+ */
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';

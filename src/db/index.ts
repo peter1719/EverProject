@@ -1,3 +1,9 @@
+/**
+ * IndexedDB connection manager.
+ * Exports: getDB() — returns a cached IDB connection promise.
+ * Contains upgrade logic for schema versions v1 through v6.
+ * Used by all stores (projectStore, sessionStore, etc.) and timerDraft.ts.
+ */
 import { openDB, type IDBPDatabase } from 'idb';
 import { DB_NAME, DB_VERSION, PROJECT_DURATION_DEFAULT_MINUTES } from '@/lib/constants';
 import type { EverProjectDB } from './schema';

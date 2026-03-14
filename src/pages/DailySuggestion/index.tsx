@@ -1,3 +1,9 @@
+/**
+ * Daily Suggestion page (/suggest, Tab 2).
+ * DrumPicker to choose available time; calls suggestProject() for a weighted random pick.
+ * Roll Again (seed+1, excludeId); Try Combo navigates to /combo?minutes=N; Start → /timer.
+ * Dependencies: projectStore, sessionStore, suggestProject, useNavigate
+ */
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';

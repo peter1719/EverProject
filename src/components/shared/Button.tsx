@@ -1,3 +1,8 @@
+/**
+ * MD3 Button component with consistent variant styling.
+ * Variants: filled / tonal / outlined / danger; supports forwardRef.
+ * Dependencies: cn() (tailwind-merge)
+ */
 import { cn } from '@/lib/utils';
 
 type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'danger';

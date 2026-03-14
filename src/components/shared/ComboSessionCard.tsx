@@ -1,3 +1,8 @@
+/**
+ * Combo session card for the SessionComplete page (one card per project).
+ * Shows project info, outcome toggle, notes input, and photo upload.
+ * Dependencies: imageUtils, OutcomeToggle
+ */
 import { useState } from 'react';
 import { ProjectNameRow } from './ProjectNameRow';
 import { SwipeableSessionCard } from './SwipeableSessionCard';

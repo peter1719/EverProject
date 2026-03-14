@@ -1,3 +1,9 @@
+/**
+ * IDB hydration coordination hook.
+ * Triggers hydrate() on projectStore, sessionStore, and settingsStore on mount.
+ * Returns true once all three stores are ready — used as a hydration gate in App.tsx.
+ * Dependencies: projectStore, sessionStore, settingsStore
+ */
 import { useEffect } from 'react';
 import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';

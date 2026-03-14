@@ -1,3 +1,8 @@
+/**
+ * Project total duration progress bar.
+ * Shows time used vs planned total (projectDurationMinutes).
+ * Dependencies: cn()
+ */
 import { cn, formatDurationLong } from '@/lib/utils';
 
 interface ProjectProgressBarProps {

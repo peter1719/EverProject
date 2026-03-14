@@ -1,3 +1,8 @@
+/**
+ * Settings page (/settings, full-screen).
+ * Theme / Language / App Style selection; JSON data export and import (with confirmation dialog).
+ * Dependencies: settingsStore, backup.ts, PixelDialog
+ */
 import { useRef, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PixelDialog } from '@/components/shared/PixelDialog';

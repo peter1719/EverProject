@@ -1,3 +1,9 @@
+/**
+ * App layout shell — root component wrapping all routes.
+ * Renders the route Outlet, controls BottomNav visibility, and mounts UpdatePrompt,
+ * PWAInstallBanner, and TimerDraftRecovery.
+ * Dependencies: react-router-dom, BottomNav, UpdatePrompt, PWAInstallBanner, TimerDraftRecovery
+ */
 import { Outlet, useLocation } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { UpdatePrompt } from '@/components/shared/UpdatePrompt';
