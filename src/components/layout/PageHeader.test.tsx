@@ -82,3 +82,27 @@ describe('PageHeader className', () => {
     expect(header.className).toContain('extra-test-class');
   });
 });
+
+// ── onTitlePress ───────────────────────────────────────────────────────────────
+
+describe('PageHeader onTitlePress', () => {
+  it('does not apply cursor-pointer when onTitlePress is not provided', () => {
+    renderHeader();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1.className).not.toContain('cursor-pointer');
+  });
+
+  it('applies cursor-pointer when onTitlePress is provided', () => {
+    renderHeader({ onTitlePress: vi.fn() });
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1.className).toContain('cursor-pointer');
+  });
+
+  it('calls onTitlePress when title is clicked', async () => {
+    const user = userEvent.setup();
+    const onTitlePress = vi.fn();
+    renderHeader({ onTitlePress });
+    await user.click(screen.getByRole('heading', { level: 1 }));
+    expect(onTitlePress).toHaveBeenCalledOnce();
+  });
+});

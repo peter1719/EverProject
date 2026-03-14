@@ -8,6 +8,7 @@ interface PageHeaderProps {
   readonly backPath?: string;
   readonly rightSlot?: React.ReactNode;
   readonly className?: string;
+  readonly onTitlePress?: () => void;
 }
 
 export function PageHeader({
@@ -16,6 +17,7 @@ export function PageHeader({
   backPath,
   rightSlot,
   className,
+  onTitlePress,
 }: PageHeaderProps): React.ReactElement {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -46,7 +48,13 @@ export function PageHeader({
       )}
 
       {/* Title */}
-      <h1 className="flex flex-1 items-center px-4 py-6 font-display text-2xl font-bold text-on-surface leading-tight">
+      <h1
+        onClick={onTitlePress}
+        className={cn(
+          'flex flex-1 items-center px-4 py-6 font-display text-2xl font-bold text-on-surface leading-tight',
+          onTitlePress && 'cursor-pointer select-none active:opacity-70 transition-opacity duration-100',
+        )}
+      >
         {title}
       </h1>
 

@@ -34,10 +34,15 @@ export function ActivityDashboard(): React.ReactElement {
     searchParams.get('view') === 'history' ? 'history' : 'overview';
   const [activeView, setActiveView] = useState<ActiveView>(defaultView);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   return (
     <div className="flex flex-col h-full">
       <PageHeader
         title={t('page.activity')}
+        onTitlePress={activeView === 'history'
+          ? () => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+          : undefined}
         rightSlot={
           <button
             onClick={() => navigate('/settings')}
@@ -60,7 +65,7 @@ export function ActivityDashboard(): React.ReactElement {
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto overscroll-contain">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain">
         {activeView === 'overview' ? <OverviewTab /> : <HistoryTab />}
       </div>
     </div>

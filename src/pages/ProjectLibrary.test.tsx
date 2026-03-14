@@ -256,6 +256,28 @@ describe('ProjectLibrary color filter', () => {
   });
 });
 
+// ── scroll to top ─────────────────────────────────────────────────────────────
+
+describe('ProjectLibrary scroll to top', () => {
+  it('clicking the header title scrolls the list to the top', async () => {
+    const user = userEvent.setup();
+    const scrollToMock = vi.fn();
+    HTMLElement.prototype.scrollTo = scrollToMock;
+
+    useProjectStore.setState({
+      projects: [makeProject({ id: 'p1', name: 'Alpha' })],
+      isHydrated: true,
+    });
+    renderLibrary();
+
+    await user.click(screen.getByRole('heading', { level: 1 }));
+    expect(scrollToMock).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+
+    // cleanup
+    delete (HTMLElement.prototype as unknown as Record<string, unknown>).scrollTo;
+  });
+});
+
 // ── start session sheet ───────────────────────────────────────────────────────
 
 describe('ProjectLibrary start session sheet', () => {

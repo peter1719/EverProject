@@ -323,6 +323,35 @@ describe('ActivityDashboard combo session expand', () => {
   });
 });
 
+// ── scroll to top ─────────────────────────────────────────────────────────────
+
+describe('ActivityDashboard scroll to top', () => {
+  it('does NOT scroll when header title is clicked on Overview tab', async () => {
+    const user = userEvent.setup();
+    const scrollToMock = vi.fn();
+    HTMLElement.prototype.scrollTo = scrollToMock;
+
+    renderDashboard();
+    await user.click(screen.getByRole('heading', { level: 1 }));
+    expect(scrollToMock).not.toHaveBeenCalled();
+
+    delete (HTMLElement.prototype as unknown as Record<string, unknown>).scrollTo;
+  });
+
+  it('scrolls to top when header title is clicked on History tab', async () => {
+    const user = userEvent.setup();
+    const scrollToMock = vi.fn();
+    HTMLElement.prototype.scrollTo = scrollToMock;
+
+    renderDashboard();
+    await user.click(screen.getByRole('button', { name: /HISTORY/i }));
+    await user.click(screen.getByRole('heading', { level: 1 }));
+    expect(scrollToMock).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+
+    delete (HTMLElement.prototype as unknown as Record<string, unknown>).scrollTo;
+  });
+});
+
 // ── heatmap infinite scroll ───────────────────────────────────────────────────
 
 describe('ActivityDashboard heatmap infinite scroll', () => {

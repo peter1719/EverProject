@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ArrowUpDown, GripVertical } from 'lucide-react';
 import { ColorFilterDropdown } from './components/ColorFilterDropdown';
@@ -187,6 +187,8 @@ export function ProjectLibrary(): React.ReactElement {
   const hasNoProjects = projects.length === 0;
   const allArchived = filteredActive.length === 0 && filteredArchived.length > 0;
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   return (
     <>
       {/* Dim overlay — covers header, FAB, BottomNav */}
@@ -199,9 +201,12 @@ export function ProjectLibrary(): React.ReactElement {
       )}
 
       <div className="flex flex-col h-full">
-        <PageHeader title={t('page.library')} />
+        <PageHeader
+          title={t('page.library')}
+          onTitlePress={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+        />
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-28 flex flex-col gap-3">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-28 flex flex-col gap-3">
           {hasNoProjects && (
             <EmptyState
               title={t('library.noProjects')}
