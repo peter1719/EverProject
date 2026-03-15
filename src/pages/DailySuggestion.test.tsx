@@ -121,20 +121,19 @@ describe('DailySuggestion time selector', () => {
   });
 });
 
-// ── ROLL AGAIN ────────────────────────────────────────────────────────────────
+// ── swipe hint ────────────────────────────────────────────────────────────────
 
-describe('DailySuggestion ROLL AGAIN', () => {
-  it('ROLL AGAIN is disabled when only 1 project fits', async () => {
+describe('DailySuggestion swipe hint', () => {
+  it('hides swipe hint when only 1 project', () => {
     useProjectStore.setState({
       projects: [makeProject({ id: 'p1', estimatedDurationMinutes: 30 })],
       isHydrated: true,
     });
     renderPage();
-    const rollBtn = screen.getByRole('button', { name: /ROLL AGAIN/i });
-    expect(rollBtn).toBeDisabled();
+    expect(screen.queryByText(/swipe to change|左右滑動切換/i)).not.toBeInTheDocument();
   });
 
-  it('ROLL AGAIN is enabled when multiple projects fit', () => {
+  it('shows swipe hint when multiple projects exist', () => {
     useProjectStore.setState({
       projects: [
         makeProject({ id: 'p1', estimatedDurationMinutes: 30 }),
@@ -143,7 +142,7 @@ describe('DailySuggestion ROLL AGAIN', () => {
       isHydrated: true,
     });
     renderPage();
-    expect(screen.getByRole('button', { name: /ROLL AGAIN/i })).not.toBeDisabled();
+    expect(screen.getByText(/swipe to change|左右滑動切換/i)).toBeInTheDocument();
   });
 });
 
@@ -262,7 +261,7 @@ describe('DailySuggestion color filter', () => {
     expect(screen.getByText(/沒有符合此顏色的專案|No projects match/i)).toBeInTheDocument();
   });
 
-  it('ROLL AGAIN is disabled when only 1 project matches filter', async () => {
+  it('swipe hint hidden when only 1 project matches filter', async () => {
     const user = userEvent.setup();
     useProjectStore.setState({
       projects: [
@@ -276,6 +275,6 @@ describe('DailySuggestion color filter', () => {
     await user.click(screen.getByRole('button', { name: /filter by color/i }));
     await user.click(screen.getByRole('button', { name: /filter by indigo/i }));
 
-    expect(screen.getByRole('button', { name: /ROLL AGAIN/i })).toBeDisabled();
+    expect(screen.queryByText(/swipe to change|左右滑動切換/i)).not.toBeInTheDocument();
   });
 });

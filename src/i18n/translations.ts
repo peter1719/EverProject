@@ -25,7 +25,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'settings.style.pixel': 'Pixel',
     'settings.style.paper': 'Paper',
     'settings.style.zen': 'Zen',
-    'settings.style.pixel-gemini': 'Pixel Gemini',
+    'settings.style.pixel-gemini': 'Pixel 2',
     'settings.language': 'Language',
     'settings.language.en': 'English',
     'settings.language.zhTW': '繁體中文',
@@ -75,6 +75,9 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'suggest.noNote': 'No note',
     'suggest.noProjectsFilter': 'No projects match this color.',
     'suggest.noProjectsFilterSub': 'Try a different filter or clear it.',
+    'suggest.swipeHint': '← Swipe to change →',
+    'suggest.onlyOneProject': 'Only one project in library',
+    'suggest.onlyOneInColor': 'Only one project in this color',
 
     // ── Combo Suggestion ────────────────────────────────────────────────────
     'combo.noCombo': 'No combos for {minutes} min.',
@@ -89,6 +92,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'combo.perfectFit': 'Perfect fit',
     'combo.startThis': '▶ Start this combo',
     'combo.changeDuration': 'Change duration',
+    'combo.swipeHint': '← Swipe to choose →',
 
     // ── Pomodoro Timer ──────────────────────────────────────────────────────
     'timer.notes': 'Notes',
@@ -208,7 +212,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'settings.style.pixel': '像素',
     'settings.style.paper': '筆記',
     'settings.style.zen': '禪',
-    'settings.style.pixel-gemini': '像素 Gemini',
+    'settings.style.pixel-gemini': 'Pixel 2',
     'settings.language': '語言',
     'settings.language.en': 'English',
     'settings.language.zhTW': '繁體中文',
@@ -258,6 +262,9 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'suggest.noNote': '沒有備註',
     'suggest.noProjectsFilter': '沒有符合此顏色的專案。',
     'suggest.noProjectsFilterSub': '請換一個顏色或清除篩選。',
+    'suggest.swipeHint': '← 左右滑動切換 →',
+    'suggest.onlyOneProject': '目前只有這一個專案',
+    'suggest.onlyOneInColor': '此顏色只有這個專案',
 
     // ── Combo Suggestion ────────────────────────────────────────────────────
     'combo.noCombo': '{minutes} 分鐘沒有適合的組合。',
@@ -272,6 +279,7 @@ export const translations: Record<AppLanguage, Record<string, string>> = {
     'combo.perfectFit': '完美符合',
     'combo.startThis': '▶ 開始這個組合',
     'combo.changeDuration': '更改時長',
+    'combo.swipeHint': '← 左右滑動選擇 →',
 
     // ── Pomodoro Timer ──────────────────────────────────────────────────────
     'timer.notes': '備註',

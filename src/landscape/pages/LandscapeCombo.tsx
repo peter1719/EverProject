@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useSearchParams, Navigate, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { ColorDot } from '@/components/shared/ColorDot';
@@ -11,6 +11,7 @@ import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStyle } from '@/hooks/useAppStyle';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { suggestCombos } from '@/algorithms/combo';
 import { cn } from '@/lib/utils';
 import type { ComboSuggestion, TimerRouterState } from '@/types';
@@ -29,7 +30,10 @@ export function LandscapeCombo(): React.ReactElement {
 function LandscapeComboInner({ availableMinutes }: { readonly availableMinutes: number }): React.ReactElement {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
+  const [exitDir, setExitDir] = useState<'left' | 'right'>('left');
+  const [peekIndex, setPeekIndex] = useState(0);
 
   const sessions = useSessionStore(s => s.sessions);
   const getActiveProjects = useProjectStore(s => s.getActiveProjects);
@@ -40,8 +44,23 @@ function LandscapeComboInner({ availableMinutes }: { readonly availableMinutes: 
     [activeProjects, sessions, availableMinutes],
   );
 
+  const displayPeekIndex = isExiting
+    ? peekIndex
+    : (currentIndex + 1) % Math.max(combos.length, 1);
+
+  const goTo = useCallback((targetIndex: number, dir: 'left' | 'right'): void => {
+    if (combos.length <= 1) return;
+    setPeekIndex(targetIndex);
+    setExitDir(dir);
+    setIsExiting(true);
+    setTimeout(() => {
+      setCurrentIndex(targetIndex);
+      setIsExiting(false);
+    }, 320);
+  }, [combos.length]);
+
   function handleStart(): void {
-    const combo = combos[selectedIndex];
+    const combo = combos[currentIndex];
     if (!combo) return;
     const comboGroupId = crypto.randomUUID();
     const projectAllocatedMinutes: Record<string, number> = {};
@@ -57,15 +76,28 @@ function LandscapeComboInner({ availableMinutes }: { readonly availableMinutes: 
   }
 
   function handleTimeChange(mins: number): void {
-    setSelectedIndex(0);
+    setCurrentIndex(0);
     navigate(`/combo?minutes=${mins}`, { replace: true });
   }
+
+  const { dragX, isDragging, isSnapping, ...swipeHandlers } = useSwipeGesture({
+    onSwipeLeft: () => goTo((currentIndex + 1) % combos.length, 'left'),
+    onSwipeRight: () => goTo((currentIndex - 1 + combos.length) % combos.length, 'right'),
+    disabled: combos.length <= 1 || isExiting,
+  });
+
+  const dragRotation = Math.min(Math.max(dragX * 0.04, -10), 10);
+  const cardTransform = isExiting
+    ? `translateX(${exitDir === 'left' ? '-110%' : '110%'}) rotate(${exitDir === 'left' ? '-8deg' : '8deg'})`
+    : `translateX(${dragX}px) rotate(${dragRotation}deg)`;
+  const cardTransition = isExiting
+    ? 'transform 320ms ease-out'
+    : isSnapping ? 'transform 250ms ease-out' : 'none';
 
   return (
     <div className="flex h-full">
       {/* ── Left: controls ───────────────────────────────────────────── */}
       <div className="flex w-[40%] flex-col border-r border-outline/20 px-5 py-4">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-5">
           <button
             onClick={() => navigate('/suggest')}
@@ -76,20 +108,17 @@ function LandscapeComboInner({ availableMinutes }: { readonly availableMinutes: 
           <h1 className="text-lg font-semibold text-on-surface">{t('page.combo')}</h1>
         </div>
 
-        {/* Available time */}
         <div className="flex flex-col gap-3 mb-4">
           <p className="text-sm font-medium text-on-surface-variant">{t('combo.changeDuration')}</p>
           <DurationSelector value={availableMinutes} onChange={handleTimeChange} />
         </div>
 
-        {/* Combo count */}
         {combos.length > 0 && (
           <p className="text-xs text-on-surface-variant mt-2">
             {combos.length} {combos.length === 1 ? 'combination' : 'combinations'} found
           </p>
         )}
 
-        {/* Start button at bottom */}
         {combos.length > 0 && (
           <div className="mt-auto">
             <Button variant="filled" onClick={handleStart} className="w-full">
@@ -99,8 +128,8 @@ function LandscapeComboInner({ availableMinutes }: { readonly availableMinutes: 
         )}
       </div>
 
-      {/* ── Right: combo cards list ──────────────────────────────────── */}
-      <div className="flex flex-1 flex-col overflow-y-auto px-5 py-4 gap-3">
+      {/* ── Right: stacked carousel ──────────────────────────────────── */}
+      <div className="flex flex-1 flex-col overflow-hidden px-5 py-4 gap-3">
         {combos.length === 0 && (
           <EmptyState
             title={t('combo.noCombo', { minutes: availableMinutes })}
@@ -108,34 +137,67 @@ function LandscapeComboInner({ availableMinutes }: { readonly availableMinutes: 
           />
         )}
 
-        {combos.map((combo, i) => (
-          <button
-            key={i}
-            onClick={() => setSelectedIndex(i)}
-            className={cn(
-              'w-full text-left rounded-xl transition-all duration-150',
-              i === selectedIndex ? 'ring-2 ring-primary' : 'opacity-70',
+        {combos.length > 0 && (
+          <>
+            <div style={{ position: 'relative', overflow: 'hidden', flex: 1 }}>
+              {/* Bottom card */}
+              {combos.length > 1 && (
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                  <ComboCard combo={combos[displayPeekIndex]} index={displayPeekIndex} total={combos.length} />
+                </div>
+              )}
+              {/* Top card — follows finger, flies off on commit */}
+              <div
+                style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  height: '100%',
+                  overflowY: 'auto',
+                  transform: cardTransform,
+                  transition: cardTransition,
+                  touchAction: 'pan-y',
+                  cursor: isDragging ? 'grabbing' : 'grab',
+                }}
+                {...swipeHandlers}
+              >
+                <ComboCard combo={combos[currentIndex]} index={currentIndex} total={combos.length} />
+              </div>
+            </div>
+
+            {/* Dot indicators + hint */}
+            {combos.length > 1 && (
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex justify-center gap-2">
+                  {combos.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        if (i === currentIndex) return;
+                        goTo(i, i > currentIndex ? 'left' : 'right');
+                      }}
+                      aria-label={t('combo.dotAriaLabel', { index: i + 1 })}
+                      className={cn(
+                        'rounded-full w-2 h-2',
+                        i === currentIndex ? 'bg-primary' : 'bg-outline/30',
+                      )}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-on-surface-variant/50 select-none">
+                  {t('combo.swipeHint')}
+                </p>
+              </div>
             )}
-          >
-            <ComboCard combo={combo} index={i} total={combos.length} />
-          </button>
-        ))}
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-// ── ComboCard (same as portrait) ──────────────────────────────────────────────
+// ── ComboCard ──────────────────────────────────────────────────────────────────
 
-function ComboCard({
-  combo,
-  index,
-  total,
-}: {
-  readonly combo: ComboSuggestion;
-  readonly index: number;
-  readonly total: number;
-}): React.ReactElement {
+function ComboCard({ combo, index, total }: { readonly combo: ComboSuggestion; readonly index: number; readonly total: number }): React.ReactElement {
   const { t } = useTranslation();
   const appStyle = useAppStyle();
   const slackClass =
@@ -150,10 +212,7 @@ function ComboCard({
     >
       <Card
         shadow={appStyle !== 'pixel-gemini'}
-        className={cn(
-          "overflow-hidden w-full",
-          appStyle === 'pixel-gemini' ? "border-2 border-outline rounded-none" : ""
-        )}
+        className={cn("overflow-hidden w-full", appStyle === 'pixel-gemini' ? "border-2 border-outline rounded-none" : "")}
         padding=""
       >
         <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3">

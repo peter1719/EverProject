@@ -1,10 +1,10 @@
 /**
  * Combo Suggestion page (/combo?minutes=N).
  * Reads minutes from URL param; calls suggestCombos() for up to 3 multi-project sets.
- * Carousel display; Start Combo navigates to /timer with comboGroupId.
- * Dependencies: projectStore, sessionStore, suggestCombos, useSearchParams
+ * Stacked-card swipe: bottom card peeks at scale(0.95), top card exits on swipe.
+ * Dependencies: projectStore, sessionStore, suggestCombos, useSearchParams, useSwipeGesture
  */
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useSearchParams, Navigate, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ColorDot } from '@/components/shared/ColorDot';
@@ -18,6 +18,7 @@ import { useProjectStore } from '@/store/projectStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStyle } from '@/hooks/useAppStyle';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { suggestCombos } from '@/algorithms/combo';
 import { cn } from '@/lib/utils';
 import type { ComboSuggestion, TimerRouterState } from '@/types';
@@ -44,51 +45,42 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
   const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const swipeStartX = useRef<number | null>(null);
+  const [isExiting, setIsExiting] = useState(false);
+  const [exitDir, setExitDir] = useState<'left' | 'right'>('left');
+  // peekIndex: which combo shows as the bottom card during & after animation
+  const [peekIndex, setPeekIndex] = useState(0);
 
   const sessions = useSessionStore(s => s.sessions);
   const getActiveProjects = useProjectStore(s => s.getActiveProjects);
   const activeProjects = getActiveProjects(sessions);
 
-  const combos = useMemo(() => {
-    return suggestCombos({
-      projects: activeProjects,
-      sessions,
-      availableMinutes,
-      seed: 0,
-    });
-  }, [activeProjects, sessions, availableMinutes]);
+  const combos = useMemo(
+    () => suggestCombos({ projects: activeProjects, sessions, availableMinutes, seed: 0 }),
+    [activeProjects, sessions, availableMinutes],
+  );
 
-  const scrollTo = useCallback((index: number): void => {
-    const carousel = carouselRef.current;
-    if (!carousel) return;
-    const card = carousel.children[index] as HTMLElement | undefined;
-    if (card) {
-      carousel.scrollTo({ left: card.offsetLeft - carousel.offsetLeft, behavior: 'instant' });
-    }
-    setCurrentIndex(index);
-  }, []);
+  // At rest, peek shows the next combo (circular). During exit, it shows the target.
+  const displayPeekIndex = isExiting
+    ? peekIndex
+    : (currentIndex + 1) % Math.max(combos.length, 1);
 
-  function handlePrev(): void {
-    scrollTo((currentIndex - 1 + combos.length) % combos.length);
-  }
-
-  function handleNext(): void {
-    scrollTo((currentIndex + 1) % combos.length);
-  }
+  const goTo = useCallback((targetIndex: number, dir: 'left' | 'right'): void => {
+    if (combos.length <= 1) return;
+    setPeekIndex(targetIndex);
+    setExitDir(dir);
+    setIsExiting(true);
+    setTimeout(() => {
+      setCurrentIndex(targetIndex);
+      setIsExiting(false);
+    }, 320);
+  }, [combos.length]);
 
   function handleStart(): void {
     const combo = combos[currentIndex];
     if (!combo) return;
     const comboGroupId = crypto.randomUUID();
-
-    // Build per-project allocation map (only for partial combos where allocated < estimated)
     const projectAllocatedMinutes: Record<string, number> = {};
-    combo.projects.forEach((p, i) => {
-      projectAllocatedMinutes[p.id] = combo.projectMinutes[i];
-    });
-
+    combo.projects.forEach((p, i) => { projectAllocatedMinutes[p.id] = combo.projectMinutes[i]; });
     const state: TimerRouterState = {
       projectIds: combo.projects.map(p => p.id),
       totalMinutes: availableMinutes,
@@ -104,6 +96,20 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
     setCurrentIndex(0);
     navigate(`/combo?minutes=${mins}`, { replace: true });
   }
+
+  const { dragX, isDragging, isSnapping, ...swipeHandlers } = useSwipeGesture({
+    onSwipeLeft: () => goTo((currentIndex + 1) % combos.length, 'left'),
+    onSwipeRight: () => goTo((currentIndex - 1 + combos.length) % combos.length, 'right'),
+    disabled: combos.length <= 1 || isExiting,
+  });
+
+  const dragRotation = Math.min(Math.max(dragX * 0.04, -10), 10);
+  const cardTransform = isExiting
+    ? `translateX(${exitDir === 'left' ? '-110%' : '110%'}) rotate(${exitDir === 'left' ? '-8deg' : '8deg'})`
+    : `translateX(${dragX}px) rotate(${dragRotation}deg)`;
+  const cardTransition = isExiting
+    ? 'transform 320ms ease-out'
+    : isSnapping ? 'transform 250ms ease-out' : 'none';
 
   return (
     <div className="flex flex-col h-full">
@@ -131,75 +137,61 @@ function ComboSuggestionInner({ availableMinutes }: ComboSuggestionInnerProps): 
 
         {combos.length > 0 && (
           <>
-            {/* Carousel */}
-            <div className="relative flex items-center gap-2 px-2">
-              {/* Left arrow */}
-              <button
-                onClick={handlePrev}
-                disabled={combos.length <= 1}
-                className={cn(
-                  'shrink-0 rounded-full p-2 bg-surface-variant active:opacity-80 transition-opacity duration-100',
-                  combos.length <= 1 ? 'opacity-[0.38] cursor-not-allowed' : '',
-                )}
-                aria-label={t('combo.prevAriaLabel')}
-              >
-                ◀
-              </button>
-
-              {/* Cards */}
-              <div
-                ref={carouselRef}
-                className="flex-1 flex overflow-x-hidden"
-                style={{ scrollSnapType: 'x mandatory', touchAction: 'pan-y' }}
-                onPointerDown={e => { swipeStartX.current = e.clientX; }}
-                onPointerUp={e => {
-                  if (swipeStartX.current === null) return;
-                  const delta = e.clientX - swipeStartX.current;
-                  swipeStartX.current = null;
-                  if (Math.abs(delta) < 40) return;
-                  if (delta < 0) handleNext();
-                  else handlePrev();
-                }}
-                onPointerCancel={() => { swipeStartX.current = null; }}
-              >
-                {combos.map((combo, i) => (
+            {/* Stacked card */}
+            <div className="px-4">
+              <div style={{ position: 'relative', overflow: 'hidden' }}>
+                {/* Bottom card — full size, waits behind top card */}
+                {combos.length > 1 && (
                   <div
-                    key={i}
-                    style={{ scrollSnapAlign: 'center', flex: '0 0 100%' }}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      pointerEvents: 'none',
+                    }}
                   >
-                    <ComboCard combo={combo} index={i} total={combos.length} />
+                    <ComboCard combo={combos[displayPeekIndex]} index={displayPeekIndex} total={combos.length} />
                   </div>
-                ))}
-              </div>
-
-              {/* Right arrow */}
-              <button
-                onClick={handleNext}
-                disabled={combos.length <= 1}
-                className={cn(
-                  'shrink-0 rounded-full p-2 bg-surface-variant active:opacity-80 transition-opacity duration-100',
-                  combos.length <= 1 ? 'opacity-[0.38] cursor-not-allowed' : '',
                 )}
-                aria-label={t('combo.nextAriaLabel')}
-              >
-                ▶
-              </button>
+
+                {/* Top card — follows finger, flies off on commit */}
+                <div
+                  style={{
+                    position: 'relative',
+                    zIndex: 1,
+                    transform: cardTransform,
+                    transition: cardTransition,
+                    touchAction: 'pan-y',
+                    cursor: isDragging ? 'grabbing' : 'grab',
+                  }}
+                  {...swipeHandlers}
+                >
+                  <ComboCard combo={combos[currentIndex]} index={currentIndex} total={combos.length} />
+                </div>
+              </div>
             </div>
 
-            {/* Dot indicators */}
+            {/* Dot indicators + swipe hint */}
             {combos.length > 1 && (
-              <div className="flex justify-center gap-2">
-                {combos.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => scrollTo(i)}
-                    aria-label={t('combo.dotAriaLabel', { index: i + 1 })}
-                    className={cn(
-                      'rounded-full w-2 h-2',
-                      i === currentIndex ? 'bg-primary' : 'bg-outline/30',
-                    )}
-                  />
-                ))}
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex justify-center gap-2">
+                  {combos.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        if (i === currentIndex) return;
+                        goTo(i, i > currentIndex ? 'left' : 'right');
+                      }}
+                      aria-label={t('combo.dotAriaLabel', { index: i + 1 })}
+                      className={cn(
+                        'rounded-full w-2 h-2',
+                        i === currentIndex ? 'bg-primary' : 'bg-outline/30',
+                      )}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-on-surface-variant/50 select-none">
+                  {t('combo.swipeHint')}
+                </p>
               </div>
             )}
 
@@ -258,15 +250,11 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
         )}
         padding=""
       >
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-outline/20 px-4 py-3">
           <span className="text-sm font-medium text-primary">
             {t('combo.label', { index: index + 1, total })}
           </span>
         </div>
-
-        {/* Projects */}
-        {/* ComboCard rows keep raw JSX: the trailing "partial" badge prevents clean ProjectNameRow use */}
         <div className="flex flex-col gap-3 px-4 py-4">
           {combo.projects.map((project, i) => {
             const allocated = combo.projectMinutes[i];
@@ -280,18 +268,12 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
                     <span className="ml-1.5 text-xs text-warning">{t('combo.partial')}</span>
                   )}
                 </span>
-                <span className="text-sm text-on-surface-variant shrink-0">
-                  ~{allocated} min
-                </span>
+                <span className="text-sm text-on-surface-variant shrink-0">~{allocated} min</span>
               </div>
             );
           })}
         </div>
-
-        {/* Divider */}
         <div className="mx-4 border-t border-dashed border-outline/30" />
-
-        {/* Totals */}
         <div className="flex items-center justify-between px-4 py-3">
           <span className="text-sm font-medium text-on-surface">
             {t('combo.total', { minutes: combo.totalMinutes })}
@@ -304,8 +286,6 @@ function ComboCard({ combo, index, total }: ComboCardProps): React.ReactElement 
             <span className="text-sm font-medium text-success">{t('combo.perfectFit')}</span>
           ) : null}
         </div>
-
-        {/* Color bar strip */}
         <ProjectColorStrip colors={combo.projects.map(p => p.color)} />
       </Card>
     </div>
